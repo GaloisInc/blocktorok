@@ -1,0 +1,15 @@
+-- Eq1.  - u △u+po (u•∇ )u + ∇p + po * B *TF* g = po*(1+B*To)* g
+
+-- Eq2.
+-- ∇•u = 0
+
+-- Eq3. - kF* △TF + po * cp *(u • ∇TF) = QF
+
+-- Eq4.
+-- TS = TF
+
+-- Eq5.
+kF* (n • ∇TF) = ks*(n•∇TS)
+
+-- Eq6.
+-- - ks* △Ts=Qs

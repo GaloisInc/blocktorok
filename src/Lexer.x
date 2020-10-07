@@ -23,18 +23,19 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-  let                                   { lex' TokenLet         }
-  in                                    { lex' TokenIn          }
   $digit+                               { lex (TokenInt . read) }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar         }
   \=                                    { lex' TokenEq          }
+  \△                                    { lex' TokenTriangle    }
+  \∇                                    { lex' TokenNabla    }
   \+                                    { lex' TokenPlus        }
   \-                                    { lex' TokenMinus       }
   \*                                    { lex' TokenTimes       }
+  \•                                    { lex' TokenInnerProduct }
   \/                                    { lex' TokenDiv         }
   \(                                    { lex' TokenLParen      }
   \)                                    { lex' TokenRParen      }
-  
+
 {
 -- To improve error messages, We keep the path of the file we are
 -- lexing in our own state.
@@ -54,14 +55,15 @@ data Token = Token AlexPosn TokenClass
   deriving ( Show )
 
 data TokenClass
-  = TokenLet
-  | TokenIn
-  | TokenInt Int
+  = TokenInt Int
   | TokenVar String
   | TokenEq
+  | TokenTriangle
+  | TokenNabla
   | TokenPlus
   | TokenMinus
   | TokenTimes
+  | TokenInnerProduct
   | TokenDiv
   | TokenLParen
   | TokenRParen
@@ -70,14 +72,15 @@ data TokenClass
 
 -- For nice parser error messages.
 unLex :: TokenClass -> String
-unLex TokenLet = "let"
-unLex TokenIn = "in"
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenEq = "="
+unLex TokenTriangle = "△"
+unLex TokenNabla = "∇"
 unLex TokenPlus = "+"
 unLex TokenMinus = "-"
 unLex TokenTimes = "*"
+unLex TokenInnerProduct = "•"
 unLex TokenDiv = "/"
 unLex TokenLParen = "("
 unLex TokenRParen = ")"

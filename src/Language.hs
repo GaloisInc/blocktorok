@@ -2,44 +2,32 @@ module Language where
 
 -- This example comes straight from the happy documentation
 
-data Exp  
-      = Let String Exp Exp
-      | Exp1 Exp1
+-- Declarations
+data Decl
+    = D_Stmts [Stmt]
+instance Show Decl where
+  show (D_Stmts es) = "\n"++concat(map show es )++" \n\n "
+
+data Stmt
+      = Equation Exp Exp
+instance Show Stmt where
+  show (Equation e1 e2) = show(e1) ++ "=" ++ show(e2)
+
+data Exp
+     = Divergence Exp
+     | Laplacian Exp
+     | Nabla Exp
+     | Paran Exp
+     | Negation Exp
+     | Plus Exp Exp
+     | Minus Exp Exp
+     | Times Exp Exp
+     | InnerProduct Exp Exp
+     | Div Exp Exp
+     | Term Term
+     deriving Show
+
+data Term
+      = Int Int
+      | Var String
       deriving Show
-
-data Exp1 
-      = Plus Exp1 Term 
-      | Minus Exp1 Term 
-      | Term Term
-      deriving Show
-
-data Term 
-      = Times Term Factor 
-      | Div Term Factor 
-      | Factor Factor
-      deriving Show
-
-data Factor 
-      = Int Int 
-      | Var String 
-      | Brack Exp
-      deriving Show
-
-eval :: [(String,Int)] -> Exp -> Int
-eval p (Let var e1 e2) = eval ((var, eval p e1): p) e2
-eval p (Exp1 e)        = evalExp1 p e
-  where
-  evalExp1 p' (Plus  e' t) = evalExp1 p' e' + evalTerm p' t
-  evalExp1 p' (Minus e' t) = evalExp1 p' e' + evalTerm p' t
-  evalExp1 p' (Term  t)    = evalTerm p' t
-
-  evalTerm p' (Times t f) = evalTerm p' t * evalFactor p' f
-  evalTerm p' (Div   t f) = evalTerm p' t `div` evalFactor p' f
-  evalTerm p' (Factor f)  = evalFactor p' f
-
-  evalFactor _  (Int i)    = i
-  evalFactor p' (Var s)    = case lookup s p' of
-                             Nothing -> error "free variable"
-                             Just i  -> i
-  evalFactor p' (Brack e') = eval p' e'
-

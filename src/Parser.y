@@ -1,6 +1,7 @@
 {
 {-# OPTIONS -w #-}
-module Parser( parseExp ) where
+module Parser( parseDecl) where
+
 
 import Language
 import Lexer
@@ -18,36 +19,45 @@ import Lexer
 -- Without this we get a type error
 %error { happyError }
 
-%token 
-      let             { Token _ TokenLet }
-      in              { Token _ TokenIn }
+%token
       int             { Token _ (TokenInt $$) }
       var             { Token _ (TokenVar $$) }
       '='             { Token _ TokenEq }
       '+'             { Token _ TokenPlus }
       '-'             { Token _ TokenMinus }
       '*'             { Token _ TokenTimes }
+      '•'             { Token _ TokenInnerProduct }
+      '△'             { Token _ TokenTriangle }
+      '∇'             { Token _ TokenNabla }
       '/'             { Token _ TokenDiv }
       '('             { Token _ TokenLParen }
       ')'             { Token _ TokenRParen }
 
 %%
+Decl : DeclL                                  {D_Stmts (reverse $1)}
 
-Exp   : let var '=' Exp in Exp  { Let $2 $4 $6 }
-      | Exp1                    { Exp1 $1 }
+DeclL :                                       { [] }
+    | DeclL Stmt                              { $2 : $1 }
 
-Exp1  : Exp1 '+' Term           { Plus $1 $3 }
-      | Exp1 '-' Term           { Minus $1 $3 }
-      | Term                    { Term $1 }
+Stmt  : Exp '=' Exp            { Equation $1 $3}
 
-Term  : Term '*' Factor         { Times $1 $3 }
-      | Term '/' Factor         { Div $1 $3 }
-      | Factor                  { Factor $1 }
 
-Factor        
+Exp  : '∇' '•' Exp             { Divergence $3 }
+      |'∇' Exp                 { Nabla $2 }
+      | '△' Exp                { Laplacian $2 }
+      | '-' Exp                { Negation $2 }
+      | '(' Exp ')'            { Paran $2 }
+      | Exp '+' Exp            { Plus $1 $3 }
+      | Exp '-' Exp            { Minus $1 $3 }
+      | Exp '*' Exp            { Times $1 $3 }
+      | Exp '•' Exp            { InnerProduct $1 $3 }
+      | Exp '/' Exp            { Div $1 $3 }
+      | Term                   { Term $1 }
+
+Term
       : int                     { Int $1 }
       | var                     { Var $1 }
-      | '(' Exp ')'             { Brack $2 }
+
 
 {
 lexwrap :: (Token -> Alex a) -> Alex a
@@ -57,6 +67,6 @@ happyError :: Token -> Alex a
 happyError (Token p t) =
   alexError' p ("parse error at token '" ++ unLex t ++ "'")
 
-parseExp :: FilePath -> String -> Either String Exp
-parseExp = runAlex' parse
+parseDecl :: FilePath -> String -> Either String Decl
+parseDecl = runAlex' parse
 }
