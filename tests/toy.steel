@@ -1,15 +1,10 @@
--- Eq1.  - u △u+po (u•∇ )u + ∇p + po * B *TF* g = po*(1+B*To)* g
 
--- Eq2.
--- ∇•u = 0
+ΩF. -u *△u + po*(u•∇ )*u+ ∇p +po * B *TF* g = po*(1+B*To)* g
+ΩF. ∇•u = 0
+ΩF. kF* △TF + po* cp*(u • ∇TF)  = QF
+ΩS. TS = TF
+ΩS. kF* (n • ∇TF) = ks*(n•∇TS)
+ΩS. -ks* △Ts=Qs
 
--- Eq3. - kF* △TF + po * cp *(u • ∇TF) = QF
-
--- Eq4.
--- TS = TF
-
--- Eq5.
-kF* (n • ∇TF) = ks*(n•∇TS)
-
--- Eq6.
--- - ks* △Ts=Qs
+Model 1 { Solve = FVM, Space = ΩF}
+Model 2 { Solve = FEM, Space = ΩS}

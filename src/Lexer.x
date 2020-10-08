@@ -24,17 +24,35 @@ tokens :-
   $white+                               ;
   "--".*                                ;
   $digit+                               { lex (TokenInt . read) }
+  Model                                 { lex' TokenModel       }
+  Solve                                 { lex' TokenSolve       }
+  FEM                                   { lex' TokenFEM         }
+  FVM                                   { lex' TokenFVM         }
+  Space                                 { lex' TokenSpace      }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar         }
   \=                                    { lex' TokenEq          }
+  \∇\×                                  { lex' TokenNablaCross  }
+  \∇\•                                  { lex' TokenNablaDot    }
+  \∇\⊗                                  { lex' TokenNablaOuter  }
+  \∇                                    { lex' TokenNabla }
   \△                                    { lex' TokenTriangle    }
-  \∇                                    { lex' TokenNabla    }
   \+                                    { lex' TokenPlus        }
   \-                                    { lex' TokenMinus       }
   \*                                    { lex' TokenTimes       }
-  \•                                    { lex' TokenInnerProduct }
   \/                                    { lex' TokenDiv         }
+  \×                                    { lex' TokenCrossProduct }
+  \•                                    { lex' TokenInnerProduct }
+  \⊗                                    { lex' TokenOuterProduct }
+  \⊗                                    { lex' TokenOuterProduct }
+  \Ω                                    { lex' TokenOmega }
+  \.                                    { lex' TokenDot }
+  \,                                    { lex' TokenComma }
   \(                                    { lex' TokenLParen      }
   \)                                    { lex' TokenRParen      }
+  \[                                    { lex' TokenLBracket      }
+  \]                                    { lex' TokenRBracket      }
+  \{                                    { lex' TokenLCurl       }
+  \}                                    { lex' TokenRCurl       }
 
 {
 -- To improve error messages, We keep the path of the file we are
@@ -57,16 +75,33 @@ data Token = Token AlexPosn TokenClass
 data TokenClass
   = TokenInt Int
   | TokenVar String
+  | TokenModel
+  | TokenSolve
+  | TokenFEM
+  | TokenFVM
+  | TokenSpace
   | TokenEq
   | TokenTriangle
+  | TokenNablaCross
+  | TokenNablaDot
+  | TokenNablaOuter
   | TokenNabla
   | TokenPlus
   | TokenMinus
   | TokenTimes
-  | TokenInnerProduct
   | TokenDiv
+  | TokenCrossProduct
+  | TokenInnerProduct
+  | TokenOuterProduct
+  | TokenOmega
+  | TokenDot
+  | TokenComma
   | TokenLParen
   | TokenRParen
+  | TokenLBracket
+  | TokenRBracket
+  | TokenLCurl
+  | TokenRCurl
   | TokenEOF
   deriving ( Show )
 
@@ -74,16 +109,32 @@ data TokenClass
 unLex :: TokenClass -> String
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
+unLex TokenModel = "Model"
+unLex TokenFEM = "FEM"
+unLex TokenFVM = "FVM"
+unLex TokenSpace = "Space"
 unLex TokenEq = "="
 unLex TokenTriangle = "△"
+unLex TokenNablaCross = "∇×"
+unLex TokenNablaDot = "∇•"
+unLex TokenNablaOuter = "∇⊗"
 unLex TokenNabla = "∇"
 unLex TokenPlus = "+"
 unLex TokenMinus = "-"
 unLex TokenTimes = "*"
-unLex TokenInnerProduct = "•"
 unLex TokenDiv = "/"
+unLex TokenCrossProduct ="×"
+unLex TokenInnerProduct="•"
+unLex TokenOuterProduct ="⊗"
+unLex TokenOmega = "Ω"
+unLex TokenDot = "."
+unLex TokenComma = ","
 unLex TokenLParen = "("
 unLex TokenRParen = ")"
+unLex TokenLBracket = "["
+unLex TokenRBracket = "]"
+unLex TokenLCurl= "{"
+unLex TokenRCurl = "}"
 unLex TokenEOF = "<EOF>"
 
 alexEOF :: Alex Token
