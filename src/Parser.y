@@ -4,7 +4,11 @@ module Parser( parseDecl) where
 
 
 import Language
+import Technique
+import Math
 import Lexer
+import PhysicsType
+import PhysicsModel
 
 }
 
@@ -65,9 +69,10 @@ Decl : DeclL                                  {D_Stmts (reverse $1)}
 DeclL :                                       { [] }
     | DeclL Stmt                              { $2 : $1 }
 
+PhysicsModel : '{' SettingSolve ',' SettingSpace '}' { PhysicsModel.mkModel LaminarFlow $2 $4}
 
 Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
-      | Model Term '{' SettingSolve ',' SettingSpace '}'       { Model $2 $4 $6 }
+      | Model Term PhysicsModel                { Box $2 $3}
 
 -- solving
 SettingSolve

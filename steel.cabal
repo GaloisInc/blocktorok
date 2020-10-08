@@ -35,4 +35,8 @@ library
   exposed-modules:     Language
                        Lexer
                        Parser
+		       Technique
+		       Math
+		       PhysicsType
+		       PhysicsModel
   ghc-options: -Wall
