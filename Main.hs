@@ -1,6 +1,5 @@
 module Main(main) where
 
-
 import Language.Parser ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
@@ -13,7 +12,7 @@ main = do
               [f] -> fmap (parseDecl f) (readFile f)
               _   -> error "expected max. 1 argument"
   case result of
-          Left e -> do
-                print e
-                exitFailure
-          Right e->  print e
+    Left e -> do
+          print e
+          exitFailure
+    Right e->  print e

@@ -21,4 +21,4 @@ module Physics.Type
 data PType = LaminarFlow  -- ^ Laminar fluid flow
            | HeatTransfer -- ^ Heat transfer between entities
            deriving (Show)
---- Note this is hard-coded into the Parser and not yet added to the grammar 
+--- Note this is hard-coded into the Parser and not yet added to the grammar
