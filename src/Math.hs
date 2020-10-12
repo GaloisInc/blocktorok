@@ -14,11 +14,13 @@ with all sorts of operations, notions of units, types, etc.
 
 module Math where
 
+-- | The type of a physical domain, named by a @Term@
 newtype Space = Omega Term
 
 instance Show Space where
   show(Omega t) = "Ω_" ++ show t
 
+-- | The type of mathematical expressions
 data Exp = Divergence Exp
          | Laplacian Exp
          | NablaCross Exp
@@ -55,7 +57,8 @@ instance Show Exp where
   show (OuterProduct e1 e2) = "(" ++ show e1++"⊗" ++ show e2 ++ ")"
   show (Term e) = show e
 
-
+-- | Mathematical terms, which are either integers or valid variable
+--   identifiers
 data Term = Int Int
           | Var String
 

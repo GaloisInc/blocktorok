@@ -16,13 +16,16 @@ module Language.AST where
 import Math
 import Physics.Model
 
+-- | A LINK program is a sequence of @Stmt@s
 newtype Decl = DStmts [Stmt]
 
 instance Show Decl where
   show (DStmts es) = "\n" ++ concatMap show es ++ " \n\n "
 
-data Stmt = Equation Exp Exp Space
-          | Box Term Model
+-- | Type representing a top-level statement, which is (currently) an equation
+--   or a model specification
+data Stmt = Equation Exp Exp Space -- ^ An equation in a particular domain
+          | Box Term Model -- ^ A model labeled by a @Term@
 
 instance Show Stmt where
   show (Equation e1 e2 e3) = "\n" ++ show e1 ++ "=" ++ show e2 ++ " in "++ show e3
