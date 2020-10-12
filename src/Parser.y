@@ -64,7 +64,7 @@ import PhysicsModel
       '}'            { Token _ TokenRCurl }
 
 %%
-Decl : DeclL                                  {D_Stmts (reverse $1)}
+Decl : DeclL                                  {DStmts (reverse $1)}
 
 DeclL :                                       { [] }
     | DeclL Stmt                              { $2 : $1 }

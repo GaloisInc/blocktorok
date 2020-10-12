@@ -14,6 +14,6 @@ main = do
               _   -> error "expected max. 1 argument"
   case result of
           Left e -> do
-                print (e)
+                print e
                 exitFailure
-          Right e->  print (e)
+          Right e->  print e
