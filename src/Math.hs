@@ -1,6 +1,6 @@
 {-|
 Module      : Math
-Description : The representations of mathematical expressions
+Description : Representations of mathematical expressions
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
 Maintainer  : chiw@galois.com
