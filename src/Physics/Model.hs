@@ -1,5 +1,5 @@
 {-|
-Module      : PhysicsModel
+Module      : Physics.Model
 Description : High-level representation of physical models
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -13,15 +13,15 @@ here, probably, but for now it's as simple as it can be (basically a record
 designed to be extended with whatever we feel is important.)
 -}
 
-module PhysicsModel
+module Physics.Model
   ( Model,
     mkModel,
     getType,
     getTechnique
   ) where
 
-import PhysicsType
-import Technique
+import Physics.Type
+import Solver.Technique
 import Math
 
 
@@ -34,6 +34,7 @@ data Model =
         , getSpace :: Space
         }
   deriving(Show)
+
 -- | Construct a new @Model@ from its basic components
 mkModel :: PType -> Technique -> Space -> Model
 mkModel = Model

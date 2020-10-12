@@ -1,5 +1,5 @@
 {-|
-Module      : Technique
+Module      : Solver.Technique
 Description : Type and associated functions capturing various solving
               techniques
 Copyright   : (c) Galois, Inc. 2020
@@ -18,7 +18,7 @@ appropriate, and those should be paired up ahead of time / checked for
 consistency at the type level.
 -}
 
-module Technique
+module Solver.Technique
   ( Technique(..)
   ) where
 

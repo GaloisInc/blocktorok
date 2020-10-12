@@ -1,7 +1,7 @@
 module Language where
 
 import Math
-import PhysicsModel
+import Physics.Model
 
 -- Declarations
 newtype Decl = DStmts [Stmt]

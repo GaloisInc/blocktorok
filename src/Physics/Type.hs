@@ -1,5 +1,5 @@
 {-|
-Module      : PhysicsType
+Module      : Physics.Type
 Description : Simple type / associated functions for distinguishing types of
               physics
 Copyright   : (c) Galois, Inc. 2020
@@ -13,7 +13,7 @@ of physics at the type level. Its main use is tagging records of type
 'Physics.Model.Model'.
 -}
 
-module PhysicsType
+module Physics.Type
   ( PType(..)
   ) where
 
