@@ -1,12 +1,12 @@
 {
 {-# OPTIONS -w #-}
-module Parser( parseDecl) where
+module Language.Parser( parseDecl) where
 
 
-import Language
+import Language.AST
 import Solver.Technique
 import Math
-import Lexer
+import Language.Lexer
 import Physics.Type
 import Physics.Model
 

@@ -1,6 +1,6 @@
 {
 {-# OPTIONS -w  #-}
-module Lexer
+module Language.Lexer
   ( Token(..)
   , AlexPosn(..)
   , TokenClass(..)

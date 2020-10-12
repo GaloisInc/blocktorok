@@ -1,7 +1,7 @@
 module Main(main) where
 
 
-import Parser ( parseDecl )
+import Language.Parser ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
 

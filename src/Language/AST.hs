@@ -1,4 +1,17 @@
-module Language where
+{-|
+Module      : Language.AST
+Description : The LINK AST
+Copyright   : (c) Galois, Inc. 2020
+License     : N/A
+Maintainer  : chiw@galois.co
+Stability   : experimental
+Portability : N/A
+
+This module exports the abstract representation of the LINK concrete syntax. It
+is the target of the parser defined in @Parser.y@.
+-}
+
+module Language.AST where
 
 import Math
 import Physics.Model
