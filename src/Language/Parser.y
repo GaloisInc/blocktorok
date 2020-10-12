@@ -1,6 +1,8 @@
 {
 {-# OPTIONS -w #-}
-module Language.Parser( parseDecl) where
+module Language.Parser
+  ( parseDecl
+  ) where
 
 
 import Language.AST
