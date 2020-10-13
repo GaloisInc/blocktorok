@@ -80,31 +80,29 @@ Prog : Config ModelL CouplingL                        { Prog $1 $2 $3 }
 
 -- TODO: It would be nice if the order of the config fields didn't matter; I'll
 -- look in to making that happen.
-Config : config ':' '{' StepConfig DurationConfig '}' { Config $4 $5 }
+Config : config ':' '{' StepConfig DurationConfig '}'          { Config $4 $5 }
 
-StepConfig : step ':' int                             { $3 }
+StepConfig : step ':' int                                      { $3 }
 
-DurationConfig : iterations ':' int                   { Iterations $3 }
-               | totalTime ':' int                    { TotalTime $3 }
+DurationConfig : iterations ':' int                            { Iterations $3 }
+               | totalTime ':' int                             { TotalTime $3 }
 
-ModelL :                                              { [] }
-       | Model ModelL                                 { $1 : $2 }
+ModelL :                                                       { [] }
+       | Model ModelL                                          { $1 : $2 }
 
-Model : model Identifier PhysicsModel                 { $3 }
+Model : model Identifier '{' SettingSolve ',' SettingSpace '}' { mkModel $2 LaminarFlow $4 $6 }
 
-CouplingL :                                           { [] }
-          | Coupling CouplingL                        { $1 : $2 }
+CouplingL :                                                    { [] }
+          | Coupling CouplingL                                 { $1 : $2 }
 
-Coupling : couple Identifier Identifier ':' '{' '}'   { Coupling $2 $3 }
+Coupling : couple Identifier Identifier ':' '{' '}'            { Coupling $2 $3 }
 
-Identifier : var                                      { $1 }
+Identifier : var                                               { $1 }
 
 -- Decl : DeclL                                  {DStmts (reverse $1)}
 
 -- DeclL :                                       { [] }
 --     | DeclL Stmt                              { $2 : $1 }
-
-PhysicsModel : '{' SettingSolve ',' SettingSpace '}' { Physics.Model.mkModel LaminarFlow $2 $4}
 
 -- Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
 --       | model Term PhysicsModel                { Box $2 $3}
