@@ -43,7 +43,7 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-newtype Coupling = Coupling Int deriving (Show)
+data Coupling = Coupling String String deriving (Show)
 
 -- | A LINK program is a sequence of @Stmt@s
 newtype Decl = DStmts [Stmt]

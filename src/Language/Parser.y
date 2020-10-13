@@ -78,6 +78,8 @@ import Physics.Model
 -- the parser)
 Prog : Config ModelL CouplingL                        { Prog $1 $2 $3 }
 
+-- TODO: It would be nice if the order of the config fields didn't matter; I'll
+-- look in to making that happen.
 Config : config ':' '{' StepConfig DurationConfig '}' { Config $4 $5 }
 
 StepConfig : step ':' int                             { $3 }
@@ -88,12 +90,14 @@ DurationConfig : iterations ':' int                   { Iterations $3 }
 ModelL :                                              { [] }
        | Model ModelL                                 { $1 : $2 }
 
-Model : model Term PhysicsModel                       { $3 }
+Model : model Identifier PhysicsModel                 { $3 }
 
 CouplingL :                                           { [] }
           | Coupling CouplingL                        { $1 : $2 }
 
-Coupling : couple ':' '{' '}'                         { Coupling 17 }
+Coupling : couple Identifier Identifier ':' '{' '}'   { Coupling $2 $3 }
+
+Identifier : var                                      { $1 }
 
 -- Decl : DeclL                                  {DStmts (reverse $1)}
 
