@@ -37,9 +37,13 @@ import Physics.Model
 %token
       int             { Token _ (TokenInt $$) }
       config          { Token _ TokenConfig }
+      duration        { Token _ TokenDuration }
+      iterations      { Token _ TokenIterations }
       model           { Token _ TokenModel }
       couple          { Token _ TokenCouple }
       Solve           { Token _ TokenSolve }
+      step            { Token _ TokenStep }
+      totalTime       { Token _ TokenTotalTime }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
       Space           { Token _ TokenSpace }
@@ -72,19 +76,24 @@ import Physics.Model
 -- An entire program is a config block followed by one or more models and an
 -- appropriate number of couplings (this appropriate number is not asserted by
 -- the parser)
-Prog : Config ModelL CouplingL                { Prog $1 (reverse $2) (reverse $3) }
+Prog : Config ModelL CouplingL                        { Prog $1 $2 $3 }
 
-Config : config ':' '{' '}'                   { Config 17 (Iterations 17) }
+Config : config ':' '{' StepConfig DurationConfig '}' { Config $4 $5 }
 
-ModelL :                                      { [] }
-       | ModelL Model                         { $2 : $1 }
+StepConfig : step ':' int                             { $3 }
 
-Model : model Term PhysicsModel               { $3 }
+DurationConfig : iterations ':' int                   { Iterations $3 }
+               | totalTime ':' int                    { TotalTime $3 }
 
-CouplingL :                                   { [] }
-          | CouplingL Coupling                { $2 : $1 }
+ModelL :                                              { [] }
+       | Model ModelL                                 { $1 : $2 }
 
-Coupling : couple ':' '{' '}'                 { Coupling 17 }
+Model : model Term PhysicsModel                       { $3 }
+
+CouplingL :                                           { [] }
+          | Coupling CouplingL                        { $1 : $2 }
+
+Coupling : couple ':' '{' '}'                         { Coupling 17 }
 
 -- Decl : DeclL                                  {DStmts (reverse $1)}
 

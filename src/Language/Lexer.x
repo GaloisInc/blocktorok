@@ -25,9 +25,13 @@ tokens :-
   "--".*                                ;
   $digit+                               { lex (TokenInt . read)  }
   config                                { lex' TokenConfig       }
+  duration                              { lex' TokenDuration     }
+  iterations                            { lex' TokenIterations   }
   model                                 { lex' TokenModel        }
   couple                                { lex' TokenCouple       }
   Solve                                 { lex' TokenSolve        }
+  step                                  { lex' TokenStep         }
+  totalTime                             { lex' TokenTotalTime    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
   Space                                 { lex' TokenSpace        }
@@ -79,9 +83,13 @@ data TokenClass
   = TokenInt Int
   | TokenVar String
   | TokenConfig
+  | TokenDuration
+  | TokenIterations
   | TokenModel
   | TokenCouple
   | TokenSolve
+  | TokenStep
+  | TokenTotalTime
   | TokenFEM
   | TokenFVM
   | TokenSpace
@@ -116,8 +124,13 @@ unLex :: TokenClass -> String
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
+unLex TokenDuration = "duration"
+unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
 unLex TokenCouple = "couple"
+unLex TokenSolve = "Solve"
+unLex TokenStep = "step"
+unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
 unLex TokenSpace = "Space"
