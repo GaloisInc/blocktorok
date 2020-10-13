@@ -44,18 +44,3 @@ data Config =
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
 data Coupling = Coupling String String deriving (Show)
-
--- | A LINK program is a sequence of @Stmt@s
-newtype Decl = DStmts [Stmt]
-
-instance Show Decl where
-  show (DStmts es) = "\n" ++ concatMap show es ++ " \n\n "
-
--- | Type representing a top-level statement, which is (currently) an equation
---   or a model specification
-data Stmt = Equation Exp Exp Space -- ^ An equation in a particular domain
-          | Box Term Model -- ^ A model labeled by a @Term@
-
-instance Show Stmt where
-  show (Equation e1 e2 e3) = "\n" ++ show e1 ++ "=" ++ show e2 ++ " in "++ show e3
-  show (Box name m)   =  "\n Model " ++ show name ++ ":{" ++ show m ++ "}"

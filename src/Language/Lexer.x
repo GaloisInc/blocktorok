@@ -29,7 +29,7 @@ tokens :-
   iterations                            { lex' TokenIterations   }
   model                                 { lex' TokenModel        }
   couple                                { lex' TokenCouple       }
-  Solve                                 { lex' TokenSolve        }
+  solve                                 { lex' TokenSolve        }
   step                                  { lex' TokenStep         }
   totalTime                             { lex' TokenTotalTime    }
   FEM                                   { lex' TokenFEM          }
@@ -128,7 +128,7 @@ unLex TokenDuration = "duration"
 unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
 unLex TokenCouple = "couple"
-unLex TokenSolve = "Solve"
+unLex TokenSolve = "solve"
 unLex TokenStep = "step"
 unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"

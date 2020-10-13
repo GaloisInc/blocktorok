@@ -14,12 +14,6 @@ with all sorts of operations, notions of units, types, etc.
 
 module Math where
 
--- | The type of a physical domain, named by a @Term@
-newtype Space = Omega Term
-
-instance Show Space where
-  show(Omega t) = "Ω_" ++ show t
-
 -- | The type of mathematical expressions
 data Exp = Divergence Exp
          | Laplacian Exp

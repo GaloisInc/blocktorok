@@ -41,7 +41,7 @@ import Physics.Model
       iterations      { Token _ TokenIterations }
       model           { Token _ TokenModel }
       couple          { Token _ TokenCouple }
-      Solve           { Token _ TokenSolve }
+      solve           { Token _ TokenSolve }
       step            { Token _ TokenStep }
       totalTime       { Token _ TokenTotalTime }
       FEM             { Token _ TokenFEM }
@@ -90,7 +90,7 @@ DurationConfig : iterations ':' int                            { Iterations $3 }
 ModelL :                                                       { [] }
        | Model ModelL                                          { $1 : $2 }
 
-Model : model Identifier '{' SettingSolve ',' SettingSpace '}' { mkModel $2 LaminarFlow $4 $6 }
+Model : model Identifier ':' '{' SettingSolve '}' { mkModel $2 LaminarFlow $5 }
 
 CouplingL :                                                    { [] }
           | Coupling CouplingL                                 { $1 : $2 }
@@ -99,25 +99,10 @@ Coupling : couple Identifier Identifier ':' '{' '}'            { Coupling $2 $3 
 
 Identifier : var                                               { $1 }
 
--- Decl : DeclL                                  {DStmts (reverse $1)}
-
--- DeclL :                                       { [] }
---     | DeclL Stmt                              { $2 : $1 }
-
--- Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
---       | model Term PhysicsModel                { Box $2 $3}
-
 -- solving
 SettingSolve
-     : Solve '=' FEM                    { FEM }
-     | Solve '=' FVM                    { FVM }
-
--- Omega
-Omega
-    : 'Ω' Term                 { Omega $2}
-
-SettingSpace
-    : Space '='  Omega          { $3 }
+     : solve '=' FEM                    { FEM }
+     | solve '=' FVM                    { FVM }
 
 -- mathematical expressions
 -- Exp  : '∇×' Exp                { NablaCross $2 }
