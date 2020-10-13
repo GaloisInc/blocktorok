@@ -1,0 +1,9 @@
+config : {
+
+}
+
+model A { Solve = FEM, Space = ΩF }
+
+couple : {
+
+}

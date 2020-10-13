@@ -36,12 +36,15 @@ import Physics.Model
 
 %token
       int             { Token _ (TokenInt $$) }
-      Model           { Token _ TokenModel }
+      config          { Token _ TokenConfig }
+      model           { Token _ TokenModel }
+      couple          { Token _ TokenCouple }
       Solve           { Token _ TokenSolve }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
       Space           { Token _ TokenSpace }
       var             { Token _ (TokenVar $$) }
+      ':'             { Token _ TokenColon }
       '='             { Token _ TokenEq }
       '∇×'            { Token _ TokenNablaCross }
       '∇•'            { Token _ TokenNablaDot }
@@ -66,15 +69,32 @@ import Physics.Model
       '}'            { Token _ TokenRCurl }
 
 %%
-Decl : DeclL                                  {DStmts (reverse $1)}
+-- An entire program is a config block followed by one or more models and an
+-- appropriate number of couplings (this appropriate number is not asserted by
+-- the parser)
+Prog : Config ModelL CouplingL                { Prog $1 (reverse $2) (reverse $3) }
 
-DeclL :                                       { [] }
-    | DeclL Stmt                              { $2 : $1 }
+Config : config ':' '{' '}'                   { Config 17 (Iterations 17) }
+
+ModelL :                                      { [] }
+       | ModelL Model                         { $2 : $1 }
+
+Model : model Term PhysicsModel               { $3 }
+
+CouplingL :                                   { [] }
+          | CouplingL Coupling                { $2 : $1 }
+
+Coupling : couple ':' '{' '}'                 { Coupling 17 }
+
+-- Decl : DeclL                                  {DStmts (reverse $1)}
+
+-- DeclL :                                       { [] }
+--     | DeclL Stmt                              { $2 : $1 }
 
 PhysicsModel : '{' SettingSolve ',' SettingSpace '}' { Physics.Model.mkModel LaminarFlow $2 $4}
 
-Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
-      | Model Term PhysicsModel                { Box $2 $3}
+-- Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
+--       | model Term PhysicsModel                { Box $2 $3}
 
 -- solving
 SettingSolve
@@ -89,22 +109,22 @@ SettingSpace
     : Space '='  Omega          { $3 }
 
 -- mathematical expressions
-Exp  : '∇×' Exp                { NablaCross $2 }
-      | '∇•' Exp               { NablaDot $2 }
-      | '∇⊗' Exp               { NablaOuter $2 }
-      | '∇' Exp                { NablaExp $2 }
-      | '∇'                    { NablaSingle }
-      | '△' Exp               { Laplacian $2 }
-      | '-' Exp                { Negation $2 }
-      | '(' Exp ')'            { Paran $2 }
-      | Exp '+' Exp            { Plus $1 $3 }
-      | Exp '-' Exp            { Minus $1 $3 }
-      | Exp '*' Exp            { Times $1 $3 }
-      | Exp '/' Exp            { Div $1 $3 }
-      | Exp '×' Exp            { CrossProduct $1 $3 }
-      | Exp '•' Exp            { InnerProduct $1 $3 }
-      | Exp '⊗' Exp            { OuterProduct $1 $3 }
-      | Term                   { Term $1 }
+-- Exp  : '∇×' Exp                { NablaCross $2 }
+--       | '∇•' Exp               { NablaDot $2 }
+--       | '∇⊗' Exp               { NablaOuter $2 }
+--       | '∇' Exp                { NablaExp $2 }
+--       | '∇'                    { NablaSingle }
+--       | '△' Exp               { Laplacian $2 }
+--       | '-' Exp                { Negation $2 }
+--       | '(' Exp ')'            { Paran $2 }
+--       | Exp '+' Exp            { Plus $1 $3 }
+--       | Exp '-' Exp            { Minus $1 $3 }
+--       | Exp '*' Exp            { Times $1 $3 }
+--       | Exp '/' Exp            { Div $1 $3 }
+--       | Exp '×' Exp            { CrossProduct $1 $3 }
+--       | Exp '•' Exp            { InnerProduct $1 $3 }
+--       | Exp '⊗' Exp            { OuterProduct $1 $3 }
+--       | Term                   { Term $1 }
 
 Term
       : int                     { Int $1 }
@@ -120,6 +140,6 @@ happyError :: Token -> Alex a
 happyError (Token p t) =
   alexError' p ("parse error at token '" ++ unLex t ++ "'")
 
-parseDecl :: FilePath -> String -> Either String Decl
+parseDecl :: FilePath -> String -> Either String Prog
 parseDecl = runAlex' parse
 }
