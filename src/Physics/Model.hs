@@ -14,10 +14,10 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Physics.Model
-  ( Model,
-    mkModel,
-    getType,
-    getTechnique
+  ( Model
+  , mkModel
+  , getType
+  , getTechnique
   ) where
 
 import Physics.Type
