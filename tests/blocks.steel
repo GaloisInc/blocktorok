@@ -14,9 +14,11 @@
 -- a number of steps to take or a total time to run for). The order of things
 -- (currently) matters, and we'll probably discover there are useful fields to
 -- add here.
-config : {
-    step : 17
-    totalTime : 10
+
+-- These values are totally made up for now
+config {
+    step: 17;
+    totalTime: 10;
 }
 
 -------------------------------------------------------------------------------
@@ -27,11 +29,23 @@ config : {
 -- defining the model: For now, this is simply the solving technique. The
 -- identifier can be thought of as the domain as one would see in a typical
 -- physics paper.
-model A : { solve = FEM }
 
-model B : { solve = FVM }
+-- The two models presented here come from the NASA toy problem number 3
+model F {
+    technique: FVM;
 
-model C : { solve = FEM }
+    -u * △u + po * (u•∇ ) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
+    ∇•u = 0;
+    kF* △TF + po* cp*(u • ∇TF) = QF;
+}
+
+model S {
+    technique: FEM;
+
+    TS = TF;
+    kF * (n • ∇TF) = ks * (n • ∇TS);
+    -ks * △Ts = Qs;
+}
 
 -------------------------------------------------------------------------------
 
@@ -44,6 +58,4 @@ model C : { solve = FEM }
 -- `couple` followed by two identifiers (that must have been introduced above).
 -- In braces will be fields defining the coupling parameters (currently,
 -- nothing).
-couple A B : { }
-couple A C : { }
-couple B C : { }
+couple F S { }
