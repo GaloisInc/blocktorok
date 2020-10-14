@@ -36,7 +36,7 @@ model F {
 
     -u * △u + po * (u•∇ ) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
     ∇•u = 0;
-    kF* △TF + po* cp*(u • ∇TF) = QF;
+    kF * △TF + po * cp * (u • ∇TF) = QF;
 }
 
 model S {
