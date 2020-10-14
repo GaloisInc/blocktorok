@@ -13,7 +13,6 @@ is the target of the parser defined in @Parser.y@.
 
 module Language.AST where
 
-import Math
 import Physics.Model
 
 -- | A complete LINK program, which consists of configuration, a (nonempty)
@@ -22,7 +21,11 @@ import Physics.Model
 --   Given a term @Prog config models couplings@, we have:
 --
 --   @length couplings = (length models * (length models - 1)) / 2@
-data Prog = Prog Config [Model] [Coupling] deriving (Show)
+data Prog =
+  Prog { getConfig :: Config -- ^ The global configuration
+       , getModels :: [Model] -- ^ The specified models
+       , getCouplings :: [Coupling] -- ^ The model couplings
+       } deriving (Show)
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
@@ -36,8 +39,7 @@ data Duration = Iterations Int -- ^ The number of steps to take
 data Config =
   Config { getGlobalStep :: Int -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
-         }
-         deriving (Show)
+         } deriving (Show)
 
 -- TODO: A coupling relates two models via boundary equations and knowledge of
 -- what variables are communicated via the boundary. At minimum, a coupling
