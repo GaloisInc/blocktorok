@@ -1,5 +1,6 @@
 module Main(main) where
 
+import Language.Check (hasAllCouplings)
 import Language.Parser ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
@@ -15,4 +16,7 @@ main = do
     Left e -> do
           print e
           exitFailure
-    Right e->  print e
+    Right e -> if hasAllCouplings e then
+                 print e
+               else
+                 error "missing couplings"

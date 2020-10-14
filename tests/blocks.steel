@@ -25,7 +25,7 @@ config : {
 -- (starting with an alphabetic character followed by zero or more letters,
 -- digits, underscores, or single-quotes). In braces will be the parameters
 -- defining the model: For now, this is simply the solving technique. The
--- identifier can be thought of as the domain as one would seen in a typical
+-- identifier can be thought of as the domain as one would see in a typical
 -- physics paper.
 model A : { solve = FEM }
 
