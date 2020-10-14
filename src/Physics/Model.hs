@@ -16,6 +16,7 @@ designed to be extended with whatever we feel is important.)
 module Physics.Model
   ( Model
   , mkModel
+  , getID
   , getType
   , getTechnique
   ) where
