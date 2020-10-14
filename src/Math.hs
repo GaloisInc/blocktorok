@@ -56,6 +56,15 @@ instance Show Exp where
 data Term = Int Int
           | Var String
 
+-- | Mathematical equations, which consist of a left- and right-hand side.
+data Equation =
+  Equation { getLHS :: Exp -- ^ The left-hand side of the equation
+           , getRHS :: Exp -- ^ The right-hand side of the equation
+           }
+
+instance Show Equation where
+  show eq = show (getLHS eq) ++ " = " ++ show (getRHS eq)
+
 instance Show Term where
   show (Int e) = show e
   show (Var e) = e
