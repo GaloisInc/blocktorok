@@ -25,18 +25,17 @@ tokens :-
   "--".*                                ;
   $digit+                               { lex (TokenInt . read)  }
   config                                { lex' TokenConfig       }
-  duration                              { lex' TokenDuration     }
   iterations                            { lex' TokenIterations   }
   model                                 { lex' TokenModel        }
   couple                                { lex' TokenCouple       }
-  solve                                 { lex' TokenSolve        }
   step                                  { lex' TokenStep         }
+  technique                             { lex' TokenTechnique    }
   totalTime                             { lex' TokenTotalTime    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
-  Space                                 { lex' TokenSpace        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }
+  \;                                    { lex' TokenSemi         }
   \=                                    { lex' TokenEq           }
   \∇\×                                  { lex' TokenNablaCross   }
   \∇\•                                  { lex' TokenNablaDot     }
@@ -51,7 +50,6 @@ tokens :-
   \•                                    { lex' TokenInnerProduct }
   \⊗                                    { lex' TokenOuterProduct }
   \⊗                                    { lex' TokenOuterProduct }
-  \Ω                                    { lex' TokenOmega        }
   \.                                    { lex' TokenDot          }
   \,                                    { lex' TokenComma        }
   \(                                    { lex' TokenLParen       }
@@ -83,17 +81,16 @@ data TokenClass
   = TokenInt Int
   | TokenVar String
   | TokenConfig
-  | TokenDuration
   | TokenIterations
   | TokenModel
   | TokenCouple
-  | TokenSolve
   | TokenStep
+  | TokenTechnique
   | TokenTotalTime
   | TokenFEM
   | TokenFVM
-  | TokenSpace
   | TokenColon
+  | TokenSemi
   | TokenEq
   | TokenTriangle
   | TokenNablaCross
@@ -107,7 +104,6 @@ data TokenClass
   | TokenCrossProduct
   | TokenInnerProduct
   | TokenOuterProduct
-  | TokenOmega
   | TokenDot
   | TokenComma
   | TokenLParen
@@ -124,17 +120,16 @@ unLex :: TokenClass -> String
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
-unLex TokenDuration = "duration"
 unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
 unLex TokenCouple = "couple"
-unLex TokenSolve = "solve"
 unLex TokenStep = "step"
+unLex TokenTechnique = "technique"
 unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
-unLex TokenSpace = "Space"
 unLex TokenColon = ":"
+unLex TokenSemi = ";"
 unLex TokenEq = "="
 unLex TokenTriangle = "△"
 unLex TokenNablaCross = "∇×"
@@ -148,7 +143,6 @@ unLex TokenDiv = "/"
 unLex TokenCrossProduct ="×"
 unLex TokenInnerProduct="•"
 unLex TokenOuterProduct ="⊗"
-unLex TokenOmega = "Ω"
 unLex TokenDot = "."
 unLex TokenComma = ","
 unLex TokenLParen = "("
