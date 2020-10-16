@@ -17,25 +17,22 @@ module Physics.Model
   ( Model
   , mkModel
   , getID
-  , getType
   , getTechnique
   , getEqs
   ) where
 
 import Math
-import Physics.Type
 import Solver.Technique
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
   Model { getID :: String -- ^ A string uniquely identifying the model
-        , getType :: PType -- ^ What type of physical model is this
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: String -> PType -> Technique -> [Equation] -> Model
+mkModel :: String -> Technique -> [Equation] -> Model
 mkModel = Model

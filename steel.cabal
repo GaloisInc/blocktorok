@@ -42,6 +42,5 @@ library
                        Language.Parser
 		                   Solver.Technique
 		                   Math
-		                   Physics.Type
 		                   Physics.Model
   ghc-options: -Wall

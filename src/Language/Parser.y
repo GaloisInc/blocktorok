@@ -9,7 +9,6 @@ import Language.AST
 import Solver.Technique
 import Math
 import Language.Lexer
-import Physics.Type
 import Physics.Model
 
 }
@@ -88,7 +87,7 @@ DurationConfig : iterations ':' int                            { Iterations $3 }
 ModelL :                                                       { [] }
        | Model ModelL                                          { $1 : $2 }
 
-Model : model Identifier '{' SettingTechnique ';' EqL '}' { mkModel $2 LaminarFlow $4 $6 }
+Model : model Identifier '{' SettingTechnique ';' EqL '}' { mkModel $2 $4 $6 }
 
 CouplingL :                                                    { [] }
           | Coupling CouplingL                                 { $1 : $2 }
