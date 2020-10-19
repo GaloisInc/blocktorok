@@ -13,7 +13,14 @@ is the target of the parser defined in @Parser.y@.
 
 module Language.AST where
 
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
 import Physics.Model
+
+-- | A simple wrapper around strings for valid LINK identifiers; useful if we
+--   want to change this representation to something else later.
+newtype Identifier = Identifier String deriving (Eq, Ord, Show)
 
 -- | A complete LINK program, which consists of configuration, a (nonempty)
 --   collection of 'Physics.Model.Model's, and a collection of @Coupling@s.
@@ -23,7 +30,7 @@ import Physics.Model
 --   @length couplings = (length models * (length models - 1)) / 2@
 data Prog =
   Prog { getConfig :: Config -- ^ The global configuration
-       , getModels :: [Model] -- ^ The specified models
+       , getModels :: Map Identifier Model -- ^ The specified models
        , getCouplings :: [Coupling] -- ^ The model couplings
        } deriving (Show)
 
@@ -45,4 +52,4 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-data Coupling = Coupling String String deriving (Show)
+data Coupling = Coupling Identifier Identifier deriving (Show)

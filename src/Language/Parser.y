@@ -4,6 +4,8 @@ module Language.Parser
   ( parseDecl
   ) where
 
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
 import Language.AST
 import Solver.Technique
@@ -73,28 +75,27 @@ import Physics.Model
 -- An entire program is a config block followed by one or more models and an
 -- appropriate number of couplings (this appropriate number is not asserted by
 -- the parser)
-Prog : Config ModelL CouplingL                        { Prog $1 $2 $3 }
+Prog : Config ModelL CouplingL                                 { Prog $1 $2 $3 }
 
 -- TODO: It would be nice if the order of the config fields didn't matter; I'll
 -- look in to making that happen.
-Config : config '{' StepConfig ';' DurationConfig ';' '}'          { Config $3 $5 }
+Config : config '{' StepConfig ';' DurationConfig ';' '}'      { Config $3 $5 }
 
 StepConfig : step ':' int                                      { $3 }
 
 DurationConfig : iterations ':' int                            { Iterations $3 }
                | totalTime ':' int                             { TotalTime $3 }
 
-ModelL :                                                       { [] }
-       | Model ModelL                                          { $1 : $2 }
-
-Model : model Identifier '{' SettingTechnique ';' EqL '}' { mkModel $2 $4 $6 }
+ModelL :: { Map Identifier Model }
+ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 $6 }
+       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 $7) $1 }
 
 CouplingL :                                                    { [] }
-          | Coupling CouplingL                                 { $1 : $2 }
+          | CouplingL Coupling                                 { $2 : $1 }
 
-Coupling : couple Identifier Identifier '{' '}'            { Coupling $2 $3 }
+Coupling : couple Identifier Identifier '{' '}'                { Coupling $2 $3 }
 
-Identifier : var                                               { $1 }
+Identifier : var                                               { Identifier $1 }
 
 -- solving
 SettingTechnique

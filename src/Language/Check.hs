@@ -17,24 +17,22 @@ module Language.Check
   ( hasAllCouplings
   ) where
 
-import Data.Tuple (swap)
+import qualified Data.Map.Strict as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Language.AST
-import Physics.Model
 
 -- | Return true if and only if the set of all couplings in the given LINK
 --   program accounts for all pairs of distinct models.
 hasAllCouplings :: Prog -> Bool
-hasAllCouplings p = all represented modelPairs
+hasAllCouplings p = couplings == modelPairs
   where
-    couplings :: [(String, String)]
-    couplings = (\(Coupling a b) -> (a, b)) <$> getCouplings p
+    modelNames :: Set Identifier
+    modelNames = Map.keysSet $ getModels p
 
-    modelIDs :: [String]
-    modelIDs = getID <$> getModels p
+    modelPairs :: Set (Set Identifier)
+    modelPairs = Set.filter (\s -> Set.size s == 2) $ Set.powerSet modelNames
 
-    modelPairs :: [(String, String)]
-    modelPairs = [(a, b) | a <- modelIDs, b <- modelIDs, a /= b]
-
-    represented :: (String, String) -> Bool
-    represented mIDs = (mIDs `elem` couplings) || (swap mIDs `elem` couplings)
+    couplings :: Set (Set Identifier)
+    couplings = Set.fromList $ Set.fromList . (\(Coupling a b) -> [a, b]) <$> getCouplings p
