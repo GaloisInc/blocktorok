@@ -87,8 +87,8 @@ DurationConfig : iterations ':' int                            { Iterations $3 }
                | totalTime ':' int                             { TotalTime $3 }
 
 ModelL :: { Map Identifier Model }
-ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 $6 }
-       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 $7) $1 }
+ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 $ reverse $6 }
+       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 $ reverse $7) $1 }
 
 CouplingL :                                                    { [] }
           | CouplingL Coupling                                 { $2 : $1 }
@@ -125,9 +125,9 @@ Term
       | var                     { Var $1 }
 
 EqL :                           { [] }
-    | Eq ';' EqL                { $1 : $3 }
+    | EqL Eq                    { $2 : $1 }
 
-Eq : Exp '=' Exp                { Equation $1 $3 }
+Eq : Exp '=' Exp ';'            { Equation $1 $3 }
 
 
 
