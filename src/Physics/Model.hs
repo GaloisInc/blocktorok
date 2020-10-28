@@ -14,27 +14,23 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Physics.Model
-  ( Model,
-    mkModel,
-    getType,
-    getTechnique
+  ( Model
+  , mkModel
+  , getTechnique
+  , getEqs
   ) where
 
-import Physics.Type
-import Solver.Technique
 import Math
-
+import Solver.Technique
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
-  Model { getType :: PType -- ^ What type of physical model is this
-        , getTechnique :: Technique -- ^ What solving technique should be used
-        -- TODO: I/O variables, equations, internal constraints/config, etc
-        , getSpace :: Space
+  Model { getTechnique :: Technique -- ^ What solving technique should be used
+        , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: PType -> Technique -> Space -> Model
+mkModel :: Technique -> [Equation] -> Model
 mkModel = Model

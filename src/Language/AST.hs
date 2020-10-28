@@ -3,7 +3,7 @@ Module      : Language.AST
 Description : The LINK AST
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
-Maintainer  : chiw@galois.co
+Maintainer  : chiw@galois.com
 Stability   : experimental
 Portability : N/A
 
@@ -13,20 +13,43 @@ is the target of the parser defined in @Parser.y@.
 
 module Language.AST where
 
-import Math
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
 import Physics.Model
 
--- | A LINK program is a sequence of @Stmt@s
-newtype Decl = DStmts [Stmt]
+-- | A simple wrapper around strings for valid LINK identifiers; useful if we
+--   want to change this representation to something else later.
+newtype Identifier = Identifier String deriving (Eq, Ord, Show)
 
-instance Show Decl where
-  show (DStmts es) = "\n" ++ concatMap show es ++ " \n\n "
+-- | A complete LINK program, which consists of configuration, a (nonempty)
+--   collection of 'Physics.Model.Model's, and a collection of @Coupling@s.
+--
+--   Given a term @Prog config models couplings@, we have:
+--
+--   @length couplings = (length models * (length models - 1)) / 2@
+data Prog =
+  Prog { getConfig :: Config -- ^ The global configuration
+       , getModels :: Map Identifier Model -- ^ The specified models
+       , getCouplings :: [Coupling] -- ^ The model couplings
+       } deriving (Show)
 
--- | Type representing a top-level statement, which is (currently) an equation
---   or a model specification
-data Stmt = Equation Exp Exp Space -- ^ An equation in a particular domain
-          | Box Term Model -- ^ A model labeled by a @Term@
+-- | A @Duration@ specifies how long a simulation should run, either as an
+--   explicit number of iterations or as an elapsed time.
+--   TODO: We need units, and probably shouldn't wait terribly long to do them
+data Duration = Iterations Int -- ^ The number of steps to take
+              | TotalTime Int -- ^ The amount of time to simulate
+              deriving (Show)
 
-instance Show Stmt where
-  show (Equation e1 e2 e3) = "\n" ++ show e1 ++ "=" ++ show e2 ++ " in "++ show e3
-  show (Box name m)   =  "\n Model " ++ show name ++ ":{" ++ show m ++ "}"
+-- | LINK Configuration, consisting of the global simulation step size and the
+--   total @Duration@
+data Config =
+  Config { getGlobalStep :: Int -- ^ The global solving step size TODO: This should have units
+         , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
+         } deriving (Show)
+
+-- TODO: A coupling relates two models via boundary equations and knowledge of
+-- what variables are communicated via the boundary. At minimum, a coupling
+-- must consist of two models and the set of consistency/coordination equations
+-- that hold at the interface between the models.
+data Coupling = Coupling Identifier Identifier deriving (Show)

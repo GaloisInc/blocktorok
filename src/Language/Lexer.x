@@ -23,36 +23,41 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-  $digit+                               { lex (TokenInt . read) }
-  Model                                 { lex' TokenModel       }
-  Solve                                 { lex' TokenSolve       }
-  FEM                                   { lex' TokenFEM         }
-  FVM                                   { lex' TokenFVM         }
-  Space                                 { lex' TokenSpace      }
-  $alpha [$alpha $digit \_ \']*         { lex  TokenVar         }
-  \=                                    { lex' TokenEq          }
-  \∇\×                                  { lex' TokenNablaCross  }
-  \∇\•                                  { lex' TokenNablaDot    }
-  \∇\⊗                                  { lex' TokenNablaOuter  }
-  \∇                                    { lex' TokenNabla }
-  \△                                    { lex' TokenTriangle    }
-  \+                                    { lex' TokenPlus        }
-  \-                                    { lex' TokenMinus       }
-  \*                                    { lex' TokenTimes       }
-  \/                                    { lex' TokenDiv         }
+  $digit+                               { lex (TokenInt . read)  }
+  config                                { lex' TokenConfig       }
+  iterations                            { lex' TokenIterations   }
+  model                                 { lex' TokenModel        }
+  couple                                { lex' TokenCouple       }
+  step                                  { lex' TokenStep         }
+  technique                             { lex' TokenTechnique    }
+  totalTime                             { lex' TokenTotalTime    }
+  FEM                                   { lex' TokenFEM          }
+  FVM                                   { lex' TokenFVM          }
+  $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
+  \:                                    { lex' TokenColon        }
+  \;                                    { lex' TokenSemi         }
+  \=                                    { lex' TokenEq           }
+  \∇\×                                  { lex' TokenNablaCross   }
+  \∇\•                                  { lex' TokenNablaDot     }
+  \∇\⊗                                  { lex' TokenNablaOuter   }
+  \∇                                    { lex' TokenNabla        }
+  \△                                    { lex' TokenTriangle     }
+  \+                                    { lex' TokenPlus         }
+  \-                                    { lex' TokenMinus        }
+  \*                                    { lex' TokenTimes        }
+  \/                                    { lex' TokenDiv          }
   \×                                    { lex' TokenCrossProduct }
   \•                                    { lex' TokenInnerProduct }
   \⊗                                    { lex' TokenOuterProduct }
   \⊗                                    { lex' TokenOuterProduct }
-  \Ω                                    { lex' TokenOmega }
-  \.                                    { lex' TokenDot }
-  \,                                    { lex' TokenComma }
-  \(                                    { lex' TokenLParen      }
-  \)                                    { lex' TokenRParen      }
-  \[                                    { lex' TokenLBracket      }
-  \]                                    { lex' TokenRBracket      }
-  \{                                    { lex' TokenLCurl       }
-  \}                                    { lex' TokenRCurl       }
+  \.                                    { lex' TokenDot          }
+  \,                                    { lex' TokenComma        }
+  \(                                    { lex' TokenLParen       }
+  \)                                    { lex' TokenRParen       }
+  \[                                    { lex' TokenLBracket     }
+  \]                                    { lex' TokenRBracket     }
+  \{                                    { lex' TokenLCurl        }
+  \}                                    { lex' TokenRCurl        }
 
 {
 -- To improve error messages, We keep the path of the file we are
@@ -75,11 +80,17 @@ data Token = Token AlexPosn TokenClass
 data TokenClass
   = TokenInt Int
   | TokenVar String
+  | TokenConfig
+  | TokenIterations
   | TokenModel
-  | TokenSolve
+  | TokenCouple
+  | TokenStep
+  | TokenTechnique
+  | TokenTotalTime
   | TokenFEM
   | TokenFVM
-  | TokenSpace
+  | TokenColon
+  | TokenSemi
   | TokenEq
   | TokenTriangle
   | TokenNablaCross
@@ -93,7 +104,6 @@ data TokenClass
   | TokenCrossProduct
   | TokenInnerProduct
   | TokenOuterProduct
-  | TokenOmega
   | TokenDot
   | TokenComma
   | TokenLParen
@@ -109,10 +119,17 @@ data TokenClass
 unLex :: TokenClass -> String
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
-unLex TokenModel = "Model"
+unLex TokenConfig = "config"
+unLex TokenIterations = "iterations"
+unLex TokenModel = "model"
+unLex TokenCouple = "couple"
+unLex TokenStep = "step"
+unLex TokenTechnique = "technique"
+unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
-unLex TokenSpace = "Space"
+unLex TokenColon = ":"
+unLex TokenSemi = ";"
 unLex TokenEq = "="
 unLex TokenTriangle = "△"
 unLex TokenNablaCross = "∇×"
@@ -126,7 +143,6 @@ unLex TokenDiv = "/"
 unLex TokenCrossProduct ="×"
 unLex TokenInnerProduct="•"
 unLex TokenOuterProduct ="⊗"
-unLex TokenOmega = "Ω"
 unLex TokenDot = "."
 unLex TokenComma = ","
 unLex TokenLParen = "("

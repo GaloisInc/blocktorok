@@ -32,15 +32,16 @@ executable steel
 library
   build-depends:       base >= 3 && < 5
                      , array
+                     , containers
                      , units
                      , units-defs
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     Language.AST
+                       Language.Check
                        Language.Lexer
                        Language.Parser
 		                   Solver.Technique
 		                   Math
-		                   Physics.Type
 		                   Physics.Model
   ghc-options: -Wall

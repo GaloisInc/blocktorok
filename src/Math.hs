@@ -14,12 +14,6 @@ with all sorts of operations, notions of units, types, etc.
 
 module Math where
 
--- | The type of a physical domain, named by a @Term@
-newtype Space = Omega Term
-
-instance Show Space where
-  show(Omega t) = "Ω_" ++ show t
-
 -- | The type of mathematical expressions
 data Exp = Divergence Exp
          | Laplacian Exp
@@ -61,6 +55,15 @@ instance Show Exp where
 --   identifiers
 data Term = Int Int
           | Var String
+
+-- | Mathematical equations, which consist of a left- and right-hand side.
+data Equation =
+  Equation { getLHS :: Exp -- ^ The left-hand side of the equation
+           , getRHS :: Exp -- ^ The right-hand side of the equation
+           }
+
+instance Show Equation where
+  show eq = show (getLHS eq) ++ " = " ++ show (getRHS eq)
 
 instance Show Term where
   show (Int e) = show e

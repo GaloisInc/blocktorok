@@ -4,12 +4,13 @@ module Language.Parser
   ( parseDecl
   ) where
 
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
 import Language.AST
 import Solver.Technique
 import Math
 import Language.Lexer
-import Physics.Type
 import Physics.Model
 
 }
@@ -36,12 +37,18 @@ import Physics.Model
 
 %token
       int             { Token _ (TokenInt $$) }
-      Model           { Token _ TokenModel }
-      Solve           { Token _ TokenSolve }
+      config          { Token _ TokenConfig }
+      iterations      { Token _ TokenIterations }
+      model           { Token _ TokenModel }
+      couple          { Token _ TokenCouple }
+      step            { Token _ TokenStep }
+      technique       { Token _ TokenTechnique }
+      totalTime       { Token _ TokenTotalTime }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
-      Space           { Token _ TokenSpace }
       var             { Token _ (TokenVar $$) }
+      ':'             { Token _ TokenColon }
+      ';'             { Token _ TokenSemi }
       '='             { Token _ TokenEq }
       '∇×'            { Token _ TokenNablaCross }
       '∇•'            { Token _ TokenNablaDot }
@@ -55,7 +62,6 @@ import Physics.Model
       '×'             { Token _ TokenCrossProduct }
       '•'             { Token _ TokenInnerProduct }
       '⊗'             { Token _ TokenOuterProduct }
-      'Ω'             { Token _ TokenOmega }
       '.'             { Token _ TokenDot }
       ','             { Token _ TokenComma }
       '('             { Token _ TokenLParen }
@@ -66,27 +72,35 @@ import Physics.Model
       '}'            { Token _ TokenRCurl }
 
 %%
-Decl : DeclL                                  {DStmts (reverse $1)}
+-- An entire program is a config block followed by one or more models and an
+-- appropriate number of couplings (this appropriate number is not asserted by
+-- the parser)
+Prog : Config ModelL CouplingL                                 { Prog $1 $2 $3 }
 
-DeclL :                                       { [] }
-    | DeclL Stmt                              { $2 : $1 }
+-- TODO: It would be nice if the order of the config fields didn't matter; I'll
+-- look in to making that happen.
+Config : config '{' StepConfig ';' DurationConfig ';' '}'      { Config $3 $5 }
 
-PhysicsModel : '{' SettingSolve ',' SettingSpace '}' { Physics.Model.mkModel LaminarFlow $2 $4}
+StepConfig : step ':' int                                      { $3 }
 
-Stmt  : Omega '.' Exp '=' Exp                  { Equation $3 $5 $1}
-      | Model Term PhysicsModel                { Box $2 $3}
+DurationConfig : iterations ':' int                            { Iterations $3 }
+               | totalTime ':' int                             { TotalTime $3 }
+
+ModelL :: { Map Identifier Model }
+ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 $ reverse $6 }
+       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 $ reverse $7) $1 }
+
+CouplingL :                                                    { [] }
+          | CouplingL Coupling                                 { $2 : $1 }
+
+Coupling : couple Identifier Identifier '{' '}'                { Coupling $2 $3 }
+
+Identifier : var                                               { Identifier $1 }
 
 -- solving
-SettingSolve
-     : Solve '=' FEM                    { FEM }
-     | Solve '=' FVM                    { FVM }
-
--- Omega
-Omega
-    : 'Ω' Term                 { Omega $2}
-
-SettingSpace
-    : Space '='  Omega          { $3 }
+SettingTechnique
+     : technique ':' FEM                    { FEM }
+     | technique ':' FVM                    { FVM }
 
 -- mathematical expressions
 Exp  : '∇×' Exp                { NablaCross $2 }
@@ -110,6 +124,11 @@ Term
       : int                     { Int $1 }
       | var                     { Var $1 }
 
+EqL :                           { [] }
+    | EqL Eq                    { $2 : $1 }
+
+Eq : Exp '=' Exp ';'            { Equation $1 $3 }
+
 
 
 {
@@ -120,6 +139,6 @@ happyError :: Token -> Alex a
 happyError (Token p t) =
   alexError' p ("parse error at token '" ++ unLex t ++ "'")
 
-parseDecl :: FilePath -> String -> Either String Decl
+parseDecl :: FilePath -> String -> Either String Prog
 parseDecl = runAlex' parse
 }
