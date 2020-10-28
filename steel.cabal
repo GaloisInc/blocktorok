@@ -33,6 +33,7 @@ library
   build-depends:       base >= 3 && < 5
                      , array
                      , containers
+                     , parsec
                      , units
                      , units-defs
   hs-source-dirs:      src
