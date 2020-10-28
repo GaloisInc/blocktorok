@@ -14,7 +14,6 @@ is the target of the parser defined in @Parser.y@.
 module Language.AST where
 
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
 
 import Physics.Model
 
