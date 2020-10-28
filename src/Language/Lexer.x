@@ -3,8 +3,6 @@
 module Language.Lexer
   ( Token(..)
   , AlexPosn(..)
-  , TokenClass(..)
-  , unLex
   , Alex(..)
   , runAlex'
   , alexMonadScan'
@@ -13,6 +11,8 @@ module Language.Lexer
 
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
+
+import Language.TokenClass
 }
 
 %wrapper "monadUserState"
@@ -76,82 +76,6 @@ setFilePath = alexSetUserState . AlexUserState
 -- The token type, consisting of the source code position and a token class.
 data Token = Token AlexPosn TokenClass
   deriving ( Show )
-
-data TokenClass
-  = TokenInt Int
-  | TokenVar String
-  | TokenConfig
-  | TokenIterations
-  | TokenModel
-  | TokenCouple
-  | TokenStep
-  | TokenTechnique
-  | TokenTotalTime
-  | TokenFEM
-  | TokenFVM
-  | TokenColon
-  | TokenSemi
-  | TokenEq
-  | TokenTriangle
-  | TokenNablaCross
-  | TokenNablaDot
-  | TokenNablaOuter
-  | TokenNabla
-  | TokenPlus
-  | TokenMinus
-  | TokenTimes
-  | TokenDiv
-  | TokenCrossProduct
-  | TokenInnerProduct
-  | TokenOuterProduct
-  | TokenDot
-  | TokenComma
-  | TokenLParen
-  | TokenRParen
-  | TokenLBracket
-  | TokenRBracket
-  | TokenLCurl
-  | TokenRCurl
-  | TokenEOF
-  deriving ( Show )
-
--- For nice parser error messages.
-unLex :: TokenClass -> String
-unLex (TokenInt i) = show i
-unLex (TokenVar s) = show s
-unLex TokenConfig = "config"
-unLex TokenIterations = "iterations"
-unLex TokenModel = "model"
-unLex TokenCouple = "couple"
-unLex TokenStep = "step"
-unLex TokenTechnique = "technique"
-unLex TokenTotalTime = "totalTime"
-unLex TokenFEM = "FEM"
-unLex TokenFVM = "FVM"
-unLex TokenColon = ":"
-unLex TokenSemi = ";"
-unLex TokenEq = "="
-unLex TokenTriangle = "△"
-unLex TokenNablaCross = "∇×"
-unLex TokenNablaDot = "∇•"
-unLex TokenNablaOuter = "∇⊗"
-unLex TokenNabla = "∇"
-unLex TokenPlus = "+"
-unLex TokenMinus = "-"
-unLex TokenTimes = "*"
-unLex TokenDiv = "/"
-unLex TokenCrossProduct ="×"
-unLex TokenInnerProduct="•"
-unLex TokenOuterProduct ="⊗"
-unLex TokenDot = "."
-unLex TokenComma = ","
-unLex TokenLParen = "("
-unLex TokenRParen = ")"
-unLex TokenLBracket = "["
-unLex TokenRBracket = "]"
-unLex TokenLCurl= "{"
-unLex TokenRCurl = "}"
-unLex TokenEOF = "<EOF>"
 
 alexEOF :: Alex Token
 alexEOF = do

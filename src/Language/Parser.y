@@ -11,6 +11,7 @@ import Language.AST
 import Solver.Technique
 import Math
 import Language.Lexer
+import Language.TokenClass
 import Physics.Model
 
 }
