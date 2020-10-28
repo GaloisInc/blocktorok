@@ -40,10 +40,11 @@ library
   default-language:    Haskell2010
   exposed-modules:     Language.AST
                        Language.Check
+                       Language.Identifier
                        Language.Lexer
                        Language.Parser
                        Language.TokenClass
-		                   Solver.Technique
-		                   Math
-		                   Physics.Model
+                       Solver.Technique
+                       Math
+                       Physics.Model
   ghc-options: -Wall

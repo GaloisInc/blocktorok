@@ -27,6 +27,7 @@ tokens :-
   config                                { lex' TokenConfig       }
   iterations                            { lex' TokenIterations   }
   model                                 { lex' TokenModel        }
+  const                                 { lex' TokenConst        }
   couple                                { lex' TokenCouple       }
   step                                  { lex' TokenStep         }
   technique                             { lex' TokenTechnique    }

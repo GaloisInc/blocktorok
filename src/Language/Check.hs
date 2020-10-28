@@ -22,6 +22,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.AST
+import Language.Identifier
 
 -- | Return true if and only if the set of all couplings in the given LINK
 --   program accounts for all pairs of distinct models.

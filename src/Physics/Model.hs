@@ -20,6 +20,9 @@ module Physics.Model
   , getEqs
   ) where
 
+import Data.Map.Strict (Map)
+
+import Language.Identifier
 import Math
 import Solver.Technique
 
@@ -27,10 +30,11 @@ import Solver.Technique
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
   Model { getTechnique :: Technique -- ^ What solving technique should be used
+        , getConsts :: Map Identifier Int
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Technique -> [Equation] -> Model
+mkModel :: Technique -> Map Identifier Int -> [Equation] -> Model
 mkModel = Model

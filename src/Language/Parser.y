@@ -7,6 +7,7 @@ module Language.Parser
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
+import Language.Identifier
 import Language.AST
 import Solver.Technique
 import Math
@@ -88,8 +89,8 @@ DurationConfig : iterations ':' int                            { Iterations $3 }
                | totalTime ':' int                             { TotalTime $3 }
 
 ModelL :: { Map Identifier Model }
-ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 $ reverse $6 }
-       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 $ reverse $7) $1 }
+ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 Map.empty $ reverse $6 }
+       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 Map.empty $ reverse $7) $1 }
 
 CouplingL :                                                    { [] }
           | CouplingL Coupling                                 { $2 : $1 }

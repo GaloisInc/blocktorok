@@ -22,6 +22,7 @@ data TokenClass = TokenInt Int
                 | TokenConfig
                 | TokenIterations
                 | TokenModel
+                | TokenConst
                 | TokenCouple
                 | TokenStep
                 | TokenTechnique
@@ -61,6 +62,7 @@ unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
 unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
+unLex TokenConst = "const"
 unLex TokenCouple = "couple"
 unLex TokenStep = "step"
 unLex TokenTechnique = "technique"
