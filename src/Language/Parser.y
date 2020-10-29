@@ -93,8 +93,11 @@ DurationConfig : iterations ':' int                            { Iterations $3 }
                | totalTime ':' int                             { TotalTime $3 }
 
 ModelL :: { Map Identifier Model }
-ModelL : model Identifier '{' SettingTechnique ';' EqL '}'          { Map.singleton $2 $ mkModel $4 Map.empty $ reverse $6 }
-       | ModelL model Identifier '{' SettingTechnique ';' EqL '}'   { Map.insert $3 (mkModel $5 Map.empty $ reverse $7) $1 }
+ModelL : model Identifier ModelBody                            { Map.singleton $2 $3 }
+       | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
+
+ModelBody :: { Model }
+ModelBody : '{' SettingTechnique ';' EqL '}'                   { mkModel $2 Map.empty $ reverse $4 }
 
 CouplingL :: { [Coupling] }
 CouplingL :                                                    { [] }
