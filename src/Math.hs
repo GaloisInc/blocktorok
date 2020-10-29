@@ -12,7 +12,15 @@ operations useful for specifying physical models. This will likely be extended
 with all sorts of operations, notions of units, types, etc.
 -}
 
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Math where
+
+import Data.Generics.Uniplate.Direct
+import Data.Set (Set)
+import qualified Data.Set as Set
+
+import Language.Identifier
 
 -- | The type of mathematical expressions
 data Exp = Divergence Exp
@@ -68,3 +76,29 @@ instance Show Equation where
 instance Show Term where
   show (Int e) = show e
   show (Var e) = e
+
+instance Uniplate Exp where
+  uniplate (Divergence e)       = plate Divergence |* e
+  uniplate (Laplacian e)        = plate Laplacian |* e
+  uniplate (NablaCross e)       = plate NablaCross |* e
+  uniplate (NablaDot e)         = plate NablaDot |* e
+  uniplate (NablaOuter e)       = plate NablaOuter |* e
+  uniplate (NablaExp e)         = plate NablaExp |* e
+  uniplate NablaSingle          = plate NablaSingle
+  uniplate (Paran e)            = plate Paran |* e
+  uniplate (Negation e)         = plate Negation |* e
+  uniplate (Plus e1 e2)         = plate Plus |* e1 |* e2
+  uniplate (Minus e1 e2)        = plate Minus |* e1 |* e2
+  uniplate (Times e1 e2)        = plate Times |* e1 |* e2
+  uniplate (Div e1 e2)          = plate Div |* e1 |* e2
+  uniplate (CrossProduct e1 e2) = plate CrossProduct |* e1 |* e2
+  uniplate (InnerProduct e1 e2) = plate InnerProduct |* e1 |* e2
+  uniplate (OuterProduct e1 e2) = plate OuterProduct |* e1 |* e2
+  uniplate (Term t)             = plate Term |- t
+
+instance Biplate Exp Exp where
+  biplate = plateSelf
+
+-- | Given an expression, return a set containing all of its variables.
+vars :: Exp -> Set Identifier
+vars e = Set.fromList [Identifier x | Term (Var x) <- universe e]

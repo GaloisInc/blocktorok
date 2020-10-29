@@ -34,6 +34,7 @@ library
                      , array
                      , containers
                      , parsec
+                     , uniplate
                      , units
                      , units-defs
   hs-source-dirs:      src

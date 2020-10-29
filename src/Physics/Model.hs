@@ -17,6 +17,8 @@ module Physics.Model
   ( Model
   , mkModel
   , getTechnique
+  , getConsts
+  , getVars
   , getEqs
   ) where
 

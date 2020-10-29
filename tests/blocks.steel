@@ -34,6 +34,18 @@ config {
 model F {
     technique: FVM;
 
+    const u = 1;
+    const po = 1;
+    const B = 1;
+    const To = 1;
+    const kF = 1;
+    const cp = 1;
+
+    var p;
+    var TF;
+    var g;
+    var QF;
+
     -u * △u + po * (u•∇ ) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
     ∇•u = 0;
     kF * △TF + po * cp * (u • ∇TF) = QF;
@@ -41,6 +53,15 @@ model F {
 
 model S {
     technique: FEM;
+
+    const kF = 1;
+    const n = 1;
+    const ks = 1;
+
+    var TS;
+    var TF;
+    var Ts;
+    var Qs;
 
     TS = TF;
     kF * (n • ∇TF) = ks * (n • ∇TS);
