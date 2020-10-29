@@ -6,6 +6,8 @@ module Language.Parser
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Language.Identifier
 import Language.AST
@@ -49,7 +51,8 @@ import Physics.Model
       totalTime       { Token _ TokenTotalTime }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
-      var             { Token _ (TokenVar $$) }
+      var             { Token _ TokenV }
+      varstr          { Token _ (TokenVar $$) }
       ':'             { Token _ TokenColon }
       ';'             { Token _ TokenSemi }
       '='             { Token _ TokenEq }
@@ -98,11 +101,15 @@ ModelL : model Identifier ModelBody                            { Map.singleton $
        | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
 
 ModelBody :: { Model }
-ModelBody : '{' SettingTechnique ConstDecls EqL '}'            { mkModel $2 $3 $ reverse $4 }
+ModelBody : '{' SettingTechnique ConstDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $ reverse $5 }
 
 ConstDecls :: { Map Identifier Int }
 ConstDecls :                                                   { Map.empty }
-           | ConstDecls const Identifier int ';'               { Map.insert $3 $4 $1 }
+           | ConstDecls const Identifier '=' int ';'           { Map.insert $3 $5 $1 }
+
+VarDecls :: { Set Identifier }
+VarDecls :                                                     { Set.empty }
+         | VarDecls var Identifier ';'                         { Set.insert $3 $1 }
 
 CouplingL :: { [Coupling] }
 CouplingL :                                                    { [] }
@@ -112,7 +119,7 @@ Coupling :: { Coupling }
 Coupling : couple Identifier Identifier '{' '}'                { Coupling $2 $3 }
 
 Identifier :: { Identifier }
-Identifier : var                                               { Identifier $1 }
+Identifier : varstr                                            { Identifier $1 }
 
 -- solving
 SettingTechnique :: { Technique }
@@ -142,7 +149,7 @@ Exp  : '∇×' Exp                { NablaCross $2 }
 Term :: { Term }
 Term
       : int                     { Int $1 }
-      | var                     { Var $1 }
+      | varstr                  { Var $1 }
 
 EqL :: { [Equation] }
 EqL :                           { [] }

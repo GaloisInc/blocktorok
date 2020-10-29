@@ -29,6 +29,7 @@ data TokenClass = TokenInt Int
                 | TokenTotalTime
                 | TokenFEM
                 | TokenFVM
+                | TokenV
                 | TokenColon
                 | TokenSemi
                 | TokenEq
@@ -69,6 +70,7 @@ unLex TokenTechnique = "technique"
 unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
+unLex TokenV = "var"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
 unLex TokenEq = "="

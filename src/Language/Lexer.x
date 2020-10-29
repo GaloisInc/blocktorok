@@ -34,6 +34,7 @@ tokens :-
   totalTime                             { lex' TokenTotalTime    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
+  var                                   { lex' TokenV            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }

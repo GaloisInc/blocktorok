@@ -21,6 +21,7 @@ module Physics.Model
   ) where
 
 import Data.Map.Strict (Map)
+import Data.Set (Set)
 
 import Language.Identifier
 import Math
@@ -31,10 +32,11 @@ import Solver.Technique
 data Model =
   Model { getTechnique :: Technique -- ^ What solving technique should be used
         , getConsts :: Map Identifier Int
+        , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Technique -> Map Identifier Int -> [Equation] -> Model
+mkModel :: Technique -> Map Identifier Int -> Set Identifier -> [Equation] -> Model
 mkModel = Model
