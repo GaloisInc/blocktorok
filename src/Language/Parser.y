@@ -42,6 +42,7 @@ import Physics.Model
       config          { Token _ TokenConfig }
       iterations      { Token _ TokenIterations }
       model           { Token _ TokenModel }
+      const           { Token _ TokenConst }
       couple          { Token _ TokenCouple }
       step            { Token _ TokenStep }
       technique       { Token _ TokenTechnique }
@@ -83,21 +84,25 @@ Prog : Config ModelL CouplingL                                 { Prog $1 $2 $3 }
 -- TODO: It would be nice if the order of the config fields didn't matter; I'll
 -- look in to making that happen.
 Config :: { Config }
-Config : config '{' StepConfig ';' DurationConfig ';' '}'      { Config $3 $5 }
+Config : config '{' StepConfig DurationConfig '}'      { Config $3 $4 }
 
 StepConfig :: { Int }
-StepConfig : step ':' int                                      { $3 }
+StepConfig : step ':' int ';'                                  { $3 }
 
 DurationConfig :: { Duration }
-DurationConfig : iterations ':' int                            { Iterations $3 }
-               | totalTime ':' int                             { TotalTime $3 }
+DurationConfig : iterations ':' int ';'                        { Iterations $3 }
+               | totalTime ':' int ';'                         { TotalTime $3 }
 
 ModelL :: { Map Identifier Model }
 ModelL : model Identifier ModelBody                            { Map.singleton $2 $3 }
        | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
 
 ModelBody :: { Model }
-ModelBody : '{' SettingTechnique ';' EqL '}'                   { mkModel $2 Map.empty $ reverse $4 }
+ModelBody : '{' SettingTechnique ConstDecls EqL '}'            { mkModel $2 $3 $ reverse $4 }
+
+ConstDecls :: { Map Identifier Int }
+ConstDecls :                                                   { Map.empty }
+           | ConstDecls const Identifier int ';'               { Map.insert $3 $4 $1 }
 
 CouplingL :: { [Coupling] }
 CouplingL :                                                    { [] }
@@ -112,8 +117,8 @@ Identifier : var                                               { Identifier $1 }
 -- solving
 SettingTechnique :: { Technique }
 SettingTechnique
-     : technique ':' FEM                    { FEM }
-     | technique ':' FVM                    { FVM }
+     : technique ':' FEM ';'                                   { FEM }
+     | technique ':' FVM ';'                                   { FVM }
 
 -- mathematical expressions
 Exp :: { Exp }
