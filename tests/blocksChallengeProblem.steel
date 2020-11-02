@@ -1,0 +1,94 @@
+-- This represents the rough shape of a typical LINK program. Every LINK
+-- program consists of three sections:
+--
+-- 1. A global configuration
+-- 2. One or more models
+-- 3. Coupling configuration for every pair of models
+--
+-- Each of these is described below in comments like this one.
+
+-------------------------------------------------------------------------------
+
+-- The configuration block will set globally important parameters. Right now,
+-- that's only the step size (no units support just yet) and a duration (either
+-- a number of steps to take or a total time to run for). The order of things
+-- (currently) matters, and we'll probably discover there are useful fields to
+-- add here.
+
+-- These values are totally made up for now
+config {
+    step: 17;
+    totalTime: 10;
+}
+
+-------------------------------------------------------------------------------
+
+-- Models are introduced with the keyword `model` followed by an identifier
+-- (starting with an alphabetic character followed by zero or more letters,
+-- digits, underscores, or single-quotes). In braces will be the parameters
+-- defining the model: For now, this is simply the solving technique. The
+-- identifier can be thought of as the domain as one would see in a typical
+-- physics paper.
+
+-- The two models presented here come from the NASA challenge problem
+-- Equations are from the toy problem
+
+-- Model that captures aerodynamic flow.
+-- Input is surface temperature (Tw)
+-- Use temperature as a boundary condition
+-- Get boundary heat flux (qw) using FVM
+model ModelFluid (Tw){
+    technique: FVM;
+    kF * △TF + po * cp * (u • ∇TF) = QF;
+    Boundary: Dirichlet (Tw);
+    Output : qw
+}
+
+-- Model that captures the structural heat transfer.
+-- Input is heat flux (qw)
+-- Get solid temperature distribution for the current time step using FEM
+model ModelStructure(qw){
+    technique: FEM;
+    kF * (n • ∇TF) = ks * (n • ∇TS);
+    Boundary : Neumann (qw)
+    output : Tw
+}
+
+-------------------------------------------------------------------------------
+
+-- The coupling blocks will effectively define the coordination between each
+-- pair of models. The LINK compiler statically checks that for every pair of
+-- models introduced above, there is a single coupling block. Coupling blocks
+-- will contain the equations governing the behavior at the interface between
+-- the two models and any other information necessary to communicate data
+-- between the models as appropriate. A coupling is introduced with the keyword
+-- `couple` followed by two identifiers (that must have been introduced above).
+-- In braces will be fields defining the coupling parameters (currently,
+-- nothing).
+
+
+-- TW, is a surface temperature
+couple (Tw) {
+  qw = ModelFluid (Tw)
+  Tw = ModelSolid (qw)
+}
+
+
+
+
+-- steps copied from Zhang paper
+-- 1): At the initial time t  t0, a certain temperature distribution is
+-- given in the solid, e.g., isothermal body, and then the surface
+-- temperature Tw is transferred to the fluid solver as a Dirichlet
+-- boundary condition.
+-- 2) With the imposed wall temperature Tw, the steady-state solution
+-- of the flow fluid is obtained using CFD methods to extract the wall
+-- heat flux qw.
+-- 3) The known wall heat flux qw of the flow fluid is transferred to
+-- the solid heat conduction solver as a Neumann boundary condition.
+-- 4) With the imposed wall heat flux qw, the transient-state solution
+-- from time level t0 to time level t0  Δtc for structural heat transfer is
+-- obtained using FEM methods to extract the temperature distribution
+-- in the solid, and then the surface temperature Tw is transferred to the
+-- fluid solver as a Dirichlet boundary condition again for the next
+-- coupling step.
