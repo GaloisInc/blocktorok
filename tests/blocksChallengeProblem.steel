@@ -2,94 +2,102 @@
 -- program consists of three sections:
 --
 -- 1. A global configuration
--- 2. One or more models
--- 3. Coupling configuration for every pair of models
---
--- Each of these is described below in comments like this one.
+-- 2. Coupling configuration for every pair of models
+-- 3. One or more models
 
 -------------------------------------------------------------------------------
 
--- The configuration block will set globally important parameters. Right now,
--- that's only the step size (no units support just yet) and a duration (either
--- a number of steps to take or a total time to run for). The order of things
--- (currently) matters, and we'll probably discover there are useful fields to
--- add here.
+-- The configuration block will set globally important parameters. Including:
+--  * duration (total time to run)
+--  * stepsize
+--  * input parameters for the coupling process
+--
+-- As defined the coupling block gets the surface temperature, Tw, as input
+--  and runs for the total amount of time.
+-- It is executed as "couple (couple (couple Tw))"
 
--- These values are totally made up for now
 config {
-    step: 17;
-    totalTime: 10;
-    Tw =  -- TW, is a surface temperature
-    couple (Tw)  -- executed for a certain number of steps, total time
+    totalTime: 10 ms;
+    Tw : 293 K;
+    Run: couple Tw;
+    -- Mach number = 5.94;
+    -- Isothermal = 300 K
 }
 
 -------------------------------------------------------------------------------
 
 -- The coupling blocks will effectively define the coordination between each
--- pair of models. The LINK compiler statically checks that for every pair of
--- models introduced above, there is a single coupling block. Coupling blocks
--- will contain the equations governing the behavior at the interface between
--- the two models and any other information necessary to communicate data
--- between the models as appropriate. A coupling is introduced with the keyword
--- `couple` followed by two identifiers (that must have been introduced above).
--- In braces will be fields defining the coupling parameters (currently,
--- nothing).
+--  pair of models. The LINK compiler statically checks that for every pair of
+--  models introduced above, there is a single coupling block.
+--
+-- The coupling blocks are introduced with the keyword `couple` followed by
+--  * two identifiers (that each define a model)
+--  * input parameters for the coupling process
+--  * braces
+--
+-- Defined inside the braces can be
+-- * equations governing the behavior at the interface between
+--   the two models and any other information necessary to communicate data
+--   between the models as appropriate.
+-- * the algorithm describing the information flow
+-- * the output that serves as input for the next run
 
-couple (Tw) {
-  qw = Run ModelFluid (Tw)
-  Tw = Run ModelSolid (qw)
+couple ModelFluid ModelSolid arg {
+  -- computes heat flux: qw
+  qw = ModelFluid (arg)
+  tw = ModelSolid (qw)
+  output = tw
 }
 
 -------------------------------------------------------------------------------
 
--- Models are introduced with the keyword `model` followed by an identifier
--- (starting with an alphabetic character followed by zero or more letters,
--- digits, underscores, or single-quotes). In braces will be the parameters
--- defining the model: For now, this is simply the solving technique. The
--- identifier can be thought of as the domain as one would see in a typical
--- physics paper.
+-- Models are introduced with the keyword `model` followed by
+--  * an identifier (starting with an alphabetic character followed by zero or
+--    more letters, digits, underscores, or single-quotes). The identifier can
+--    be thought of as the domain as one would see in a typical physics paper.
+--  * input parameter for the model
+--  * braces
+--
+-- Defined inside braces can be
+--  * technique: solving technique.
+--  * boundary : boundary conditions
+--  * physics :type of physics
+--  * math: (multiple) equations governing the behavior in model
+--  * model : model parameters associated with that type of physics
+--  * output : output parameter
 
--- The two models presented here come from the NASA challenge problem
--- Equations are from the toy problem
--- but should be replaced by pg 8 of Yerim's slides
-
--- Model that captures aerodynamic flow.
--- Input is surface temperature (Tw)
--- Use temperature as a boundary condition
--- Get boundary heat flux (qw) using FVM
-model ModelFluid (Tw){
-    technique: FVM;
-    kF * △TF + po * cp * (u • ∇TF) = QF;
-    Boundary: Dirichlet (Tw);
-    Output : qw
-}
 
 -- Model that captures the structural heat transfer.
--- Input is heat flux (qw)
--- Get solid temperature distribution for the current time step using FEM
+-- Input is heat flux (qw). The computations gets the solid temperature
+--  distribution for the current time step using FEM.
 model ModelStructure(qw){
-    technique: FEM;
-    kF * (n • ∇TF) = ks * (n • ∇TS);
-    Boundary : Neumann (qw)
     output : Tw
+    technique: FEM;
+    boundary : Neumann (qw)
+    physics: Heat
+    ModelType : Structure
+    model : Structure.CONDUCTION_CONDITION_DEFINITION
+    math :
+      ps*cs * (∇Ts) = ∇ * (λs* ∇Ts) + Q;
+      -ks* △Ts = Qs
+      -- what is missing here?
+
 }
 
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
--- steps copied from Zhang paper
--- 1): At the initial time t  t0, a certain temperature distribution is
--- given in the solid, e.g., isothermal body, and then the surface
--- temperature Tw is transferred to the fluid solver as a Dirichlet
--- boundary condition.
--- 2) With the imposed wall temperature Tw, the steady-state solution
--- of the flow fluid is obtained using CFD methods to extract the wall
--- heat flux qw.
--- 3) The known wall heat flux qw of the flow fluid is transferred to
--- the solid heat conduction solver as a Neumann boundary condition.
--- 4) With the imposed wall heat flux qw, the transient-state solution
--- from time level t0 to time level t0  Δtc for structural heat transfer is
--- obtained using FEM methods to extract the temperature distribution
--- in the solid, and then the surface temperature Tw is transferred to the
--- fluid solver as a Dirichlet boundary condition again for the next
--- coupling step.
+
+-- Model that captures aerodynamic flow.
+-- Get boundary heat flux (qw) using FVM
+model ModelFluid (Tw){
+    output : qw
+    technique: FVM;
+    boundary: Dirichlet (Tw);
+    ModelType : Fluid
+    model :
+        Fluid.COMPRESSIBLE_FREESTREAM_DEFINITION
+        Fluid.Sutherland
+        Fluid.THERMALCONDUCTIVITYMODEL
+        Fluid.standardAir
+    math :
+      ΩF. kF* △TF + po* cp*(u • ∇TF)  = QF
+      -- what is missing here?
+}
