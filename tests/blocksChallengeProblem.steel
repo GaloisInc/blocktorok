@@ -19,6 +19,25 @@
 config {
     step: 17;
     totalTime: 10;
+    Tw =  -- TW, is a surface temperature
+    couple (Tw)  -- executed for a certain number of steps, total time
+}
+
+-------------------------------------------------------------------------------
+
+-- The coupling blocks will effectively define the coordination between each
+-- pair of models. The LINK compiler statically checks that for every pair of
+-- models introduced above, there is a single coupling block. Coupling blocks
+-- will contain the equations governing the behavior at the interface between
+-- the two models and any other information necessary to communicate data
+-- between the models as appropriate. A coupling is introduced with the keyword
+-- `couple` followed by two identifiers (that must have been introduced above).
+-- In braces will be fields defining the coupling parameters (currently,
+-- nothing).
+
+couple (Tw) {
+  qw = Run ModelFluid (Tw)
+  Tw = Run ModelSolid (qw)
 }
 
 -------------------------------------------------------------------------------
@@ -32,6 +51,7 @@ config {
 
 -- The two models presented here come from the NASA challenge problem
 -- Equations are from the toy problem
+-- but should be replaced by pg 8 of Yerim's slides
 
 -- Model that captures aerodynamic flow.
 -- Input is surface temperature (Tw)
@@ -55,27 +75,8 @@ model ModelStructure(qw){
 }
 
 -------------------------------------------------------------------------------
-
--- The coupling blocks will effectively define the coordination between each
--- pair of models. The LINK compiler statically checks that for every pair of
--- models introduced above, there is a single coupling block. Coupling blocks
--- will contain the equations governing the behavior at the interface between
--- the two models and any other information necessary to communicate data
--- between the models as appropriate. A coupling is introduced with the keyword
--- `couple` followed by two identifiers (that must have been introduced above).
--- In braces will be fields defining the coupling parameters (currently,
--- nothing).
-
-
--- TW, is a surface temperature
-couple (Tw) {
-  qw = ModelFluid (Tw)
-  Tw = ModelSolid (qw)
-}
-
-
-
-
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- steps copied from Zhang paper
 -- 1): At the initial time t  t0, a certain temperature distribution is
 -- given in the solid, e.g., isothermal body, and then the surface
