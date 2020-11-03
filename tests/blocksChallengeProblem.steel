@@ -60,44 +60,79 @@ couple ModelFluid ModelSolid arg {
 --
 -- Defined inside braces can be
 --  * technique: solving technique.
---  * boundary : boundary conditions
+--  * output : output parameter
 --  * physics :type of physics
 --  * math: (multiple) equations governing the behavior in model
 --  * model : model parameters associated with that type of physics
---  * output : output parameter
-
+--  * variables: matching of variables in math with model parameters
+--  * boundary : boundary conditions
 
 -- Model that captures the structural heat transfer.
 -- Input is heat flux (qw). The computations gets the solid temperature
 --  distribution for the current time step using FEM.
-model ModelStructure(qw){
+model ModelStructure qw{
     output : Tw
     technique: FEM;
     boundary : Neumann (qw)
     physics: Heat
-    ModelType : Structure
-    model : Structure.CONDUCTION_CONDITION_DEFINITION
-    math :
-      ps*cs * (∇Ts) = ∇ * (λs* ∇Ts) + Q;
-      -ks* △Ts = Qs
-      -- what is missing here?
-
+    ModelType : Structure {
+      definition = conduction_condition_definition
+    }
 }
 
 
 -- Model that captures aerodynamic flow.
 -- Get boundary heat flux (qw) using FVM
-model ModelFluid (Tw){
+model ModelFluid Tw{
     output : qw
     technique: FVM;
-    boundary: Dirichlet (Tw);
-    ModelType : Fluid
-    model :
-        Fluid.COMPRESSIBLE_FREESTREAM_DEFINITION
-        Fluid.Sutherland
-        Fluid.THERMALCONDUCTIVITYMODEL
-        Fluid.standardAir
+    boundary: Dirichlet (Tw = 300K);
+    -- Isothermal under Dirichlet definition
+    ModelType : Fluid {
+      solver = compressibleFreeStreamDefinition,
+      fluidModel = standardAir
+      ViscosityModel =  sutherland
+      thermalConductivityModel = constant_prandtl
+    }
+    ---
+    -- How should we express the compressible navier stokes equation
+    --
+    -- first try at the math based on Su2
+    -- https://su2code.github.io/docs_v7/Theory/
+    variables:
+      mu = sutherland.viscosityRef -- viscosity
+      γ = -- a perfect gas with a ratio of specific heat
+      R =  standardAir.GasConstant -- specific gas constant
+      Pr = constant_prandtl.LaminarPrandtlNumber-- Prandtl number
+      IBar = --?
+      S =  ? -- generic source terms
+      rho = -- fluid density
+      E = -- total energy per unit mass
     math :
-      ΩF. kF* △TF + po* cp*(u • ∇TF)  = QF
-      -- what is missing here?
+      vBar = {u, v, w} -- flowspeed in cartesian system
+      U = {rho, rho*vBar, rho*E } -- conservative variables
+      p = (γ-1) rho [E-0.5(vbar • vbar)] -- static pressure
+      FC = {
+          rho*vBar, rho*vBar ⊗ vBar + IBar*p,  rho*E*vBar  + p*vBar
+        } -- convective fluxes
+      tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar) -- viscous stress tensor
+      T = p / (rho * R) -- temperature from ideal gas equation of state
+      FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
+      R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U)-S = 0
+      kappa =  mu * cp / Pr -- thermal conductivity
+
+
+    --
+    -- Second try at the math based on toy problem
+    -- https://drive.google.com/file/d/11UyH8SJ0GpQ3fWmcHf9F8TJx6VwbciBV/view?usp=sharing
+    variables:
+      mu = sutherland.viscosityRef -- molecular viscosity
+      B = -- coefficient of thermal expansion
+      cp = standardAir.ratio_Specific_Heat -- specific heat
+      kf = -- thermal conductivities of the fluid
+      qf = source terms
+      po, p, g =  ??
+    math :
+      -mu *△u + po*(u•∇ )*u+ ∇p +po * B *Tw* g = po*(1+B*To)* g
+      kF* △TF + po* cp*(u • ∇Tw)  = qw
 }

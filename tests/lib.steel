@@ -1,28 +1,25 @@
--- imagine a library
-
-Model Settings
-
-
--- General (can be in any model)
-
+-- Describes the types for model settings 
 
 -- Only applies in Fluid models
-Fluid.COMPRESSIBLE_FREESTREAM_DEFINITION
+Fluid.solver
+  = compressibleFreeStreamDefinition
+  | ..
 
-Fluid.Sutherland --   ViscosityModel
+Fluid.fluidModel
+  = standardAir
+  | idealGas
+  | VWGas | PRGas
+  | ConstantDensity
+  | IncIdealGas
 
-Fluid.THERMALCONDUCTIVITYMODEL
+Fluid.viscosityModel
+  = sutherland
+  | constant_viscosity
 
-Fluid.standardAir
--- default settings:
---   ratio_Specific_Heat = 1.4
---   GasConstant =  287.058 J/kg*K
+Fluid.thermalConductivityModel
+  = constant_conductivity
+  | constant_prandtls
 
-
--- Only applies in Structure models
-
-Structure.CONDUCTION_CONDITION_DEFINITION
--- default settings:
---   Solid Density= 8.5 g/cm3 (chromel)
---   Solid Specific Heat = ? J/kg*K (depends on the temperature)
---   Solid Thermal Conductivity = ? W/m*K (depends on the temperature)
+Structure.definition
+  = conduction_condition_definition
+   | ..

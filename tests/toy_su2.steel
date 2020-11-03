@@ -1,0 +1,37 @@
+// compressible flat plat tutorial
+Prd // dynamic Prandtl Number
+Rex // Reynolds number
+// skin friction
+Cf = 0.664 // Rex^(-1/2)
+// local nusselt number along the plate
+Nux = 0.33 // Rex(1/2)Prd^(1/3)
+
+// kg/m^3
+Density  = 1.13235
+// Inlet Velocity Magnitudem/s
+ InletVelocityMag  = 69.1687
+//Inlet Flow Direction, unit vector (x,y,z) =
+Flow_x = 1.0
+Flow_y = 0.0
+Flow_z = 0.0
+InletTemperature = 297.62 K
+OutletPressure = 0.0 //N/m^2
+Viscosity = 1.83463e-05 // (constant) kg/(m-s)
+PrandtlNumber = 0.72 //Prandtl Number (constant)
+ConstantWallTemp = 148.81
+
+// Boundary Conditions
+Marker_Inlet = inlet InletTemperature  InletVelocityMag Flow_x Flow_y Flow_z
+Marker_Isothermal  = wall ConstantWallTemp
+
+
+ΩF. -u *△u + po*(u•∇ )*u+ ∇p +po * B *TF* g = po*(1+B*To)* g
+ΩF. ∇•u = 0
+ΩF. kF* △TF + po* cp*(u • ∇TF)  = QF
+ΩS. TS = TF
+ΩS. kF* (n • ∇TF) = ks*(n•∇TS)
+ΩS. -ks* △Ts=Qs
+
+
+Model M1 { Solve = FVM, Space = ΩF}
+Model M2 { Solve = FEM, Space = ΩS}
