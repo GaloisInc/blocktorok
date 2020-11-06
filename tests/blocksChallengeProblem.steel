@@ -18,7 +18,7 @@
 
 config {
     totalTime: 10 ms;
-    Tw : 293 K;
+    Tw : conduction_condition_definition.InitialSolidTemperature;
     Run: couple Tw;
     -- Mach number = 5.94;
     -- Isothermal = 300 K
@@ -79,13 +79,13 @@ model ModelStructure qw{
       definition = conduction_condition_definition
     }
     ---
-    -- Heat conduction based on Zhang et al
+    -- Heat conduction based on Zhang et al and SU2
     solveV:
-        Ts;  -- temperature from ideal gas equation of state
+        Ts;  -- solid temperature
     math:
-        rhos = ?? -- solid density
-        ks = ?? -- solid thermal conductivity (function of T)
-        cps = ?? -- solid specific heat (function of T)
+        rhos = conduction_condition_definition.SolidDensity -- solid density
+        ks = conduction_condition_definition.SolidThermalConductivity -- solid thermal conductivity (function of T)
+        cps = conduction_condition_definition.SolidSpecificHeat -- solid specific heat (function of T)
         rhos*cps∇Ts - ks*△Ts = qw
 }
 
@@ -139,7 +139,7 @@ model ModelFluid Tw{
         kappa =  mu * cp / Pr -- thermal conductivity
     undefined:
       IBar = --?
-      S = qw -- generic source terms
+      S = qw -- for the challenge problem, the heat flux?
       E = ??  -- total energy per unit mass. Haven't filled in function.
 
     --
