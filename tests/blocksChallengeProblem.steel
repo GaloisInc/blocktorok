@@ -21,7 +21,6 @@ config {
     Tw : conduction_condition_definition.InitialSolidTemperature;
     Run: couple Tw;
     -- Mach number = 5.94;
-    -- Isothermal = 300 K
 }
 
 -------------------------------------------------------------------------------
@@ -44,6 +43,7 @@ config {
 
 couple ModelFluid ModelSolid arg {
   -- computes heat flux: qw
+  zone interface = (ModelFluid.marker, ModelSolid.marker) -- define the interface between the two physics domains
   qw = ModelFluid (arg)
   tw = ModelSolid (qw)
   output = tw
@@ -95,7 +95,7 @@ model ModelStructure qw{
 model ModelFluid Tw{
     output : qw
     technique: FVM;
-    boundary: Dirichlet (Tw = 300K);
+    boundary: Dirichlet (Tw = conduction_condition_definition.InitialSolidTemperature);
     -- Isothermal under Dirichlet definition
     ModelType : Fluid {
       solver = compressibleFreeStreamDefinition,
