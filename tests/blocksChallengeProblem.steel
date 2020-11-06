@@ -20,7 +20,6 @@ config {
     totalTime: 10 ms;
     Tw : conduction_condition_definition.InitialSolidTemperature;
     Run: couple Tw;
-    -- Mach number = 5.94;
 }
 
 -------------------------------------------------------------------------------
@@ -35,6 +34,7 @@ config {
 --  * braces
 --
 -- Defined inside the braces can be
+-- zone interface to define the interface between the two physics domains
 -- * equations governing the behavior at the interface between
 --   the two models and any other information necessary to communicate data
 --   between the models as appropriate.
