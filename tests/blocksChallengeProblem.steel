@@ -78,6 +78,15 @@ model ModelStructure qw{
     ModelType : Structure {
       definition = conduction_condition_definition
     }
+    ---
+    -- Heat conduction based on Zhang et al
+    solveV:
+        Ts;  -- temperature from ideal gas equation of state
+    math:
+        rhos = ?? -- solid density
+        ks = ?? -- solid thermal conductivity (function of T)
+        cps = ?? -- solid specific heat (function of T)
+        rhos*cps∇Ts - ks*△Ts = qw
 }
 
 
@@ -103,7 +112,7 @@ model ModelFluid Tw{
         u, v, w -- velocities in x,y,z directions
         p; -- static pressure
         T;  -- temperature from ideal gas equation of state
-        rho; -- fluid density
+        rhof; -- fluid density
     math:
         -- a perfect gas with a ratio of specific heat
         γ = standardAir.ratio_Specific_Heat
@@ -116,21 +125,21 @@ model ModelFluid Tw{
         R =  standardAir.GasConstant
         -- Prandtl number
         Pr = constant_prandtl.LaminarPrandtlNumber
-        U = {rho, rho*vBar, rho*E } -- conservative variables
-        p = (γ-1) rho [E-0.5(vbar • vbar)]
+        U = {rhof, rhof*vBar, rhof*E } -- conservative variables
+        p = (γ-1) rhof [E-0.5(vbar • vbar)]
         tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar)
-        T = p / (rho * R)
+        T = p / (rhof * R)
         FC = {
-            rho*vBar, rho*vBar ⊗ vBar + IBar*p,  rho*E*vBar  + p*vBar
+            rhof*vBar, rhof*vBar ⊗ vBar + IBar*p,  rhof*E*vBar  + p*vBar
             } -- convective fluxes
         FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
           -- what is this dot suppose to be?
         tauBar;  -- viscous stress tensor
-        R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U)-S = 0
+        R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U) - S = 0
         kappa =  mu * cp / Pr -- thermal conductivity
     undefined:
       IBar = --?
-      S =  ? -- generic source terms
+      S = qw -- generic source terms
       E = ??  -- total energy per unit mass. Haven't filled in function.
 
     --
