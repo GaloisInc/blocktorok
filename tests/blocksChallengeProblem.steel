@@ -62,9 +62,9 @@ couple ModelFluid ModelSolid arg {
 --  * technique: solving technique.
 --  * output : output parameter
 --  * physics :type of physics
---  * math: (multiple) equations governing the behavior in model
 --  * model : model parameters associated with that type of physics
---  * variables: matching of variables in math with model parameters
+--  * solveV:  variables used in the math that we are solving for
+--  * math: (multiple) equations governing the behavior in model
 --  * boundary : boundary conditions
 
 -- Model that captures the structural heat transfer.
@@ -99,40 +99,55 @@ model ModelFluid Tw{
     --
     -- first try at the math based on Su2
     -- https://su2code.github.io/docs_v7/Theory/
-    variables:
-      mu = sutherland.viscosityRef -- viscosity
-      γ = -- a perfect gas with a ratio of specific heat
-      R =  standardAir.GasConstant -- specific gas constant
-      Pr = constant_prandtl.LaminarPrandtlNumber-- Prandtl number
+    solveV:
+        u, v, w -- velocities in x,y,z directions
+        p; -- static pressure
+        T;  -- temperature from ideal gas equation of state
+        rho; -- fluid density
+    math:
+        -- a perfect gas with a ratio of specific heat
+        γ = standardAir.ratio_Specific_Heat
+        -- flowspeed in cartesian system
+        vBar = {u, v, w}
+        -- defined in library. model parameters
+         -- viscosity
+        mu = sutherland.viscosityRef
+         -- specific gas constant
+        R =  standardAir.GasConstant
+        -- Prandtl number
+        Pr = constant_prandtl.LaminarPrandtlNumber
+        U = {rho, rho*vBar, rho*E } -- conservative variables
+        p = (γ-1) rho [E-0.5(vbar • vbar)]
+        tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar)
+        T = p / (rho * R)
+        FC = {
+            rho*vBar, rho*vBar ⊗ vBar + IBar*p,  rho*E*vBar  + p*vBar
+            } -- convective fluxes
+        FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
+          -- what is this dot suppose to be?
+        tauBar;  -- viscous stress tensor
+        R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U)-S = 0
+        kappa =  mu * cp / Pr -- thermal conductivity
+    undefined:
       IBar = --?
       S =  ? -- generic source terms
-      rho = -- fluid density
-      E = -- total energy per unit mass
-    math :
-      vBar = {u, v, w} -- flowspeed in cartesian system
-      U = {rho, rho*vBar, rho*E } -- conservative variables
-      p = (γ-1) rho [E-0.5(vbar • vbar)] -- static pressure
-      FC = {
-          rho*vBar, rho*vBar ⊗ vBar + IBar*p,  rho*E*vBar  + p*vBar
-        } -- convective fluxes
-      tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar) -- viscous stress tensor
-      T = p / (rho * R) -- temperature from ideal gas equation of state
-      FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
-      R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U)-S = 0
-      kappa =  mu * cp / Pr -- thermal conductivity
-
+      E = ??  -- total energy per unit mass. Haven't filled in function.
 
     --
     -- Second try at the math based on toy problem
     -- https://drive.google.com/file/d/11UyH8SJ0GpQ3fWmcHf9F8TJx6VwbciBV/view?usp=sharing
-    variables:
-      mu = sutherland.viscosityRef -- molecular viscosity
-      B = -- coefficient of thermal expansion
-      cp = standardAir.ratio_Specific_Heat -- specific heat
-      kf = -- thermal conductivities of the fluid
-      qf = source terms
-      po, p, g =  ??
-    math :
-      -mu *△u + po*(u•∇ )*u+ ∇p +po * B *Tw* g = po*(1+B*To)* g
-      kF* △TF + po* cp*(u • ∇Tw)  = qw
+    solveV:
+        u, v, w -- velocities in x,y,z directions
+        p; -- static pressure
+        Tw;  -- temperature from ideal gas equation of state
+        po; -- fluid density
+    math:
+        mu = sutherland.viscosityRef
+        cp = standardAir.ratio_Specific_Heat -- specific heat
+        -mu *△u + po*(u•∇ )*u+ ∇p +po * B *Tw* g = po*(1+B*To)* g
+        kF* △Tw + po* cp*(u • ∇Tw)  = qw
+    undefined:
+      B = ?? -- coefficient of thermal expansion
+      kF = ?? -- thermal conductivities of the fluid
+      qw, g, To = ??
 }
