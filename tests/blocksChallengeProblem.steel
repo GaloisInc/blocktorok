@@ -19,7 +19,7 @@
 config {
     totalTime: 10 ms;
     Tw : conduction_condition_definition.InitialSolidTemperature;
-    Run: couple Tw;
+    Run: couple ModelFluid ModelSolid Tw;
 }
 
 -------------------------------------------------------------------------------
@@ -41,10 +41,10 @@ config {
 -- * the algorithm describing the information flow
 -- * the output that serves as input for the next run
 
-couple ModelFluid ModelSolid arg {
+couple ModelFluid ModelSolid temp {
   -- computes heat flux: qw
   zone interface = (ModelFluid.marker, ModelSolid.marker) -- define the interface between the two physics domains
-  qw = ModelFluid (arg)
+  qw = ModelFluid (temp)
   tw = ModelSolid (qw)
   output = tw
 }
@@ -104,7 +104,7 @@ model ModelFluid Tw{
       thermalConductivityModel = constant_prandtl
     }
     ---
-    -- How should we express the compressible navier stokes equation
+    -- How should we express the compressible navier stokes equation?
     --
     -- first try at the math based on Su2
     -- https://su2code.github.io/docs_v7/Theory/
