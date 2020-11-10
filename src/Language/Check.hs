@@ -15,6 +15,7 @@ ologs and applied category theory more generally.
 
 module Language.Check
   ( hasAllCouplings
+  , allVarsDeclared
   ) where
 
 import qualified Data.Map.Strict as Map
@@ -22,17 +23,31 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.AST
+import Language.Identifier
+import Math
+import Physics.Model
 
 -- | Return true if and only if the set of all couplings in the given LINK
 --   program accounts for all pairs of distinct models.
 hasAllCouplings :: Prog -> Bool
 hasAllCouplings p = couplings == modelPairs
   where
-    modelNames :: Set Identifier
-    modelNames = Map.keysSet $ getModels p
-
     modelPairs :: Set (Set Identifier)
-    modelPairs = Set.filter (\s -> Set.size s == 2) $ Set.powerSet modelNames
+    modelPairs = Set.filter (\s -> Set.size s == 2) $ Set.powerSet $ Map.keysSet $ getModels p
 
     couplings :: Set (Set Identifier)
     couplings = Set.fromList $ Set.fromList . (\(Coupling a b) -> [a, b]) <$> getCouplings p
+
+-- | Return true if and only if, for each model, the set of variables appearing
+--   in the model's equations have been declared.
+allVarsDeclared :: Prog -> Bool
+allVarsDeclared p = all modelVarsDeclared $ getModels p
+  where
+    modelVarsDeclared :: Model -> Bool
+    modelVarsDeclared m = eqVars `Set.isSubsetOf` Set.union declaredConsts (getVars m)
+      where
+        declaredConsts :: Set Identifier
+        declaredConsts = Set.fromList $ Map.keys $ getConsts m
+
+        eqVars :: Set Identifier
+        eqVars = foldr Set.union Set.empty $ vars <$> (getLHS <$> getEqs m) ++ (getRHS <$> getEqs m)

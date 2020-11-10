@@ -33,15 +33,19 @@ library
   build-depends:       base >= 3 && < 5
                      , array
                      , containers
+                     , parsec
+                     , uniplate
                      , units
                      , units-defs
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     Language.AST
                        Language.Check
+                       Language.Identifier
                        Language.Lexer
                        Language.Parser
-		                   Solver.Technique
-		                   Math
-		                   Physics.Model
+                       Language.TokenClass
+                       Solver.Technique
+                       Math
+                       Physics.Model
   ghc-options: -Wall

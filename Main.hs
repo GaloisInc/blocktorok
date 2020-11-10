@@ -1,6 +1,6 @@
 module Main(main) where
 
-import Language.Check (hasAllCouplings)
+import Language.Check (hasAllCouplings, allVarsDeclared)
 import Language.Parser ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
@@ -16,7 +16,7 @@ main = do
     Left e -> do
           print e
           exitFailure
-    Right e -> if hasAllCouplings e then
+    Right e -> if hasAllCouplings e && allVarsDeclared e then
                  print e
                else
-                 error "missing couplings"
+                 error "static checks failed"

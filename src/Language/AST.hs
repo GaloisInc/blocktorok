@@ -14,13 +14,9 @@ is the target of the parser defined in @Parser.y@.
 module Language.AST where
 
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
 
+import Language.Identifier
 import Physics.Model
-
--- | A simple wrapper around strings for valid LINK identifiers; useful if we
---   want to change this representation to something else later.
-newtype Identifier = Identifier String deriving (Eq, Ord, Show)
 
 -- | A complete LINK program, which consists of configuration, a (nonempty)
 --   collection of 'Physics.Model.Model's, and a collection of @Coupling@s.
