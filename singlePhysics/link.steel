@@ -1,0 +1,90 @@
+-- This represents the rough shape of a typical LINK program. Every LINK
+-- program consists of three sections:
+--
+-- 1. A global configuration
+-- 2. Coupling configuration for every pair of models
+-- 3. One or more models
+
+-------------------------------------------------------------------------------
+
+-- The configuration block will set globally important parameters. Including:
+--  * duration (total time to run)
+--  * stepsize
+--  * input parameters for the coupling process
+--
+-- As defined the coupling block gets the surface temperature, Tw, as input
+--  and runs for the total amount of time.
+-- It is executed as "couple (couple (couple Tw))"
+
+config {
+    totalTime: 10 ms;
+    Tw : conduction_condition_definition.InitialSolidTemperature;
+    Run: couple Model1 Tw;
+    backend: Su2 -- or OpenFoam
+}
+
+-------------------------------------------------------------------------------
+
+-- The coupling blocks will effectively define the coordination between each
+--  pair of models. The LINK compiler statically checks that for every pair of
+--  models introduced above, there is a single coupling block.
+--
+-- The coupling blocks are introduced with the keyword `couple` followed by
+--  * two identifiers (that each define a model)
+--  * input parameters for the coupling process
+--  * braces
+--
+-- Defined inside the braces can be
+-- zone interface to define the interface between the two physics domains
+-- * equations governing the behavior at the interface between
+--   the two models and any other information necessary to communicate data
+--   between the models as appropriate.
+-- * the algorithm describing the information flow
+-- * the output that serves as input for the next run
+
+couple Model1 temp {
+  -- computes heat flux: qw
+  zone interface = (ModelFluid.marker, ModelSolid.marker) -- define the interface between the two physics domains
+  output = Model1(temp)
+}
+
+-------------------------------------------------------------------------------
+
+-- Models are introduced with the keyword `model` followed by
+--  * an identifier (starting with an alphabetic character followed by zero or
+--    more letters, digits, underscores, or single-quotes). The identifier can
+--    be thought of as the domain as one would see in a typical physics paper.
+--  * input parameter for the model
+--  * braces
+--
+-- Defined inside braces can be
+--  * technique: solving technique.
+--  * output : output parameter
+--  * physics :type of physics
+--  * model : model parameters associated with that type of physics
+--  * solveV:  variables used in the math that we are solving for
+--  * math: (multiple) equations governing the behavior in model
+--  * boundary : boundary conditions
+
+-- Model that captures the structural heat transfer.
+-- Input is heat flux (qw). The computations gets the solid temperature
+--  distribution for the current time step using FEM.
+model ModelStructure qw{
+    output : Tw
+    technique: FEM;
+    boundary : Neumann (qw)
+    physics: Heat
+    ModelType : Structure {
+      definition = conduction_condition_definition
+    }
+    ---
+    -- Heat conduction based on Zhang et al and SU2
+    solveV:
+        Ts;  -- solid temperature
+    math:
+        rhos = conduction_condition_definition.SolidDensity -- solid density
+        ks = conduction_condition_definition.SolidThermalConductivity -- solid thermal conductivity (function of T)
+        cps = conduction_condition_definition.SolidSpecificHeat -- solid specific heat (function of T)
+        rhos*cps∇Ts - ks*△Ts = qw
+}
+}
