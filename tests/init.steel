@@ -20,9 +20,11 @@ standardAir = {
 
 -- Fluid.viscosityModel
 sutherland = {
-  viscosityRef = 1.716E-5
-  temperatureRef = 273.15 K
-  constant = 110.4
+  mu_knot = 1.716E-5 --viscosityRef
+  T_knot = 273.15 --temperatureRef (K)
+  S = 110.4 --constant
+  mu = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S);
+  retun mu
 }
 
 -- Fluid.thermalConductivityModel
