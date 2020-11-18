@@ -24,7 +24,7 @@ sutherland = {
   T_knot = 273.15 --temperatureRef (K)
   S = 110.4 --constant
   mu = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S);
-  retun mu
+  output : mu
 }
 
 -- Fluid.thermalConductivityModel
