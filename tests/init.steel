@@ -23,9 +23,9 @@ sutherland = {
   mu_knot = 1.716E-5 --viscosityRef
   T_knot = 273.15 --temperatureRef (K)
   S = 110.4 --constant
-  mu = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S);
-  output : mu
 }
+
+sutherlands_law temperature = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S)
 
 -- Fluid.thermalConductivityModel
 constant_prandtl = {
