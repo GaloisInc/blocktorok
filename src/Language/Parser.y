@@ -47,10 +47,14 @@ import Physics.Model
       const           { Token _ TokenConst }
       couple          { Token _ TokenCouple }
       step            { Token _ TokenStep }
-      technique       { Token _ TokenTechnique }
       totalTime       { Token _ TokenTotalTime }
+      technique       { Token _ TokenTechnique }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
+      boundary        { Token _ TokenBoundary }
+      Neumann         { Token _ TokenNeumann }
+      Dirichlet       { Token _ TokenDirichlet }
+      output          { Token _ TokenOutput }
       var             { Token _ TokenV }
       varstr          { Token _ (TokenVar $$) }
       ':'             { Token _ TokenColon }
@@ -101,7 +105,7 @@ ModelL : model Identifier ModelBody                            { Map.singleton $
        | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
 
 ModelBody :: { Model }
-ModelBody : '{' SettingTechnique ConstDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $ reverse $5 }
+ModelBody : '{' SettingTechnique BoundaryDecl  OutputDecl ConstDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $5 $6 $ reverse $7 }
 
 ConstDecls :: { Map Identifier Int }
 ConstDecls :                                                   { Map.empty }
@@ -126,6 +130,17 @@ SettingTechnique :: { Technique }
 SettingTechnique
      : technique ':' FEM ';'                                   { FEM }
      | technique ':' FVM ';'                                   { FVM }
+     
+-- boundary
+BoundaryDecl :: { Boundary  }
+BoundaryDecl
+     : boundary ':'  Dirichlet ';'                            { Dirichlet }
+     | boundary ':'  Neumann ';'                              { Neumann }
+
+
+OutputDecl :: {Identifier}
+OutputDecl 
+    : output ':' varstr  ';'                                { Identifier $3 }
 
 -- mathematical expressions
 Exp :: { Exp }

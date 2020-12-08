@@ -29,10 +29,15 @@ import Language.Identifier
 import Math
 import Solver.Technique
 
+
+
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
-  Model { getTechnique :: Technique -- ^ What solving technique should be used
+  Model {
+        getTechnique :: Technique -- ^ What solving technique should be used
+        , getBoundary :: Boundary
+        , getOutput :: Identifier
         , getConsts :: Map Identifier Int
         , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
@@ -40,5 +45,5 @@ data Model =
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Technique -> Map Identifier Int -> Set Identifier -> [Equation] -> Model
+mkModel :: Technique -> Boundary  -> Identifier ->  Map Identifier Int -> Set Identifier -> [Equation] -> Model
 mkModel = Model

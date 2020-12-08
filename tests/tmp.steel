@@ -1,0 +1,13 @@
+
+
+
+config {
+  step : 2 ;
+  totalTime : 3;
+  }
+
+model m1 {
+  technique : FVM;
+  boundary : Neumann;
+  output : Tw;
+  }

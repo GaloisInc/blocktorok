@@ -30,10 +30,14 @@ tokens :-
   const                                 { lex' TokenConst        }
   couple                                { lex' TokenCouple       }
   step                                  { lex' TokenStep         }
-  technique                             { lex' TokenTechnique    }
   totalTime                             { lex' TokenTotalTime    }
+  technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
+  boundary                              { lex' TokenBoundary     }
+  Neumann                               { lex' TokenNeumann      }
+  Dirichlet                             { lex' TokenDirichlet    }
+  output                                { lex' TokenOutput       }
   var                                   { lex' TokenV            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }

@@ -25,10 +25,14 @@ data TokenClass = TokenInt Int
                 | TokenConst
                 | TokenCouple
                 | TokenStep
-                | TokenTechnique
                 | TokenTotalTime
+                | TokenTechnique
                 | TokenFEM
                 | TokenFVM
+                | TokenBoundary
+                | TokenNeumann
+                | TokenDirichlet
+                | TokenOutput
                 | TokenV
                 | TokenColon
                 | TokenSemi
@@ -70,6 +74,10 @@ unLex TokenTechnique = "technique"
 unLex TokenTotalTime = "totalTime"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
+unLex TokenBoundary = "boundary"
+unLex TokenNeumann = "Neumann"
+unLex TokenDirichlet = "Dirichlet"
+unLex TokenOutput = "output"
 unLex TokenV = "var"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
