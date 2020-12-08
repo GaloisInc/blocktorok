@@ -19,7 +19,10 @@ module Physics.Model
   , getTechnique
   , getConsts
   , getVars
+  , getLib
   , getEqs
+  , Boundary(..)
+  , PhysicsType(..)
   ) where
 
 import Data.Map.Strict (Map)
@@ -30,20 +33,31 @@ import Math
 import Solver.Technique
 
 
+data Boundary = Neumann Identifier
+              | Dirichlet Identifier
+              deriving (Show)
+
+data PhysicsType =  HeatStructure Int
+                 | FluidFlow Int
+                deriving (Show)
+
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
   Model {
-        getTechnique :: Technique -- ^ What solving technique should be used
-        , getBoundary :: Boundary
+        getInput :: Identifier
         , getOutput :: Identifier
+        , getTechnique :: Technique -- ^ What solving technique should be used
+        , getBoundary :: Boundary
+        , getPhysicsType :: PhysicsType
         , getConsts :: Map Identifier Int
+        , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Technique -> Boundary  -> Identifier ->  Map Identifier Int -> Set Identifier -> [Equation] -> Model
+mkModel :: Identifier -> Identifier -> Technique -> Boundary -> PhysicsType ->  Map Identifier Int ->  Map Identifier (Identifier, Identifier) -> Set Identifier -> [Equation] -> Model
 mkModel = Model

@@ -16,6 +16,9 @@ with all sorts of operations, notions of units, types, etc.
 
 module Math where
 
+import Data.Map.Strict (Map)
+import Data.Set (Set)
+
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -39,6 +42,7 @@ data Exp = Divergence Exp
          | CrossProduct Exp Exp
          | InnerProduct Exp Exp
          | OuterProduct Exp Exp
+         | FnApp Identifier Identifier
          | Term Term
 
 instance Show Exp where
@@ -57,6 +61,7 @@ instance Show Exp where
   show (CrossProduct e1 e2) = "(" ++ show e1 ++ "×" ++ show e2 ++ ")"
   show (InnerProduct e1 e2) = "(" ++ show e1++"•" ++ show e2 ++ ")"
   show (OuterProduct e1 e2) = "(" ++ show e1++"⊗" ++ show e2 ++ ")"
+  show (FnApp f arg) = show f ++"(" ++ show arg ++ ")"
   show (Term e) = show e
 
 -- | Mathematical terms, which are either integers or valid variable
@@ -95,6 +100,7 @@ instance Uniplate Exp where
   uniplate (InnerProduct e1 e2) = plate InnerProduct |* e1 |* e2
   uniplate (OuterProduct e1 e2) = plate OuterProduct |* e1 |* e2
   uniplate (Term t)             = plate Term |- t
+
 
 instance Biplate Exp Exp where
   biplate = plateSelf

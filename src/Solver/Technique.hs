@@ -20,14 +20,10 @@ consistency at the type level.
 
 module Solver.Technique
   ( Technique(..)
-    , Boundary(..)
   ) where
 
+import Language.Identifier
 -- | The type of a solving technique
 data Technique = FEM -- ^ The finite element method
                | FVM -- ^ The finite volume method
                deriving (Show)
-
-data Boundary = Neumann
-              | Dirichlet
-              deriving (Show)

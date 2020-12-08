@@ -31,13 +31,17 @@ tokens :-
   couple                                { lex' TokenCouple       }
   step                                  { lex' TokenStep         }
   totalTime                             { lex' TokenTotalTime    }
+  input                                 { lex' TokenInput       }
+  output                                { lex' TokenOutput       }
   technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
   boundary                              { lex' TokenBoundary     }
   Neumann                               { lex' TokenNeumann      }
   Dirichlet                             { lex' TokenDirichlet    }
-  output                                { lex' TokenOutput       }
+  physics                               { lex' TokenPhysics      }
+  HeatStructure                         { lex' TokenHeatStructure}
+  FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }

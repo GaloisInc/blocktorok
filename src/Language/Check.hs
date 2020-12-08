@@ -36,18 +36,19 @@ hasAllCouplings p = couplings == modelPairs
     modelPairs = Set.filter (\s -> Set.size s == 2) $ Set.powerSet $ Map.keysSet $ getModels p
 
     couplings :: Set (Set Identifier)
-    couplings = Set.fromList $ Set.fromList . (\(Coupling a b) -> [a, b]) <$> getCouplings p
+    couplings = Set.fromList $ Set.fromList . (\(Coupling a b _ _ _ _) -> [a, b]) <$> getCouplings p
 
 -- | Return true if and only if, for each model, the set of variables appearing
 --   in the model's equations have been declared.
 allVarsDeclared :: Prog -> Bool
-allVarsDeclared p = all modelVarsDeclared $ getModels p
+allVarsDeclared _ = True -- FIXME
+allVarsDeclared2 p = all modelVarsDeclared $ getModels p
   where
     modelVarsDeclared :: Model -> Bool
-    modelVarsDeclared m = eqVars `Set.isSubsetOf` Set.union declaredConsts (getVars m)
+    modelVarsDeclared m = eqVars `Set.isSubsetOf` Set.union declaredConsts (Physics.Model.getVars m)
       where
         declaredConsts :: Set Identifier
         declaredConsts = Set.fromList $ Map.keys $ getConsts m
 
         eqVars :: Set Identifier
-        eqVars = foldr Set.union Set.empty $ vars <$> (getLHS <$> getEqs m) ++ (getRHS <$> getEqs m)
+        eqVars = foldr Set.union Set.empty $ vars <$> (getLHS <$> Physics.Model.getEqs m) ++ (getRHS <$> Physics.Model.getEqs m)

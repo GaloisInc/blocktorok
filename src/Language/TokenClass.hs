@@ -26,13 +26,17 @@ data TokenClass = TokenInt Int
                 | TokenCouple
                 | TokenStep
                 | TokenTotalTime
+                | TokenInput
+                | TokenOutput
                 | TokenTechnique
                 | TokenFEM
                 | TokenFVM
                 | TokenBoundary
                 | TokenNeumann
                 | TokenDirichlet
-                | TokenOutput
+                | TokenPhysics
+                | TokenHeatStructure
+                | TokenFluidFlow
                 | TokenV
                 | TokenColon
                 | TokenSemi
@@ -70,14 +74,18 @@ unLex TokenModel = "model"
 unLex TokenConst = "const"
 unLex TokenCouple = "couple"
 unLex TokenStep = "step"
-unLex TokenTechnique = "technique"
 unLex TokenTotalTime = "totalTime"
+unLex TokenTechnique = "technique"
+unLex TokenInput = "input"
+unLex TokenOutput = "output"
 unLex TokenFEM = "FEM"
 unLex TokenFVM = "FVM"
 unLex TokenBoundary = "boundary"
 unLex TokenNeumann = "Neumann"
 unLex TokenDirichlet = "Dirichlet"
-unLex TokenOutput = "output"
+unLex TokenPhysics = "physics"
+unLex TokenHeatStructure = "HeatStructure"
+unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"

@@ -14,7 +14,8 @@ is the target of the parser defined in @Parser.y@.
 module Language.AST where
 
 import Data.Map.Strict (Map)
-
+import Data.Set (Set)
+import Math
 import Language.Identifier
 import Physics.Model
 
@@ -48,4 +49,11 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-data Coupling = Coupling Identifier Identifier deriving (Show)
+data Coupling = Coupling {
+  model1::Identifier
+  , model2::Identifier
+  , input::Identifier
+  , output::Identifier
+  , getVars:: Set Identifier
+  , getEqs :: [Equation] -- ^ The equations governing the model
+  } deriving (Show)

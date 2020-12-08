@@ -48,13 +48,17 @@ import Physics.Model
       couple          { Token _ TokenCouple }
       step            { Token _ TokenStep }
       totalTime       { Token _ TokenTotalTime }
+      input           { Token _ TokenInput }
+      output          { Token _ TokenOutput }
       technique       { Token _ TokenTechnique }
       FEM             { Token _ TokenFEM }
       FVM             { Token _ TokenFVM }
       boundary        { Token _ TokenBoundary }
       Neumann         { Token _ TokenNeumann }
       Dirichlet       { Token _ TokenDirichlet }
-      output          { Token _ TokenOutput }
+      physics         { Token _ TokenPhysics }
+      HeatStructure   { Token _ TokenHeatStructure }
+      FluidFlow           { Token _ TokenFluidFlow }
       var             { Token _ TokenV }
       varstr          { Token _ (TokenVar $$) }
       ':'             { Token _ TokenColon }
@@ -105,11 +109,18 @@ ModelL : model Identifier ModelBody                            { Map.singleton $
        | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
 
 ModelBody :: { Model }
-ModelBody : '{' SettingTechnique BoundaryDecl  OutputDecl ConstDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $5 $6 $ reverse $7 }
+ModelBody : '{' InputDecl OutputDecl  SettingTechnique BoundaryDecl physicsType ConstDecls LibDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $5 $6 $7 $8 $9 $ reverse $10 }
 
 ConstDecls :: { Map Identifier Int }
 ConstDecls :                                                   { Map.empty }
            | ConstDecls const Identifier '=' int ';'           { Map.insert $3 $5 $1 }
+
+LibDecls :: { Map Identifier (Identifier, Identifier) }
+LibDecls :                                                     { Map.empty }
+           | LibDecls Identifier '=' ImportVar ';'            { Map.insert $2 $4 $1 }
+
+ImportVar  :: {(Identifier, Identifier)}
+ImportVar :  Identifier '.' Identifier                        { ($1,$3) }
 
 VarDecls :: { Set Identifier }
 VarDecls :                                                     { Set.empty }
@@ -120,27 +131,42 @@ CouplingL :                                                    { [] }
           | CouplingL Coupling                                 { $2 : $1 }
 
 Coupling :: { Coupling }
-Coupling : couple Identifier Identifier '{' '}'                { Coupling $2 $3 }
+Coupling : couple Identifier Identifier '{'InputDecl OutputDecl  VarDecls EqL '}'                { Coupling $2 $3 $5 $6 $7 $ reverse $8}
 
 Identifier :: { Identifier }
 Identifier : varstr                                            { Identifier $1 }
+
+
+InputDecl :: {Identifier}
+InputDecl
+    : input ':' varstr  ';'                                { Identifier $3 }
+
+OutputDecl :: {Identifier}
+OutputDecl
+    : output ':' varstr  ';'                                { Identifier $3 }
 
 -- solving
 SettingTechnique :: { Technique }
 SettingTechnique
      : technique ':' FEM ';'                                   { FEM }
      | technique ':' FVM ';'                                   { FVM }
-     
+
 -- boundary
 BoundaryDecl :: { Boundary  }
 BoundaryDecl
-     : boundary ':'  Dirichlet ';'                            { Dirichlet }
-     | boundary ':'  Neumann ';'                              { Neumann }
+     : boundary ':'  Dirichlet '(' Identifier ')' ';'                            { Dirichlet $5 }
+     | boundary ':'  Neumann '(' Identifier ')' ';'                              { Neumann $5 }
 
+-- parameters for this type of physics
+physicsType :: { PhysicsType }
+physicsType
+    : physics ':'  physicsTypeRHS  ';'                        { $3 }
 
-OutputDecl :: {Identifier}
-OutputDecl 
-    : output ':' varstr  ';'                                { Identifier $3 }
+-- parameters for this type of physics
+physicsTypeRHS
+    :  HeatStructure '{' int '}'                             { HeatStructure $3 }
+    | FluidFlow '{' int '}'                                  { FluidFlow $3 }
+
 
 -- mathematical expressions
 Exp :: { Exp }
@@ -159,7 +185,10 @@ Exp  : '∇×' Exp                { NablaCross $2 }
       | Exp '×' Exp            { CrossProduct $1 $3 }
       | Exp '•' Exp            { InnerProduct $1 $3 }
       | Exp '⊗' Exp            { OuterProduct $1 $3 }
+      | FnApp                  { $1}
       | Term                   { Term $1 }
+
+FnApp : Identifier '('Identifier ')' {FnApp $1 $3}
 
 Term :: { Term }
 Term
