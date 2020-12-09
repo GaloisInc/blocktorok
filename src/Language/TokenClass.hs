@@ -38,6 +38,7 @@ data TokenClass = TokenInt Int
                 | TokenHeatStructure
                 | TokenFluidFlow
                 | TokenV
+                | TokenSolve
                 | TokenColon
                 | TokenSemi
                 | TokenEq
@@ -87,6 +88,7 @@ unLex TokenPhysics = "physics"
 unLex TokenHeatStructure = "HeatStructure"
 unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
+unLex TokenSolve = "solve"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
 unLex TokenEq = "="

@@ -59,5 +59,10 @@ data Model =
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Identifier -> Identifier -> Technique -> Boundary -> PhysicsType ->  Map Identifier Int ->  Map Identifier (Identifier, Identifier) -> Set Identifier -> [Equation] -> Model
+mkModel :: Identifier -> Identifier
+      -> Technique -> Boundary -> PhysicsType
+      ->  Map Identifier Int
+      ->  Map Identifier (Identifier, Identifier)
+      -> Set Identifier
+      -> [Equation] -> Model
 mkModel = Model

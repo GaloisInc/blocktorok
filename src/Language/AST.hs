@@ -29,7 +29,10 @@ data Prog =
   Prog { getConfig :: Config -- ^ The global configuration
        , getModels :: Map Identifier Model -- ^ The specified models
        , getCouplings :: [Coupling] -- ^ The model couplings
-       } deriving (Show)
+       }
+instance Show Prog where
+     show (Prog c1 m c2) = "\n\n\t"++ (show c1) ++ "\n\n\t"++ (show m) ++ "\n\n\t"++(show c2)
+
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.

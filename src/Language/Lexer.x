@@ -43,6 +43,7 @@ tokens :-
   HeatStructure                         { lex' TokenHeatStructure}
   FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
+  solve                                 { lex' TokenSolve            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }

@@ -59,6 +59,7 @@ import Physics.Model
       physics         { Token _ TokenPhysics }
       HeatStructure   { Token _ TokenHeatStructure }
       FluidFlow           { Token _ TokenFluidFlow }
+      solve           { Token _ TokenSolve }
       var             { Token _ TokenV }
       varstr          { Token _ (TokenVar $$) }
       ':'             { Token _ TokenColon }
@@ -109,7 +110,7 @@ ModelL : model Identifier ModelBody                            { Map.singleton $
        | ModelL model Identifier ModelBody                     { Map.insert $3 $4 $1 }
 
 ModelBody :: { Model }
-ModelBody : '{' InputDecl OutputDecl  SettingTechnique BoundaryDecl physicsType ConstDecls LibDecls VarDecls EqL '}'   { mkModel $2 $3 $4 $5 $6 $7 $8 $9 $ reverse $10 }
+ModelBody : '{' InputDecl OutputDecl  SettingTechnique BoundaryDecl physicsType ConstDecls LibDecls  VarDecls EqL '}'   { mkModel $2 $3 $4 $5 $6 $7 $8 $9 $ reverse $10 }
 
 ConstDecls :: { Map Identifier Int }
 ConstDecls :                                                   { Map.empty }
@@ -117,7 +118,7 @@ ConstDecls :                                                   { Map.empty }
 
 LibDecls :: { Map Identifier (Identifier, Identifier) }
 LibDecls :                                                     { Map.empty }
-           | LibDecls Identifier '=' ImportVar ';'            { Map.insert $2 $4 $1 }
+           | LibDecls  Identifier '=' ImportVar ';'            { Map.insert $2 $4 $1 }
 
 ImportVar  :: {(Identifier, Identifier)}
 ImportVar :  Identifier '.' Identifier                        { ($1,$3) }
@@ -125,6 +126,7 @@ ImportVar :  Identifier '.' Identifier                        { ($1,$3) }
 VarDecls :: { Set Identifier }
 VarDecls :                                                     { Set.empty }
          | VarDecls var Identifier ';'                         { Set.insert $3 $1 }
+
 
 CouplingL :: { [Coupling] }
 CouplingL :                                                    { [] }
