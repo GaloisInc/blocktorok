@@ -19,10 +19,10 @@ model StructureModel {
   -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
   boundary : Neumann(qw);
-  physics : HeatStructure { 2};
+  physics : HeatTransfer { 2};
   -- Question: shouldn't it be HeatTransfer instead of HeatStructure? (YL)
-  -- TODO arg to HeatStructure should be 'P'
-  -- physics : HeatStructure {P};
+  -- TODO arg to HeatTransfer should be 'P'
+  -- physics : HeatTransfer {P};
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;
