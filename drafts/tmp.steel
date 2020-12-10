@@ -1,4 +1,3 @@
-
 -- TODO Add units
 
 -- import P = lib.conduction_condition
@@ -16,17 +15,19 @@ config {
 model StructureModel {
   input : qw;
   output : Tw;
-  -- FIXME Should the variable be Ts or Tw?
+  -- Convention from the Zhang paper: Tw (YL)
+  -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
   boundary : Neumann(qw);
   physics : HeatStructure { 2};
+  -- Question: shouldn't it be HeatTransfer instead of HeatStructure? (YL)
   -- TODO arg to HeatStructure should be 'P'
   -- physics : HeatStructure {P};
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;
-  var Ts;   -- solid temperature
-  rhos*cps*∇Ts- ks*△Ts = qw;
+  var Tw;   -- solid temperature
+  rhos*cps*∇Tw- ks*△Tw = qw;
 
   }
 
