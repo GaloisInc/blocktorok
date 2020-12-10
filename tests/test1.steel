@@ -1,10 +1,86 @@
 
-ΩF. -u *△u + po*(u•∇ )*u+ ∇p +po * B *TF* g = po*(1+B*To)* g
-ΩF. ∇•u = 0
-ΩF. kF* △TF + po* cp*(u • ∇TF)  = QF
-ΩS. TS = TF
-ΩS. kF* (n • ∇TF) = ks*(n•∇TS)
-ΩS. -ks* △Ts=Qs
+-- TODO Add units
 
-Model 1 { Solve = FVM, Space = ΩF}
-Model 2 { Solve = FEM, Space = ΩS}
+-- import P = lib.conduction_condition
+-- TODO import model "P" defined in a different file (for the conduction condition)
+
+config {
+  step : 2;
+  totalTime : 10;
+  -- TODO create a variable for initial temp
+  -- Tw = P.InitialSolidTemperature;
+  -- TODO make a call to couple function
+  -- Run: couple ModelFluid ModelSolid Tw;
+  }
+
+model StructureModel {
+  input : qw;
+  output : Tw;
+  -- FIXME Should the variable be Ts or Tw?
+  technique : FEM;
+  boundary : Neumann(qw);
+  physics : HeatStructure { 2};
+  -- TODO arg to HeatStructure should be 'P'
+  -- physics : HeatStructure {P};
+  rhos = P.SolidDensity;
+  ks = P.SolidThermalConductivity;
+  cps = P.SolidSpecificHeat;
+  var Ts;   -- solid temperature
+  rhos*cps*∇Ts- ks*△Ts = qw;
+
+  }
+
+model FluidModel {
+  input : Tw;
+  output : qw;
+  technique : FVM;
+  boundary: Dirichlet (Tw);
+  -- TODO change input to boundary conditions
+  -- boundary: Dirichlet (P.InitialSolidTemperature);
+  physics : FluidFlow {2};
+  -- TODO Add Fluid constructor
+  -- physics : ModelType : FluidFlow {
+  --   solver = compressibleFreeStreamDefinition,
+  --   fluidModel = standardAir
+  --   ViscosityModel =  sutherland
+  --   thermalConductivityModel = constant_prandtl
+  -- }
+
+
+  const IBar = 0; -- FIXME initiation
+  const s = 0; -- FIXME initiation
+  const E = 0; -- FIXME initiation
+  gamma = standardAir.ratio_Specific_Heat; -- a perfect gas
+  mu = sutherland.viscosityRef; -- viscosity
+  R =  standardAir.GasConstant; -- specific gas constant
+  Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
+  -- variables we are solving for
+  var u; -- velocities in x,y,z directions
+  var v;
+  var w;
+  var p; -- static pressure
+  var T;  -- temperature from ideal gas equation of state
+  var rhof; -- fluid density
+  T = p / (rhof * R);
+  kappa =  mu * cp / Pr; -- thermal conductivity
+  -- TODO Missing the support for equations
+  -- vBar = {u, v, w} -- flowspeed in cartesian system
+  -- U = {rhof, rhof*vBar, rhof*E } -- conservative variables
+  -- p = (γ-1) rhof [E-0.5(vbar • vbar)]
+  -- R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U) - S = 0;
+  -- tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar)-- viscous stress tensor
+  --  FC = {
+  --    rhof*vBar, rhof*vBar ⊗ vBar + IBar*p,  rhof*E*vBar  + p*vBar
+  --    } -- convective fluxes
+  -- FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
+  -- FIXME what is this dot suppose to be?
+  }
+
+couple StructureModel FluidModel {
+  input : Tin;
+  output : Tout;
+  var qw; -- heat flux
+  qw = FluidModel(Tin);
+  Tout = ModelSolid (qw);
+  -- TODO add zone interface
+  }
