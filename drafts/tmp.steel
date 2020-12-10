@@ -20,7 +20,6 @@ model StructureModel {
   technique : FEM;
   boundary : Neumann(qw);
   physics : HeatTransfer { 2};
-  -- Question: shouldn't it be HeatTransfer instead of HeatStructure? (YL)
   -- TODO arg to HeatTransfer should be 'P'
   -- physics : HeatTransfer {P};
   rhos = P.SolidDensity;
@@ -39,6 +38,7 @@ model FluidModel {
   -- TODO change input to boundary conditions
   -- boundary: Dirichlet (P.InitialSolidTemperature);
   physics : FluidFlow {2};
+  -- Why don't we put this in a library, just to be consistent with HeatTransfer
   -- TODO Add Fluid constructor
   -- physics : ModelType : FluidFlow {
   --   solver = compressibleFreeStreamDefinition,
