@@ -40,7 +40,7 @@ tokens :-
   Neumann                               { lex' TokenNeumann      }
   Dirichlet                             { lex' TokenDirichlet    }
   physics                               { lex' TokenPhysics      }
-  HeatStructure                         { lex' TokenHeatStructure}
+  HeatTransfer                         { lex' TokenHeatTransfer}
   FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
   solve                                 { lex' TokenSolve            }

@@ -1,32 +1,30 @@
-
 -- TODO Add units
 
--- import P = lib.conduction_condition
--- TODO import model "P" defined in a different file (for the conduction condition)
+-- import P = lib.conduction_condition;
+-- import V = lib.fluid_flow;
 
 config {
   step : 2;
   totalTime : 10;
-  -- TODO create a variable for initial temp
   -- Tw = P.InitialSolidTemperature;
-  -- TODO make a call to couple function
-  -- Run: couple ModelFluid ModelSolid Tw;
+  -- Run: couple (ModelFluid, ModelSolid, Tw);
   }
 
 model StructureModel {
   input : qw;
   output : Tw;
-  -- FIXME Should the variable be Ts or Tw?
+  -- Convention from the Zhang paper: Tw (YL)
+  -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
   boundary : Neumann(qw);
-  physics : HeatStructure { 2};
-  -- TODO arg to HeatStructure should be 'P'
-  -- physics : HeatStructure {P};
+  physics : HeatTransfer { 2};
+  -- TODO arg to HeatTransfer should be 'P'
+  -- physics : HeatTransfer {P};
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;
-  var Ts;   -- solid temperature
-  rhos*cps*∇Ts- ks*△Ts = qw;
+  var Tw;   -- solid temperature
+  rhos*cps*∇Tw- ks*△Tw = qw;
 
   }
 
@@ -38,6 +36,7 @@ model FluidModel {
   -- TODO change input to boundary conditions
   -- boundary: Dirichlet (P.InitialSolidTemperature);
   physics : FluidFlow {2};
+  -- Why don't we put this in a library, just to be consistent with HeatTransfer
   -- TODO Add Fluid constructor
   -- physics : ModelType : FluidFlow {
   --   solver = compressibleFreeStreamDefinition,
@@ -84,3 +83,8 @@ couple StructureModel FluidModel {
   Tout = ModelSolid (qw);
   -- TODO add zone interface
   }
+
+-- def couple (m1, m2, Tin):
+--  qw = m1 (Tin)
+--  Tout = m2 (qw);
+--  return Tout

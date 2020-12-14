@@ -57,7 +57,7 @@ import Physics.Model
       Neumann         { Token _ TokenNeumann }
       Dirichlet       { Token _ TokenDirichlet }
       physics         { Token _ TokenPhysics }
-      HeatStructure   { Token _ TokenHeatStructure }
+      HeatTransfer   { Token _ TokenHeatTransfer }
       FluidFlow           { Token _ TokenFluidFlow }
       solve           { Token _ TokenSolve }
       var             { Token _ TokenV }
@@ -166,7 +166,7 @@ physicsType
 
 -- parameters for this type of physics
 physicsTypeRHS
-    :  HeatStructure '{' int '}'                             { HeatStructure $3 }
+    :  HeatTransfer '{' int '}'                             { HeatTransfer $3 }
     | FluidFlow '{' int '}'                                  { FluidFlow $3 }
 
 

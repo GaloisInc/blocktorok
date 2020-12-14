@@ -37,7 +37,7 @@ data Boundary = Neumann Identifier
               | Dirichlet Identifier
               deriving (Show)
 
-data PhysicsType =  HeatStructure Int
+data PhysicsType =  HeatTransfer Int
                  | FluidFlow Int
                 deriving (Show)
 

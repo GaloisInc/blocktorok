@@ -35,7 +35,7 @@ data TokenClass = TokenInt Int
                 | TokenNeumann
                 | TokenDirichlet
                 | TokenPhysics
-                | TokenHeatStructure
+                | TokenHeatTransfer
                 | TokenFluidFlow
                 | TokenV
                 | TokenSolve
@@ -85,7 +85,7 @@ unLex TokenBoundary = "boundary"
 unLex TokenNeumann = "Neumann"
 unLex TokenDirichlet = "Dirichlet"
 unLex TokenPhysics = "physics"
-unLex TokenHeatStructure = "HeatStructure"
+unLex TokenHeatTransfer = "HeatTransfer"
 unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
 unLex TokenSolve = "solve"
