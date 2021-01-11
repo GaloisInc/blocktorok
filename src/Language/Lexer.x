@@ -7,6 +7,7 @@ module Language.Lexer
   , runAlex'
   , alexMonadScan'
   , alexError'
+  , llex
   ) where
 
 import Prelude hiding (lex)
@@ -102,6 +103,16 @@ lex f = \(p,_,_,s) i -> return $ Token p (f (take i s))
 -- the input
 lex' :: TokenClass -> AlexAction Token
 lex' = lex . const
+
+-- LINK lexer
+llex :: String -> Either String [Token]
+llex str = runAlex str loop
+  where loop = do t@(Token _ tok) <- alexMonadScan'
+                  if tok == TokenEOF then
+                    return [t]
+                  else
+                    do toks <- loop
+                       return $ t:toks
 
 -- We rewrite alexMonadScan' to delegate to alexError' when lexing fails
 -- (the default implementation just returns an error message).
