@@ -11,7 +11,7 @@ This module defines an interface between the lexer, generated using Alex, and
 Parsec, which is used to parse LINK programs.
 -}
 
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, MonoLocalBinds #-}
 
 module Language.Token
   ( tok
@@ -28,6 +28,7 @@ import Language.TokenClass
 
 import Text.Parsec hiding (satisfy)
 
+-- | The type of LINK parsers.
 type Parser = Parsec [Token] ()
 
 satisfy :: (Stream [Token] m Token) => (Token -> Bool) -> ParsecT [Token] u m TokenClass
@@ -43,18 +44,22 @@ nextPos :: SourcePos -> Token -> [Token] -> SourcePos
 nextPos pos _ ((Token (AlexPn _ l c) _):_) = setSourceColumn (setSourceLine pos l) c
 nextPos pos _ []                           = pos
 
+-- | Parse the given 'TokenClass'.
 tok :: (Stream [Token] m Token) => TokenClass -> ParsecT [Token] u m TokenClass
 tok t = satisfy (\(Token _ t') -> t' == t) <?> show t
 
+-- | Parse (and ignore) the given 'TokenClass'.
 tok' :: (Stream [Token] m Token) => TokenClass -> ParsecT [Token] u m ()
 tok' p = void $ tok p
 
+-- | Parse a @TokenInt@.
 number :: Monad m => ParsecT [Token] u m Int
 number = satisfy' p <?> "integer"
   where p (Token _ t) = case t of
                           TokenInt n -> Just n
                           _ -> Nothing
 
+-- | Parse a @TokenVar@.
 variable :: Monad m => ParsecT [Token] u m String
 variable = satisfy' p <?> "variable"
   where p (Token _ t) = case t of
