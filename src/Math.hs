@@ -16,9 +16,6 @@ with all sorts of operations, notions of units, types, etc.
 
 module Math where
 
-import Data.Map.Strict (Map)
-import Data.Set (Set)
-
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -26,8 +23,7 @@ import qualified Data.Set as Set
 import Language.Identifier
 
 -- | The type of mathematical expressions
-data Exp = Divergence Exp
-         | Laplacian Exp
+data Exp = Laplacian Exp
          | NablaCross Exp
          | NablaDot Exp
          | NablaOuter Exp
@@ -43,7 +39,8 @@ data Exp = Divergence Exp
          | InnerProduct Exp Exp
          | OuterProduct Exp Exp
          | FnApp Identifier Identifier
-         | Term Term
+         | IntE Int
+         | Var String
 
 instance Show Exp where
   show (NablaCross e) = "(" ++ "∇×" ++ show e ++ ")"
@@ -62,12 +59,8 @@ instance Show Exp where
   show (InnerProduct e1 e2) = "(" ++ show e1++"•" ++ show e2 ++ ")"
   show (OuterProduct e1 e2) = "(" ++ show e1++"⊗" ++ show e2 ++ ")"
   show (FnApp f arg) = show f ++"(" ++ show arg ++ ")"
-  show (Term e) = show e
-
--- | Mathematical terms, which are either integers or valid variable
---   identifiers
-data Term = Int Int
-          | Var String
+  show (IntE i) = show i
+  show (Var v) = v
 
 -- | Mathematical equations, which consist of a left- and right-hand side.
 data Equation =
@@ -78,12 +71,7 @@ data Equation =
 instance Show Equation where
   show eq = show (getLHS eq) ++ " = " ++ show (getRHS eq)
 
-instance Show Term where
-  show (Int e) = show e
-  show (Var e) = e
-
 instance Uniplate Exp where
-  uniplate (Divergence e)       = plate Divergence |* e
   uniplate (Laplacian e)        = plate Laplacian |* e
   uniplate (NablaCross e)       = plate NablaCross |* e
   uniplate (NablaDot e)         = plate NablaDot |* e
@@ -99,7 +87,9 @@ instance Uniplate Exp where
   uniplate (CrossProduct e1 e2) = plate CrossProduct |* e1 |* e2
   uniplate (InnerProduct e1 e2) = plate InnerProduct |* e1 |* e2
   uniplate (OuterProduct e1 e2) = plate OuterProduct |* e1 |* e2
-  uniplate (Term t)             = plate Term |- t
+  uniplate (IntE i)             = plate IntE |- i
+  uniplate (Var v)              = plate Var |- v
+  uniplate (FnApp f arg)        = plate FnApp |- f |- arg
 
 
 instance Biplate Exp Exp where
@@ -107,4 +97,4 @@ instance Biplate Exp Exp where
 
 -- | Given an expression, return a set containing all of its variables.
 vars :: Exp -> Set Identifier
-vars e = Set.fromList [Identifier x | Term (Var x) <- universe e]
+vars e = Set.fromList [Identifier x | Var x <- universe e]
