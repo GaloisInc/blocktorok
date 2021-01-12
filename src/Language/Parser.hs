@@ -16,6 +16,8 @@ module Language.Parser
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Language.AST
 import Language.Identifier
@@ -26,6 +28,8 @@ import Language.TokenClass
 import Math
 
 import Physics.Model
+
+import Solver.Technique
 
 import Text.Parsec
 
@@ -45,79 +49,184 @@ parseDecl :: FilePath -> String -> Either ParseError Prog
 parseDecl = parseNamedText parseProg
 
 parseProg :: Parser Prog
-parseProg = do cfg <- parseConfig
-               models <- parseModels
-               couplings <- parseCouplings
-               return $ Prog cfg models couplings
+parseProg =
+  do cfg <- parseConfig
+     models <- parseModels
+     Prog cfg models <$> parseCouplings
 
 parseConfig :: Parser Config
-parseConfig = do tok' TokenConfig
-                 tok' TokenLCurl
-                 steps <- parseStepConfig
-                 duration <- parseDurationConfig
-                 tok' TokenRCurl
-                 return $ Config steps duration
+parseConfig =
+  do tok' TokenConfig
+     tok' TokenLCurl
+     steps <- parseStepConfig
+     duration <- parseDurationConfig
+     tok' TokenRCurl
+     return $ Config steps duration
 
 parseStepConfig :: Parser Int
-parseStepConfig = do tok' TokenStep
-                     tok' TokenColon
-                     n <- number
-                     tok' TokenSemi
-                     return n
+parseStepConfig =
+  do tok' TokenStep
+     tok' TokenColon
+     n <- number
+     tok' TokenSemi
+     return n
 
 parseDurationConfig :: Parser Duration
-parseDurationConfig = do mode <- tok TokenIterations <|> tok TokenTotalTime
-                         tok' TokenColon
-                         n <- number
-                         tok' TokenSemi
-                         return $ case mode of
-                                    TokenIterations -> Iterations n
-                                    TokenTotalTime -> TotalTime n
+parseDurationConfig =
+  do mode <- tok TokenIterations <|> tok TokenTotalTime
+     tok' TokenColon
+     n <- number
+     tok' TokenSemi
+     return $ case mode of
+                TokenIterations -> Iterations n
+                TokenTotalTime -> TotalTime n
 
 parseModels :: Parser (Map Identifier Model)
-parseModels = do models <- many1 parseModel
-                 return $ Map.fromList models
+parseModels =
+  do models <- many1 parseModel
+     return $ Map.fromList models
 
 parseModel :: Parser (Identifier, Model)
-parseModel = do tok' TokenModel
-                id <- parseIdentifier
-                model <- parseModelBody
-                return (id, model)
+parseModel =
+  do tok' TokenModel
+     i <- parseIdentifier
+     model <- parseModelBody
+     return (i, model)
 
 parseIdentifier :: Parser Identifier
-parseIdentifier = do Identifier <$> variable
+parseIdentifier =
+  do Identifier <$> variable
 
 parseModelBody :: Parser Model
-parseModelBody = do tok' TokenLCurl
-                    inputDecl <- parseInputDecl
-                    outputDecl <- parseOutputDecl
-                    technique <- parseSettingTechnique
-                    boundaryDecl <- parseBoundaryDecl
-                    physType <- parsePhysicsType
-                    consts <- parseConstDecls
-                    libs <- parseLibDecls
-                    vars <- parseVarDecls
-                    eqs <- parseEqs
-                    tok' TokenRCurl
-                    return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vars eqs
+parseModelBody =
+  do tok' TokenLCurl
+     inputDecl <- parseInputDecl
+     outputDecl <- parseOutputDecl
+     technique <- parseSettingTechnique
+     boundaryDecl <- parseBoundaryDecl
+     physType <- parsePhysicsType
+     consts <- parseConstDecls
+     libs <- parseLibDecls
+     vs <- parseVarDecls
+     eqs <- parseEqs
+     tok' TokenRCurl
+     return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs
 
-parseInputDecl = undefined
+parseInputDecl :: Parser Identifier
+parseInputDecl =
+  do tok' TokenInput
+     tok' TokenColon
+     var <- variable
+     tok' TokenSemi
+     return $ Identifier var
 
-parseOutputDecl = undefined
+parseOutputDecl :: Parser Identifier
+parseOutputDecl =
+  do tok' TokenOutput
+     tok' TokenColon
+     var <- variable
+     tok' TokenSemi
+     return $ Identifier var
 
-parseSettingTechnique = undefined
+parseSettingTechnique :: Parser Technique
+parseSettingTechnique =
+  do tok' TokenTechnique
+     tok' TokenColon
+     technique <- tok TokenFEM <|> tok TokenFVM
+     tok' TokenSemi
+     return $ case technique of
+                TokenFEM -> FEM
+                TokenFVM -> FVM
 
-parseBoundaryDecl = undefined
+parseBoundaryDecl :: Parser Boundary
+parseBoundaryDecl =
+  do tok' TokenBoundary
+     tok' TokenColon
+     methodTok <- tok TokenDirichlet <|> tok TokenNeumann
+     tok' TokenLParen
+     i <- parseIdentifier
+     tok' TokenRParen
+     tok' TokenSemi
+     return $ case methodTok of
+                TokenDirichlet -> Dirichlet i
+                TokenNeumann -> Neumann i
 
-parsePhysicsType = undefined
+parsePhysicsType :: Parser PhysicsType
+parsePhysicsType =
+  do tok' TokenPhysics
+     tok' TokenColon
+     rhs <- parsePhysicsTypeRHS
+     tok' TokenSemi
+     return rhs
 
-parseConstDecls = undefined
+parsePhysicsTypeRHS :: Parser PhysicsType
+parsePhysicsTypeRHS =
+  do t <- tok TokenHeatTransfer <|> tok TokenFluidFlow
+     tok' TokenLCurl
+     n <- number
+     tok' TokenRCurl
+     return $ case t of
+                TokenHeatTransfer -> HeatTransfer n
+                TokenFluidFlow -> FluidFlow n
 
-parseLibDecls = undefined
+parseConstDecls :: Parser (Map Identifier Int)
+parseConstDecls =
+  do decls <- many parseConstDecl
+     return $ Map.fromList decls
 
-parseVarDecls = undefined
+parseConstDecl :: Parser (Identifier, Int)
+parseConstDecl =
+  do tok' TokenConst
+     i <- parseIdentifier
+     tok' TokenEq
+     n <- number
+     tok' TokenSemi
+     return (i, n)
 
-parseEqs = undefined
+parseLibDecls :: Parser (Map Identifier (Identifier, Identifier))
+parseLibDecls =
+  do decls <- many parseLibDecl
+     return $ Map.fromList decls
+
+parseLibDecl :: Parser (Identifier, (Identifier, Identifier))
+parseLibDecl =
+  do i <- parseIdentifier
+     tok' TokenEq
+     lib <- parseImport
+     tok' TokenSemi
+     return (i, lib)
+
+parseImport :: Parser (Identifier, Identifier)
+parseImport =
+  do scope <- parseIdentifier
+     tok' TokenDot
+     m <- parseIdentifier
+     return (scope, m)
+
+parseVarDecls :: Parser (Set Identifier)
+parseVarDecls =
+  do decls <- many parseVarDecl
+     return $ Set.fromList decls
+
+parseVarDecl :: Parser Identifier
+parseVarDecl =
+  do tok' TokenV
+     i <- parseIdentifier
+     tok' TokenSemi
+     return i
+
+parseEqs :: Parser [Equation]
+parseEqs = many parseEq
+
+parseEq :: Parser Equation
+parseEq =
+  do lhs <- parseExp
+     tok' TokenEq
+     rhs <- parseExp
+     tok' TokenSemi
+     return $ Equation lhs rhs
+
+parseExp = undefined
 
 parseCouplings = undefined
 
