@@ -220,7 +220,7 @@ parseEqs = many parseEq
 parseExp :: Parser Exp
 parseExp = buildExpressionParser opTable parseTerm
   where
-    opTable = [ [prefix TokenNablaCross NablaCross, prefix TokenNablaDot NablaDot, prefix TokenNablaOuter NablaOuter]
+    opTable = [ [prefix TokenNablaCross NablaCross, prefix TokenNablaDot NablaDot, prefix TokenNablaOuter NablaOuter, prefix TokenMinus Negation]
               , [prefix TokenTriangle Laplacian, prefix TokenNabla NablaExp]
               , [binary TokenTimes Times AssocLeft, binary TokenInnerProduct InnerProduct AssocLeft, binary TokenCrossProduct CrossProduct AssocLeft, binary TokenOuterProduct OuterProduct AssocLeft]
               , [binary TokenDiv Div AssocLeft]
