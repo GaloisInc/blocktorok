@@ -247,4 +247,17 @@ parseExp = buildExpressionParser opTable parseTerm
              tok' TokenRParen
              return $ Paran e
 
-parseCouplings = undefined
+parseCouplings :: Parser [Coupling]
+parseCouplings = many parseCoupling
+  where
+    parseCoupling =
+      do tok' TokenCouple
+         ma <- parseIdentifier
+         mb <- parseIdentifier
+         tok' TokenLCurl
+         i <- parseInputDecl
+         o <- parseOutputDecl
+         vs <- parseVarDecls
+         eqs <- parseEqs
+         tok' TokenRCurl
+         return $ Coupling ma mb i o vs eqs
