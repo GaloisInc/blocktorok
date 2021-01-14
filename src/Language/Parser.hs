@@ -287,36 +287,6 @@ parseExp = parseExp1 `chainl1` parseOp
              tok' TokenRParen
              return $ Paran e
 
--- parseExp :: Parser Exp
--- parseExp = buildExpressionParser opTable parseTerm
---   where
---     opTable = [ [prefix TokenNablaCross NablaCross, prefix TokenNablaDot NablaDot, prefix TokenNablaOuter NablaOuter, prefix TokenMinus Negation]
---               , [prefix TokenTriangle Laplacian, prefix TokenNabla NablaExp]
---               , [binary TokenTimes Times AssocLeft, binary TokenInnerProduct InnerProduct AssocLeft, binary TokenCrossProduct CrossProduct AssocLeft, binary TokenOuterProduct OuterProduct AssocLeft]
---               , [binary TokenDiv Div AssocLeft]
---               , [binary TokenPlus Plus AssocLeft, binary TokenMinus Minus AssocLeft]
---               ]
-
---     binary opTok fun = Infix (do { tok' opTok; return fun })
---     prefix opTok fun = Prefix (do { tok' opTok; return fun })
-
---     parseTerm = (IntE <$> number) <|> (Var <$> variable) <|> parseFnApp <|> parseParens
---       where
---         parseFnApp :: Parser Exp
---         parseFnApp =
---           do f <- parseIdentifier
---              tok' TokenLParen
---              arg <- parseIdentifier
---              tok' TokenRParen
---              return $ FnApp f arg
-
---         parseParens :: Parser Exp
---         parseParens =
---           do tok' TokenLParen
---              e <- parseExp
---              tok' TokenRParen
---              return $ Paran e
-
 parseCouplings :: Parser [Coupling]
 parseCouplings = many parseCoupling
   where
