@@ -32,7 +32,14 @@ config {
 
 -- The two models presented here come from the NASA toy problem number 3
 model F {
+    input: p;
+    output: TF;
+
     technique: FVM;
+
+    boundary: Neumann(TF);
+
+    physics: FluidFlow {0};
 
     const u = 1;
     const po = 1;
@@ -46,13 +53,20 @@ model F {
     var g;
     var QF;
 
-    -u * △u + po * (u•∇ ) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
+    -u * △u + po * (u•∇) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
     ∇•u = 0;
     kF * △TF + po * cp * (u • ∇TF) = QF;
 }
 
 model S {
+    input: TF;
+    output: Qs;
+
     technique: FEM;
+
+    boundary: Dirichlet(TS);
+
+    physics: HeatTransfer {0};
 
     const kF = 1;
     const n = 1;
@@ -79,4 +93,7 @@ model S {
 -- `couple` followed by two identifiers (that must have been introduced above).
 -- In braces will be fields defining the coupling parameters (currently,
 -- nothing).
-couple F S { }
+couple F S {
+    input: TF;
+    output: Qs;
+}

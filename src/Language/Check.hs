@@ -24,8 +24,8 @@ import qualified Data.Set as Set
 
 import Language.AST
 import Language.Identifier
-import Math
-import Physics.Model
+-- import Math
+-- import Physics.Model
 
 -- | Return true if and only if the set of all couplings in the given LINK
 --   program accounts for all pairs of distinct models.
@@ -42,13 +42,13 @@ hasAllCouplings p = couplings == modelPairs
 --   in the model's equations have been declared.
 allVarsDeclared :: Prog -> Bool
 allVarsDeclared _ = True -- FIXME
-allVarsDeclared2 p = all modelVarsDeclared $ getModels p
-  where
-    modelVarsDeclared :: Model -> Bool
-    modelVarsDeclared m = eqVars `Set.isSubsetOf` Set.union declaredConsts (Physics.Model.getVars m)
-      where
-        declaredConsts :: Set Identifier
-        declaredConsts = Set.fromList $ Map.keys $ getConsts m
+-- allVarsDeclared2 p = all modelVarsDeclared $ getModels p
+--   where
+--     modelVarsDeclared :: Model -> Bool
+--     modelVarsDeclared m = eqVars `Set.isSubsetOf` Set.union declaredConsts (Physics.Model.getVars m)
+--       where
+--         declaredConsts :: Set Identifier
+--         declaredConsts = Set.fromList $ Map.keys $ getConsts m
 
-        eqVars :: Set Identifier
-        eqVars = foldr Set.union Set.empty $ vars <$> (getLHS <$> Physics.Model.getEqs m) ++ (getRHS <$> Physics.Model.getEqs m)
+--         eqVars :: Set Identifier
+--         eqVars = foldr Set.union Set.empty $ vars <$> (getLHS <$> Physics.Model.getEqs m) ++ (getRHS <$> Physics.Model.getEqs m)
