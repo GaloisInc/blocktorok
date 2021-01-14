@@ -75,6 +75,7 @@ parseConfig =
          return $ case mode of
                     TokenIterations -> Iterations n
                     TokenTotalTime -> TotalTime n
+                    _ -> error "This can't happen"
 
 parseModels :: Parser (Map Identifier Model)
 parseModels =
@@ -130,6 +131,7 @@ parseSettingTechnique =
      return $ case technique of
                 TokenFEM -> FEM
                 TokenFVM -> FVM
+                _ -> error "This can't happen"
 
 parseBoundaryDecl :: Parser Boundary
 parseBoundaryDecl =
@@ -143,6 +145,7 @@ parseBoundaryDecl =
      return $ case methodTok of
                 TokenDirichlet -> Dirichlet i
                 TokenNeumann -> Neumann i
+                _ -> error "This can't happen"
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -160,6 +163,7 @@ parsePhysicsType =
          return $ case t of
                     TokenHeatTransfer -> HeatTransfer n
                     TokenFluidFlow -> FluidFlow n
+                    _ -> error "This can't happen"
 
 parseConstDecls :: Parser (Map Identifier Int)
 parseConstDecls =
@@ -214,29 +218,31 @@ parseEqs = many parseEq
          return $ Equation lhs rhs
 
 parseExp :: Parser Exp
-parseExp = parseExp1 `chainl1` parseOp
+parseExp = parseExp1 `chainl1` pAddOp
   where
-    parseOp :: Parser (Exp -> Exp -> Exp)
-    parseOp =
+    pAddOp :: Parser (Exp -> Exp -> Exp)
+    pAddOp =
       do op <- choice (tok <$> [TokenPlus, TokenMinus])
          return $ case op of
                     TokenPlus -> Plus
                     TokenMinus -> Minus
+                    _ -> error "This can't happen"
 
     parseExp1 :: Parser Exp
     parseExp1 = parseExp2 `chainl1` return Div
 
     parseExp2 :: Parser Exp
-    parseExp2 = parseExp3 `chainl1` parseOp
+    parseExp2 = parseExp3 `chainl1` pMulOp
       where
-        parseOp :: Parser (Exp -> Exp -> Exp)
-        parseOp =
+        pMulOp :: Parser (Exp -> Exp -> Exp)
+        pMulOp =
           do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct])
              return $ case op of
                         TokenTimes -> Times
                         TokenInnerProduct -> InnerProduct
                         TokenCrossProduct -> CrossProduct
                         TokenOuterProduct -> OuterProduct
+                        _ -> error "This can't happen"
 
     parseExp3 :: Parser Exp
     parseExp3 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp4
@@ -246,6 +252,7 @@ parseExp = parseExp1 `chainl1` parseOp
              let f = case op of
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
+                       _ -> error "This can't happen"
              f <$> parseExp3
 
     parseExp4 :: Parser Exp
@@ -257,6 +264,7 @@ parseExp = parseExp1 `chainl1` parseOp
                        TokenNablaCross -> NablaCross
                        TokenNablaDot -> NablaDot
                        TokenNablaOuter -> NablaOuter
+                       _ -> error "This can't happen"
              f <$> parseExp4
 
     parseExp5 :: Parser Exp
