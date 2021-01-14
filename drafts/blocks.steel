@@ -93,4 +93,7 @@ model S {
 -- `couple` followed by two identifiers (that must have been introduced above).
 -- In braces will be fields defining the coupling parameters (currently,
 -- nothing).
-couple F S { }
+couple F S {
+    input: TF;
+    output: Qs;
+}
