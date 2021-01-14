@@ -32,10 +32,6 @@ import Physics.Model
 import Solver.Technique
 
 import Text.Parsec
-import Text.Parsec.Expr
-
-parseText :: Parser a -> String -> Either ParseError a
-parseText p = parseNamedText p "<string>"
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a
 parseNamedText p n s =
