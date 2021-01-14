@@ -243,7 +243,7 @@ parseExp = parseExp1 `chainl1` parseOp
                         TokenOuterProduct -> OuterProduct
 
     parseExp3 :: Parser Exp
-    parseExp3 = p <|> parseExp4
+    parseExp3 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp4
       where
         p =
           do op <- choice [tok TokenTriangle, tok TokenNabla]
@@ -269,7 +269,6 @@ parseExp = parseExp1 `chainl1` parseOp
              <|> (Var <$> variable)
              <|> parseNeg
              <|> parseParens
-             <|> (tok' TokenNabla >> return NablaSingle)
       where
         parseFnApp =
           do f <- parseIdentifier
