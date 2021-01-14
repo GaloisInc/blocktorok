@@ -218,21 +218,59 @@ parseEqs = many parseEq
          return $ Equation lhs rhs
 
 parseExp :: Parser Exp
-parseExp = buildExpressionParser opTable parseTerm
+parseExp = parseExp1 `chainl1` parseOp
   where
-    opTable = [ [prefix TokenNablaCross NablaCross, prefix TokenNablaDot NablaDot, prefix TokenNablaOuter NablaOuter, prefix TokenMinus Negation]
-              , [prefix TokenTriangle Laplacian, prefix TokenNabla NablaExp]
-              , [binary TokenTimes Times AssocLeft, binary TokenInnerProduct InnerProduct AssocLeft, binary TokenCrossProduct CrossProduct AssocLeft, binary TokenOuterProduct OuterProduct AssocLeft]
-              , [binary TokenDiv Div AssocLeft]
-              , [binary TokenPlus Plus AssocLeft, binary TokenMinus Minus AssocLeft]
-              ]
+    parseOp :: Parser (Exp -> Exp -> Exp)
+    parseOp =
+      do op <- choice (tok <$> [TokenPlus, TokenMinus])
+         return $ case op of
+                    TokenPlus -> Plus
+                    TokenMinus -> Minus
 
-    binary opTok fun = Infix (do { tok' opTok; return fun })
-    prefix opTok fun = Prefix (do { tok' opTok; return fun })
+    parseExp1 :: Parser Exp
+    parseExp1 = parseExp2 `chainl1` return Div
 
-    parseTerm = (IntE <$> number) <|> (Var <$> variable) <|> parseFnApp <|> parseParens
+    parseExp2 :: Parser Exp
+    parseExp2 = parseExp3 `chainl1` parseOp
       where
-        parseFnApp :: Parser Exp
+        parseOp :: Parser (Exp -> Exp -> Exp)
+        parseOp =
+          do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct])
+             return $ case op of
+                        TokenTimes -> Times
+                        TokenInnerProduct -> InnerProduct
+                        TokenCrossProduct -> CrossProduct
+                        TokenOuterProduct -> OuterProduct
+
+    parseExp3 :: Parser Exp
+    parseExp3 = p <|> parseExp4
+      where
+        p =
+          do op <- choice [tok TokenTriangle, tok TokenNabla]
+             let f = case op of
+                       TokenTriangle -> Laplacian
+                       TokenNabla -> NablaExp
+             f <$> parseExp3
+
+    parseExp4 :: Parser Exp
+    parseExp4 = p <|> parseExp5
+      where
+        p =
+          do op <- choice [tok TokenNablaCross, tok TokenNablaDot, tok TokenNablaOuter]
+             let f = case op of
+                       TokenNablaCross -> NablaCross
+                       TokenNablaDot -> NablaDot
+                       TokenNablaOuter -> NablaOuter
+             f <$> parseExp4
+
+    parseExp5 :: Parser Exp
+    parseExp5 = (IntE <$> number)
+             <|> try parseFnApp
+             <|> (Var <$> variable)
+             <|> parseNeg
+             <|> parseParens
+             <|> (tok' TokenNabla >> return NablaSingle)
+      where
         parseFnApp =
           do f <- parseIdentifier
              tok' TokenLParen
@@ -240,12 +278,45 @@ parseExp = buildExpressionParser opTable parseTerm
              tok' TokenRParen
              return $ FnApp f arg
 
-        parseParens :: Parser Exp
+        parseNeg =
+          do tok' TokenMinus
+             Negation <$> parseExp5
+
         parseParens =
           do tok' TokenLParen
              e <- parseExp
              tok' TokenRParen
              return $ Paran e
+
+-- parseExp :: Parser Exp
+-- parseExp = buildExpressionParser opTable parseTerm
+--   where
+--     opTable = [ [prefix TokenNablaCross NablaCross, prefix TokenNablaDot NablaDot, prefix TokenNablaOuter NablaOuter, prefix TokenMinus Negation]
+--               , [prefix TokenTriangle Laplacian, prefix TokenNabla NablaExp]
+--               , [binary TokenTimes Times AssocLeft, binary TokenInnerProduct InnerProduct AssocLeft, binary TokenCrossProduct CrossProduct AssocLeft, binary TokenOuterProduct OuterProduct AssocLeft]
+--               , [binary TokenDiv Div AssocLeft]
+--               , [binary TokenPlus Plus AssocLeft, binary TokenMinus Minus AssocLeft]
+--               ]
+
+--     binary opTok fun = Infix (do { tok' opTok; return fun })
+--     prefix opTok fun = Prefix (do { tok' opTok; return fun })
+
+--     parseTerm = (IntE <$> number) <|> (Var <$> variable) <|> parseFnApp <|> parseParens
+--       where
+--         parseFnApp :: Parser Exp
+--         parseFnApp =
+--           do f <- parseIdentifier
+--              tok' TokenLParen
+--              arg <- parseIdentifier
+--              tok' TokenRParen
+--              return $ FnApp f arg
+
+--         parseParens :: Parser Exp
+--         parseParens =
+--           do tok' TokenLParen
+--              e <- parseExp
+--              tok' TokenRParen
+--              return $ Paran e
 
 parseCouplings :: Parser [Coupling]
 parseCouplings = many parseCoupling
