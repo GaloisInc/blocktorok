@@ -1,0 +1,3 @@
+[submodule "units-parser"]
+	path = units-parser
+	url = https://github.com/adamgundry/units-parser
