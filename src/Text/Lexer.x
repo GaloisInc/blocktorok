@@ -24,7 +24,6 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-  $alpha+                               { lex TokenUnit          }
   $digit+                               { lex (TokenInt . read)  }
   config                                { lex' TokenConfig       }
   iterations                            { lex' TokenIterations   }
@@ -47,6 +46,7 @@ tokens :-
   var                                   { lex' TokenV            }
   solve                                 { lex' TokenSolve        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
+  $alpha+                               { lex  TokenUnit         }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }
   \=                                    { lex' TokenEq           }
