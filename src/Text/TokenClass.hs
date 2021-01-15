@@ -17,53 +17,54 @@ module Text.TokenClass
   ) where
 
 -- | The type of LINK tokens
-data TokenClass = TokenInt Int
-                | TokenVar String
-                | TokenConfig
-                | TokenIterations
-                | TokenModel
-                | TokenConst
-                | TokenCouple
-                | TokenStep
-                | TokenTotalTime
-                | TokenInput
-                | TokenOutput
-                | TokenTechnique
-                | TokenFEM
-                | TokenFVM
-                | TokenBoundary
-                | TokenNeumann
-                | TokenDirichlet
-                | TokenPhysics
-                | TokenHeatTransfer
-                | TokenFluidFlow
-                | TokenV
-                | TokenSolve
-                | TokenColon
-                | TokenSemi
-                | TokenEq
-                | TokenTriangle
-                | TokenNablaCross
-                | TokenNablaDot
-                | TokenNablaOuter
-                | TokenNabla
-                | TokenPlus
-                | TokenMinus
-                | TokenTimes
-                | TokenDiv
-                | TokenCrossProduct
-                | TokenInnerProduct
-                | TokenOuterProduct
-                | TokenDot
-                | TokenComma
-                | TokenLParen
-                | TokenRParen
-                | TokenLBracket
-                | TokenRBracket
-                | TokenLCurl
-                | TokenRCurl
-                | TokenEOF
-                deriving (Eq, Show)
+data TokenClass =
+    TokenInt Int
+  | TokenVar String
+  | TokenConfig
+  | TokenIterations
+  | TokenModel
+  | TokenConst
+  | TokenCouple
+  | TokenStep
+  | TokenTotalTime
+  | TokenInput
+  | TokenOutput
+  | TokenTechnique
+  | TokenFEM
+  | TokenFVM
+  | TokenBoundary
+  | TokenNeumann
+  | TokenDirichlet
+  | TokenPhysics
+  | TokenHeatTransfer
+  | TokenFluidFlow
+  | TokenV
+  | TokenSolve
+  | TokenColon
+  | TokenSemi
+  | TokenEq
+  | TokenTriangle
+  | TokenNablaCross
+  | TokenNablaDot
+  | TokenNablaOuter
+  | TokenNabla
+  | TokenPlus
+  | TokenMinus
+  | TokenTimes
+  | TokenDiv
+  | TokenCrossProduct
+  | TokenInnerProduct
+  | TokenOuterProduct
+  | TokenDot
+  | TokenComma
+  | TokenLParen
+  | TokenRParen
+  | TokenLBracket
+  | TokenRBracket
+  | TokenLCurl
+  | TokenRCurl
+  | TokenEOF
+  deriving (Eq, Show)
 
 -- | Given a @TokenClass@, return a string for use in error messages.
 unLex :: TokenClass -> String
