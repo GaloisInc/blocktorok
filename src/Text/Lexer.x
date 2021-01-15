@@ -24,6 +24,7 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
+  $alpha+                               { lex TokenUnit          }
   $digit+                               { lex (TokenInt . read)  }
   config                                { lex' TokenConfig       }
   iterations                            { lex' TokenIterations   }
@@ -32,7 +33,7 @@ tokens :-
   couple                                { lex' TokenCouple       }
   step                                  { lex' TokenStep         }
   totalTime                             { lex' TokenTotalTime    }
-  input                                 { lex' TokenInput       }
+  input                                 { lex' TokenInput        }
   output                                { lex' TokenOutput       }
   technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
@@ -41,10 +42,10 @@ tokens :-
   Neumann                               { lex' TokenNeumann      }
   Dirichlet                             { lex' TokenDirichlet    }
   physics                               { lex' TokenPhysics      }
-  HeatTransfer                         { lex' TokenHeatTransfer}
-  FluidFlow                             { lex' TokenFluidFlow}
+  HeatTransfer                          { lex' TokenHeatTransfer }
+  FluidFlow                             { lex' TokenFluidFlow    }
   var                                   { lex' TokenV            }
-  solve                                 { lex' TokenSolve            }
+  solve                                 { lex' TokenSolve        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }
