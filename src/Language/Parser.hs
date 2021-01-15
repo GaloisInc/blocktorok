@@ -31,6 +31,7 @@ import Physics.Model
 
 import Solver.Technique
 
+import qualified Text.Parse.Units
 import Text.Parsec
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a
