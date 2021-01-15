@@ -33,9 +33,10 @@ library
   build-depends:       base >= 3 && < 5
                      , array
                      , containers
+                     , mtl
+                     , multimap
                      , parsec
                      , uniplate
-                     , units-parser
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     Data.Link.AST
@@ -43,6 +44,7 @@ library
                        Data.Link.Identifier
                        Text.Lexer
                        Text.Parse.Link
+                       Text.Parse.Units
                        Text.Token
                        Text.TokenClass
                        Data.Solver.Technique
