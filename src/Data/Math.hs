@@ -1,5 +1,5 @@
 {-|
-Module      : Math
+Module      : Data.Math
 Description : Representations of mathematical expressions
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -14,13 +14,13 @@ with all sorts of operations, notions of units, types, etc.
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Math where
+module Data.Math where
 
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Language.Identifier
+import Data.Link.Identifier
 
 -- | The type of mathematical expressions
 data Exp = Laplacian Exp

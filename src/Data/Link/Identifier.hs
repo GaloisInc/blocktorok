@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Identifier
+Module      : Data.Link.Identifier
 Description : Representation of LINK identifiers
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -10,7 +10,7 @@ Portability : N/A
 This module defines LINK identifiers (i.e. variable names).
 -}
 
-module Language.Identifier
+module Data.Link.Identifier
   ( Identifier(..)
   ) where
 

@@ -1,5 +1,5 @@
 {-|
-Module      : Physics.Model
+Module      : Data.Physics.Model
 Description : High-level representation of physical models
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -13,7 +13,7 @@ here, probably, but for now it's as simple as it can be (basically a record
 designed to be extended with whatever we feel is important.)
 -}
 
-module Physics.Model
+module Data.Physics.Model
   ( Model
   , mkModel
   , getTechnique
@@ -28,9 +28,9 @@ module Physics.Model
 import Data.Map.Strict (Map)
 import Data.Set (Set)
 
-import Language.Identifier
-import Math
-import Solver.Technique
+import Data.Link.Identifier
+import Data.Math
+import Data.Solver.Technique
 
 
 data Boundary = Neumann Identifier

@@ -1,5 +1,5 @@
 {-|
-Module      : Language.TokenClass
+Module      : Text.TokenClass
 Description : LINK tokens
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -11,7 +11,7 @@ This module defines the type of LINK tokens to be used by Alex for lexical
 analysis.
 -}
 
-module Language.TokenClass
+module Text.TokenClass
   ( TokenClass(..)
   , unLex
   ) where

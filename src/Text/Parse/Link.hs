@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Parser
+Module      : Text.Parse.Link
 Description : Parser for the LINK language
 Copyright   : Galois, Inc. 2021
 License     : N/A
@@ -10,7 +10,7 @@ Portability : N/A
 This module defines the parser for the LINK language, using Parsec.
 -}
 
-module Language.Parser
+module Text.Parse.Link
   ( parseDecl
   ) where
 
@@ -19,19 +19,15 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Language.AST
-import Language.Identifier
-import Language.Lexer
-import Language.Token
-import Language.TokenClass
+import Data.Link.AST
+import Data.Link.Identifier
+import Text.Lexer
+import Text.Token
+import Text.TokenClass
+import Data.Math
+import Data.Physics.Model
+import Data.Solver.Technique
 
-import Math
-
-import Physics.Model
-
-import Solver.Technique
-
-import qualified Text.Parse.Units
 import Text.Parsec
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a

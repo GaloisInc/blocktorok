@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Token
+Module      : Text.Token
 Description : Interface between Alex lexer and Parsec parser
 Copyright   : Galois, Inc. 2021
 License     : N/A
@@ -13,7 +13,7 @@ Parsec, which is used to parse LINK programs.
 
 {-# LANGUAGE FlexibleContexts, MonoLocalBinds #-}
 
-module Language.Token
+module Text.Token
   ( tok
   , tok'
   , number
@@ -23,8 +23,8 @@ module Language.Token
 
 import Control.Monad (void)
 
-import Language.Lexer (Token(..), AlexPosn(..))
-import Language.TokenClass
+import Text.Lexer (Token(..), AlexPosn(..))
+import Text.TokenClass
 
 import Text.Parsec hiding (satisfy)
 

@@ -1,6 +1,6 @@
 {
 {-# OPTIONS -w  #-}
-module Language.Lexer
+module Text.Lexer
   ( Token(..)
   , AlexPosn(..)
   , Alex(..)
@@ -13,7 +13,7 @@ module Language.Lexer
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
 
-import Language.TokenClass
+import Text.TokenClass
 }
 
 %wrapper "monadUserState"
