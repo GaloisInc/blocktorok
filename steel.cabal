@@ -44,6 +44,7 @@ library
                        Language.Identifier
                        Language.Lexer
                        Language.Parser
+                       Language.Token
                        Language.TokenClass
                        Solver.Technique
                        Math

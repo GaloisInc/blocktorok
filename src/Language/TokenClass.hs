@@ -63,7 +63,7 @@ data TokenClass = TokenInt Int
                 | TokenLCurl
                 | TokenRCurl
                 | TokenEOF
-                deriving (Show)
+                deriving (Eq, Show)
 
 -- | Given a @TokenClass@, return a string for use in error messages.
 unLex :: TokenClass -> String

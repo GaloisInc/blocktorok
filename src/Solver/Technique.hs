@@ -22,7 +22,6 @@ module Solver.Technique
   ( Technique(..)
   ) where
 
-import Language.Identifier
 -- | The type of a solving technique
 data Technique = FEM -- ^ The finite element method
                | FVM -- ^ The finite volume method

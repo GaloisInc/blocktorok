@@ -60,8 +60,8 @@ model FluidModel {
   var p; -- static pressure
   var T;  -- temperature from ideal gas equation of state
   var rhof; -- fluid density
-  T = p / (rhof * R);
-  kappa =  mu * cp / Pr; -- thermal conductivity
+  -- T = p / (rhof * R);
+  -- kappa =  mu * cp / Pr; -- thermal conductivity
   -- TODO Missing the support for equations
   -- vBar = {u, v, w} -- flowspeed in cartesian system
   -- U = {rhof, rhof*vBar, rhof*E } -- conservative variables
