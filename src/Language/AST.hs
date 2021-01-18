@@ -46,6 +46,7 @@ data Duration = Iterations Int -- ^ The number of steps to take
 data Config =
   Config { getGlobalStep :: Int -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
+         , getInitEqs :: [Equation] -- ^ The equations initiating the simulation 
          } deriving (Show)
 
 -- TODO: A coupling relates two models via boundary equations and knowledge of

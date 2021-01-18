@@ -55,13 +55,14 @@ parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
      tok' TokenLCurl
-     steps <- parseStepConfig
+     timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
+     eqs <- parseEqs
      tok' TokenRCurl
-     return $ Config steps duration
+     return $ Config timeStep duration eqs
   where
-    parseStepConfig =
-      do tok' TokenStep
+    parseTimeStepConfig =
+      do tok' TokenTimeStep
          tok' TokenColon
          n <- number
          tok' TokenSemi
@@ -85,12 +86,15 @@ parseModels =
     parseModel =
       do tok' TokenModel
          i <- parseIdentifier
-         model <- parseModelBody
+         tok' TokenLParen
+         j <-  parseIdentifier
+         tok' TokenRParen
+         model <- parseModelBody j
          return (i, model)
 
-    parseModelBody =
+    parseModelBody inputDecl =
       do tok' TokenLCurl
-         inputDecl <- parseInputDecl
+         --inputDecl <- parseInputDecl
          outputDecl <- parseOutputDecl
          technique <- parseSettingTechnique
          boundaryDecl <- parseBoundaryDecl
@@ -99,6 +103,7 @@ parseModels =
          libs <- parseLibDecls
          vs <- parseVarDecls
          eqs <- parseEqs
+         --outputDecl <- parseReturnDecl
          tok' TokenRCurl
          return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs
 
@@ -121,6 +126,13 @@ parseOutputDecl =
      var <- variable
      tok' TokenSemi
      return $ Identifier var
+
+parseReturnDecl :: Parser Identifier
+parseReturnDecl =
+   do tok' TokenReturn
+      var <- variable
+      tok' TokenSemi
+      return $ Identifier var
 
 parseSettingTechnique :: Parser Technique
 parseSettingTechnique =

@@ -4,14 +4,13 @@
 -- import V = lib.fluid_flow;
 
 config {
-  step : 2;
+  timeStep : 2;
   totalTime : 10;
-  -- Tw = P.InitialSolidTemperature;
+  --Tw = P.InitialSolidTemperature;
   -- Run: couple (ModelFluid, ModelSolid, Tw);
   }
 
-model StructureModel {
-  input : qw;
+model StructureModel(qw) {
   output : Tw;
   -- Convention from the Zhang paper: Tw (YL)
   -- Convention from the toy problem #3: Ts (YL)
@@ -28,8 +27,7 @@ model StructureModel {
 
   }
 
-model FluidModel {
-  input : Tw;
+model FluidModel(Tw) {
   output : qw;
   technique : FVM;
   boundary: Dirichlet (Tw);

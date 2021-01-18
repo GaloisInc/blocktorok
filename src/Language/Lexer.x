@@ -30,10 +30,11 @@ tokens :-
   model                                 { lex' TokenModel        }
   const                                 { lex' TokenConst        }
   couple                                { lex' TokenCouple       }
-  step                                  { lex' TokenStep         }
+  timeStep                                 { lex' TokenTimeStep        }
   totalTime                             { lex' TokenTotalTime    }
-  input                                 { lex' TokenInput       }
+  input                                 { lex' TokenInput        }
   output                                { lex' TokenOutput       }
+  return                                { lex' TokenReturn       }
   technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }

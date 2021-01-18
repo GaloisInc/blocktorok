@@ -24,10 +24,11 @@ data TokenClass = TokenInt Int
                 | TokenModel
                 | TokenConst
                 | TokenCouple
-                | TokenStep
+                | TokenTimeStep
                 | TokenTotalTime
                 | TokenInput
                 | TokenOutput
+                | TokenReturn
                 | TokenTechnique
                 | TokenFEM
                 | TokenFVM
@@ -74,7 +75,7 @@ unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
 unLex TokenConst = "const"
 unLex TokenCouple = "couple"
-unLex TokenStep = "step"
+unLex TokenTimeStep  = "TimeStep"
 unLex TokenTotalTime = "totalTime"
 unLex TokenTechnique = "technique"
 unLex TokenInput = "input"

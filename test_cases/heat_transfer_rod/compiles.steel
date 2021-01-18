@@ -1,33 +1,20 @@
 
 config {
-    step: 600; -- 5ms timestep
-    totalTime: 3 ;
+    timeStep : 5; -- ms 
+    totalTime: 3;
+    Temp = 273;-- K
 }
 
 
-model m1{
-    input : a;
-    output : b;
-    technique : FEM;
-    boundary : Neumann(qw);
-    physics : HeatTransfer { 2};
-    rhos = P.SolidDensity;
+model m1 (Temp) {
+    output : Temp;
+    technique : FVM;
+    
+    boundary : Neumann(qw); 
+    physics : HeatTransfer {2};
+    
+    
+    const DT = 4; -- e-05  m^2/s
+    ∇ Temp  - DT * △Temp =0;
 }
 
-
-model m2{
-    input : a;
-    output : b;
-    technique : FEM;
-    boundary : Neumann(qw);
-    physics : HeatTransfer { 2};
-    rhos = P.SolidDensity;
-}
-
-couple m1 m2{
-  input : Tin;
-  output : Tout;
-  var qw; -- heat flux
-  qw = FluidModel(Tin);
-  Tout = ModelSolid (qw);
-}
