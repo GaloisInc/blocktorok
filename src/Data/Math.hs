@@ -30,6 +30,7 @@ data Exp = Laplacian Exp
          | NablaExp Exp
          | NablaSingle
          | Paran Exp
+         | Pow Exp Exp
          | Negation Exp
          | Plus Exp Exp
          | Minus Exp Exp
@@ -50,6 +51,7 @@ instance Show Exp where
   show NablaSingle = "(" ++ "∇" ++ ")"
   show (Laplacian e) = "(" ++ "△" ++ show e ++ ")"
   show (Paran e) = "(" ++ show e ++ ")"
+  show (Pow e1 e2) = show e1 ++ "^" ++ show e2
   show (Negation e) = "(" ++ "-" ++ show e ++ ")"
   show (Plus e1 e2) = "(" ++ show e1 ++ " + " ++ show e2 ++ ")"
   show (Minus e1 e2) = "(" ++ show e1 ++ " - " ++ show e2 ++ ")"
@@ -79,6 +81,7 @@ instance Uniplate Exp where
   uniplate (NablaExp e)         = plate NablaExp |* e
   uniplate NablaSingle          = plate NablaSingle
   uniplate (Paran e)            = plate Paran |* e
+  uniplate (Pow e1 e2)          = plate Pow |* e1 |* e2
   uniplate (Negation e)         = plate Negation |* e
   uniplate (Plus e1 e2)         = plate Plus |* e1 |* e2
   uniplate (Minus e1 e2)        = plate Minus |* e1 |* e2

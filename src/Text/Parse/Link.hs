@@ -242,7 +242,13 @@ parseExp = parseExp1 `chainl1` pAddOp
                         _ -> error "This can't happen"
 
     parseExp3 :: Parser Exp
-    parseExp3 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp4
+    parseExp3 = parseExp4 `chainl1` pPow
+      where
+        pPow :: Parser (Exp -> Exp -> Exp)
+        pPow = tok' TokenPow >> return Pow
+
+    parseExp4 :: Parser Exp
+    parseExp4 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp5
       where
         p =
           do op <- choice [tok TokenTriangle, tok TokenNabla]
@@ -250,10 +256,10 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
                        _ -> error "This can't happen"
-             f <$> parseExp3
+             f <$> parseExp4
 
-    parseExp4 :: Parser Exp
-    parseExp4 = p <|> parseExp5
+    parseExp5 :: Parser Exp
+    parseExp5 = p <|> parseExp6
       where
         p =
           do op <- choice [tok TokenNablaCross, tok TokenNablaDot, tok TokenNablaOuter]
@@ -262,10 +268,10 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenNablaDot -> NablaDot
                        TokenNablaOuter -> NablaOuter
                        _ -> error "This can't happen"
-             f <$> parseExp4
+             f <$> parseExp5
 
-    parseExp5 :: Parser Exp
-    parseExp5 = (IntE <$> number)
+    parseExp6 :: Parser Exp
+    parseExp6 = (IntE <$> number)
              <|> try parseFnApp
              <|> (Var <$> variable)
              <|> parseNeg
@@ -280,7 +286,7 @@ parseExp = parseExp1 `chainl1` pAddOp
 
         parseNeg =
           do tok' TokenMinus
-             Negation <$> parseExp5
+             Negation <$> parseExp6
 
         parseParens =
           do tok' TokenLParen

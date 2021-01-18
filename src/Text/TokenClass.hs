@@ -41,6 +41,7 @@ data TokenClass =
   | TokenFluidFlow
   | TokenV
   | TokenSolve
+  | TokenPow
   | TokenColon
   | TokenSemi
   | TokenEq
@@ -92,6 +93,7 @@ unLex TokenHeatTransfer = "HeatTransfer"
 unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
 unLex TokenSolve = "solve"
+unLex TokenPow = "^"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
 unLex TokenEq = "="
