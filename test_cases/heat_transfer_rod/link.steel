@@ -9,8 +9,8 @@ config {
 
     output : Ts
     technique: FVM;
-    initial value: uniform 273 K;
-    boundary conditions: (ModelSolid.top, Neumann, 0;
+    internalField: uniform 273 K;
+    boundaryField: (ModelSolid.top, Neumann, 0;
 		ModelSolid.right, Dirichlet, 273 K;
 		ModelSolid.top, Neumann, 0;
 		ModelSolid.left, Dirichlet, 573 K);
