@@ -1,20 +1,19 @@
-
 config {
     totalTime: 3 s;
     tiemstep = 5 ms;
-    Run: Model1 Ts;
+    T: uniform 273 K;
+    Run: Model1(T);
     backend: OpenFoam
 }
 
 -------------------------------------------------------------------------------
 
-    output : Ts
+    output : T
     technique: FVM;
-    initial value: uniform 273 K;
-    boundary conditions: (ModelSolid.patch1, Neumann, 0;
-		ModelSolid.patch2, Dirichlet, 273 K;
-		ModelSolid.patch3, Neumann, 0;
-		ModelSolid.patch4, Dirichlet, 573 K);
+    boundaryField: (ModelSolid.top, Neumann, 0;
+		ModelSolid.right, Dirichlet, 273 K;
+		ModelSolid.top, Neumann, 0;
+		ModelSolid.left, Dirichlet, 573 K);
     physics: Heat Conduction
 
     Solvers: T {
@@ -34,9 +33,9 @@ config {
     
     -- Heat conduction along a rod
     solveV:
-        Ts;  -- solid temperature
+        T;  -- solid temperature
     math:
         DT = 4e-05 m^2/s
-	\frac{\partial Ts}{\partial t} - DT \nabla^2 Ts = 0
+	\frac{\partial T}{\partial t} - DT \nabla^2 T = 0
 }
 }
