@@ -1,4 +1,3 @@
-
 config {
     totalTime: 3 s;
     tiemstep = 5 ms;
@@ -11,10 +10,10 @@ config {
     output : Ts
     technique: FVM;
     initial value: uniform 273 K;
-    boundary conditions: (ModelSolid.patch1, Neumann, 0;
-		ModelSolid.patch2, Dirichlet, 273 K;
-		ModelSolid.patch3, Neumann, 0;
-		ModelSolid.patch4, Dirichlet, 573 K);
+    boundary conditions: (ModelSolid.top, Neumann, 0;
+		ModelSolid.right, Dirichlet, 273 K;
+		ModelSolid.top, Neumann, 0;
+		ModelSolid.left, Dirichlet, 573 K);
     physics: Heat Conduction
 
     Solvers: T {
