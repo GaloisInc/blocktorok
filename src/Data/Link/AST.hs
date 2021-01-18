@@ -31,7 +31,7 @@ data Prog =
        , getCouplings :: [Coupling] -- ^ The model couplings
        }
 instance Show Prog where
-     show (Prog c1 m c2) = "\n\n\t"++ (show c1) ++ "\n\n\t"++ (show m) ++ "\n\n\t"++(show c2)
+     show (Prog c1 m c2) = "\n\n\t" ++ show c1 ++ "\n\n\t" ++ show m ++ "\n\n\t" ++ show c2
 
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
