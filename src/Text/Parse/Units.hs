@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase, NoMonomorphismRestriction, FlexibleContexts, RankNTypes,
-             Safe, DeriveGeneric, DeriveDataTypeable, CPP, StandaloneDeriving #-}
+             DeriveGeneric, DeriveDataTypeable, CPP, StandaloneDeriving #-}
 {-# OPTIONS_HADDOCK prune #-}
 
 -----------------------------------------------------------------------------
@@ -41,15 +41,13 @@ module Text.Parse.Units (
   SymbolTable(..), PrefixTable, UnitTable, mkSymbolTable,
   unsafeMkSymbolTable, universalSymbolTable,
 
-  lex, unitStringParser  -- these are pruned from the Haddock output
+  unitStringParser  -- these are pruned from the Haddock output
   ) where
 
 import Prelude hiding ( lex, div )
 
 import GHC.Generics (Generic)
 import Text.Parsec         hiding ( tab )
-import Text.Parsec.String
-import Text.Parsec.Pos
 import qualified Data.Map.Strict as Map
 import qualified Data.MultiMap as MM
 import Control.Monad.Reader
@@ -57,6 +55,10 @@ import Control.Arrow       hiding ( app)
 import Data.Data (Data)
 import Data.Maybe
 import Data.Char
+
+import Text.Lexer (Token(..))
+import Text.Token
+import Text.TokenClass
 
 #if __GLASGOW_HASKELL__ < 709
 import Data.Typeable ( Typeable )
@@ -84,37 +86,28 @@ partitionWith f (x:xs) = case f x of
 experiment :: Stream s m t => ParsecT s u m a -> ParsecT s u m (Maybe a)
 experiment = lookAhead . optionMaybe . try
 
-consumeAll :: (Stream s m t, Show t) => ParsecT s u m a -> ParsecT s u m a
-consumeAll p = do
-  result <- p
-  eof
-  return result
-
-nochar :: Stream s m Char => Char -> ParsecT s u m ()
-nochar = void . char
-
 ----------------------------------------------------------------------
 -- Datatypes
 ----------------------------------------------------------------------
 
-data Op = NegO | MultO | DivO | PowO | OpenP | CloseP
+-- data Op = NegO | MultO | DivO | PowO | OpenP | CloseP
 
-instance Show Op where
-  show NegO    = "-"
-  show MultO   = "*"
-  show DivO    = "/"
-  show PowO    = "^"
-  show OpenP   = "("
-  show CloseP  = ")"
+-- instance Show Op where
+--   show NegO    = "-"
+--   show MultO   = "*"
+--   show DivO    = "/"
+--   show PowO    = "^"
+--   show OpenP   = "("
+--   show CloseP  = ")"
 
-data Token = UnitT String
-           | NumberT Integer
-           | OpT Op
+-- data Token = UnitT String
+--            | NumberT Integer
+--            | OpT Op
 
-instance Show Token where
-  show (UnitT s)   = s
-  show (NumberT i) = show i
-  show (OpT op)    = show op
+-- instance Show Token where
+--   show (UnitT s)   = s
+--   show (NumberT i) = show i
+--   show (OpT op)    = show op
 
 -- | Parsed unit expressions, parameterized by a prefix identifier type and
 -- a unit identifier type
@@ -141,40 +134,40 @@ instance (Show pre, Show u) => Show (UnitExp pre u) where
 -- Lexer
 ----------------------------------------------------------------------
 
-type Lexer = Parser
+-- type Lexer = Parser
 
-unitL :: Lexer Token
-unitL = UnitT `fmap` (many1 letter)
+-- unitL :: Lexer Token
+-- unitL = UnitT `fmap` (many1 letter)
 
-opL :: Lexer Token
-opL = fmap OpT $
-      do { nochar '-'; return NegO    }
-  <|> do { nochar '*'; return MultO   }
-  <|> do { nochar '/'; return DivO    }
-  <|> do { nochar '^'; return PowO    }
-  <|> do { nochar '('; return OpenP   }
-  <|> do { nochar ')'; return CloseP  }
+-- opL :: Lexer Token
+-- opL = fmap OpT $
+--       do { nochar '-'; return NegO    }
+--   <|> do { nochar '*'; return MultO   }
+--   <|> do { nochar '/'; return DivO    }
+--   <|> do { nochar '^'; return PowO    }
+--   <|> do { nochar '('; return OpenP   }
+--   <|> do { nochar ')'; return CloseP  }
 
-numberL :: Lexer Token
-numberL = (NumberT . read) `fmap` (many1 digit)
+-- numberL :: Lexer Token
+-- numberL = (NumberT . read) `fmap` (many1 digit)
 
-lexer1 :: Lexer Token
-lexer1 = unitL <|> opL <|> numberL
+-- lexer1 :: Lexer Token
+-- lexer1 = unitL <|> opL <|> numberL
 
-lexer :: Lexer [Token]
-lexer = do
-  spaces
-  choice
-    [ do eof <?> ""
-         return []
-    , do tok <- lexer1
-         spaces
-         toks <- lexer
-         return (tok : toks)
-    ]
+-- lexer :: Lexer [Token]
+-- lexer = do
+--   spaces
+--   choice
+--     [ do eof <?> ""
+--          return []
+--     , do tok <- lexer1
+--          spaces
+--          toks <- lexer
+--          return (tok : toks)
+--     ]
 
-lex :: String -> Either ParseError [Token]
-lex = parse lexer ""
+-- lex :: String -> Either ParseError [Token]
+-- lex = parse lexer ""
 
 ----------------------------------------------------------------------
 -- Symbol tables
@@ -299,26 +292,26 @@ type UnitParser_UnitExp =
   forall pre u. (Show pre, Show u) => GenUnitParser pre u (UnitExp pre u)
 
 -- move a source position past a token
-updatePosToken :: SourcePos -> Token -> [Token] -> SourcePos
-updatePosToken pos (UnitT unit_str) _ = updatePosString pos unit_str
-updatePosToken pos (NumberT i) _      = updatePosString pos (show i)
-updatePosToken pos (OpT _) _          = incSourceColumn pos 1
+-- updatePosToken :: SourcePos -> Token -> [Token] -> SourcePos
+-- updatePosToken pos (UnitT unit_str) _ = updatePosString pos unit_str
+-- updatePosToken pos (NumberT i) _      = updatePosString pos (show i)
+-- updatePosToken pos (OpT _) _          = incSourceColumn pos 1
 
 -- parse a Token
-uToken :: (Token -> Maybe a) -> UnitParser a
-uToken = tokenPrim show updatePosToken
+-- uToken :: (Token -> Maybe a) -> UnitParser a
+-- uToken = tokenPrim show updatePosToken
 
 -- consume an lparen
-lparenP :: UnitParser ()
-lparenP = uToken $ \case
-  OpT OpenP -> Just ()
-  _         -> Nothing
+-- lparenP :: UnitParser ()
+-- lparenP = uToken $ \case
+--   OpT OpenP -> Just ()
+--   _         -> Nothing
 
 -- consume an rparen
-rparenP :: UnitParser ()
-rparenP = uToken $ \case
-  OpT CloseP -> Just ()
-  _          -> Nothing
+-- rparenP :: UnitParser ()
+-- rparenP = uToken $ \case
+--   OpT CloseP -> Just ()
+--   _          -> Nothing
 
 -- parse a unit string
 unitStringP :: String -> UnitParser_UnitExp
@@ -331,28 +324,21 @@ unitStringP str = do
 -- parse a number, possibly negated and nested in parens
 numP :: UnitParser Integer
 numP =
-  do lparenP
+  do tok' TokenLParen
      n <- numP
-     rparenP
+     tok' TokenRParen
      return n
   <|>
-  do uToken $ \case
-       OpT NegO -> Just ()
-       _        -> Nothing
-     negate `liftM` numP
+  do tok' TokenMinus
+     negate <$> numP
   <|>
-  do uToken $ \case
-       NumberT i -> Just i
-       _         -> Nothing
+  number
 
 -- parse an exponentiation, like "^2"
 powP :: GenUnitParser pre u (UnitExp pre u -> UnitExp pre u)
 powP = option id $ do
-  uToken $ \case
-    OpT PowO -> Just ()
-    _        -> Nothing
-  n <- numP
-  return $ flip Pow n
+  tok' TokenPow
+  flip Pow <$> numP
 
 -- parse a unit, possibly with an exponent
 unitP :: UnitParser_UnitExp
@@ -362,9 +348,7 @@ unitP =
        1 -> return Unity
        _ -> unexpected $ "number " ++ show n
   <|>
-  do unit_str <- uToken $ \case
-       UnitT unit_str -> Just unit_str
-       _              -> Nothing
+  do unit_str <- unitT
      u <- unitStringP unit_str
      maybe_pow <- powP
      return $ maybe_pow u
@@ -373,28 +357,29 @@ unitP =
 -- or a paranthesized unit exp.
 unitFactorP :: UnitParser_UnitExp
 unitFactorP =
-  do lparenP
-     unitExp <- parser
-     rparenP
+  do tok' TokenLParen
+     unitExp <- parseUnit
+     tok' TokenRParen
      return unitExp
   <|>
-  (foldl1 Mult `liftM` many1 unitP)
+  (foldl1 Mult <$> many1 unitP)
 
 -- parse * or /
 opP :: GenUnitParser pre u (UnitExp pre u -> UnitExp pre u -> UnitExp pre u)
-opP = uToken $ \case
-        OpT MultO -> Just Mult
-        OpT DivO  -> Just Div
-        _         -> Nothing
+opP = satisfy' p <?> "op"
+  where p (Token _ t) = case t of
+                          TokenTimes -> Just Mult
+                          TokenDiv -> Just Div
+                          _ -> Nothing
 
 -- parse a whole unit expression
-parser :: UnitParser_UnitExp
-parser = chainl unitFactorP opP Unity
+parseUnit :: UnitParser_UnitExp
+parseUnit = chainl unitFactorP opP Unity
 
 -- | Parse a unit expression, interpreted with respect the given symbol table.
 -- Returns either an error message or the successfully-parsed unit expression.
-parseUnit :: (Show pre, Show u)
-          => SymbolTable pre u -> String -> Either String (UnitExp pre u)
-parseUnit tab s = left show $ do
-  toks <- lex s
-  flip runReader tab $ runParserT (consumeAll parser) () "" toks
+-- parseUnit :: (Show pre, Show u)
+--           => SymbolTable pre u -> String -> Either String (UnitExp pre u)
+-- parseUnit tab s = left show $ do
+--   toks <- lex s
+--   flip runReader tab $ runParserT (consumeAll parser) () "" toks

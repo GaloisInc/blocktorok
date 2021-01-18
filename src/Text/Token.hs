@@ -17,7 +17,9 @@ module Text.Token
   ( tok
   , tok'
   , number
+  , satisfy'
   , variable
+  , unitT
   , Parser
   ) where
 
@@ -53,7 +55,7 @@ tok' :: (Stream [Token] m Token) => TokenClass -> ParsecT [Token] u m ()
 tok' p = void $ tok p
 
 -- | Parse a @TokenInt@.
-number :: Monad m => ParsecT [Token] u m Int
+number :: Monad m => ParsecT [Token] u m Integer
 number = satisfy' p <?> "integer"
   where p (Token _ t) = case t of
                           TokenInt n -> Just n
@@ -64,4 +66,10 @@ variable :: Monad m => ParsecT [Token] u m String
 variable = satisfy' p <?> "variable"
   where p (Token _ t) = case t of
                           TokenVar s -> Just s
+                          _ -> Nothing
+
+unitT :: Monad m => ParsecT [Token] u m String
+unitT = satisfy' p <?> "unit"
+  where p (Token _ t) = case t of
+                          TokenUnit s -> Just s
                           _ -> Nothing
