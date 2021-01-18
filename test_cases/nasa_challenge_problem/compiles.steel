@@ -16,7 +16,7 @@ model StructureModel(qw) {
   -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
   boundary : Neumann(qw);
-  physics : HeatTransfer { 2};
+  physics : HeatTransfer {P};
   -- TODO arg to HeatTransfer should be 'P'
   -- physics : HeatTransfer {P};
   rhos = P.SolidDensity;
@@ -33,7 +33,7 @@ model FluidModel(Tw) {
   boundary: Dirichlet (Tw);
   -- TODO change input to boundary conditions
   -- boundary: Dirichlet (P.InitialSolidTemperature);
-  physics : FluidFlow {2};
+  physics : FluidFlow {tmp};
   -- Why don't we put this in a library, just to be consistent with HeatTransfer
   -- TODO Add Fluid constructor
   -- physics : ModelType : FluidFlow {

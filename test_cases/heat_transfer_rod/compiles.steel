@@ -1,7 +1,7 @@
 
 config {
     timeStep : 5; -- ms 
-    totalTime: 3;
+    totalTime: 3; --s
     Temp = 273;-- K
 }
 
@@ -9,11 +9,8 @@ config {
 model m1 (Temp) {
     output : Temp;
     technique : FVM;
-    
-    boundary : Neumann(qw); 
-    physics : HeatTransfer {2};
-    
-    
+    boundaryField : (top, Neumann, 0); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573); 
+    physics : HeatTransfer{tmp};    
     const DT = 4; -- e-05  m^2/s
     ∇ Temp  - DT * △Temp =0;
 }

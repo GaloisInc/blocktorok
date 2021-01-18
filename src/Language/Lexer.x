@@ -30,7 +30,7 @@ tokens :-
   model                                 { lex' TokenModel        }
   const                                 { lex' TokenConst        }
   couple                                { lex' TokenCouple       }
-  timeStep                                 { lex' TokenTimeStep        }
+  timeStep                              { lex' TokenTimeStep        }
   totalTime                             { lex' TokenTotalTime    }
   input                                 { lex' TokenInput        }
   output                                { lex' TokenOutput       }
@@ -38,11 +38,13 @@ tokens :-
   technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
   FVM                                   { lex' TokenFVM          }
+  boundaryField                         { lex' TokenBoundaryField }
   boundary                              { lex' TokenBoundary     }
   Neumann                               { lex' TokenNeumann      }
   Dirichlet                             { lex' TokenDirichlet    }
   physics                               { lex' TokenPhysics      }
-  HeatTransfer                         { lex' TokenHeatTransfer}
+  HeatTransfer                          { lex' TokenHeatTransfer }
+  HeatConduction                        { lex' TokenHeatConduction}
   FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
   solve                                 { lex' TokenSolve            }

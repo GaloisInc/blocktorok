@@ -21,6 +21,8 @@ module Physics.Model
   , getVars
   , getLib
   , getEqs
+  , BoundaryType(..)
+  , BoundaryField(..)
   , Boundary(..)
   , PhysicsType(..)
   ) where
@@ -32,13 +34,23 @@ import Language.Identifier
 import Math
 import Solver.Technique
 
+-- An ugly function I added. Forgive me.
+mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
 
-data Boundary = Neumann Identifier
-              | Dirichlet Identifier
+data BoundaryType = Neumann
+              | Dirichlet
               deriving (Show)
 
-data PhysicsType =  HeatTransfer Int
-                 | FluidFlow Int
+
+data BoundaryField =  BoundaryField Identifier  BoundaryType Int
+              deriving (Show)
+
+data Boundary =  T BoundaryType Identifier | F [BoundaryField]
+              deriving (Show)
+
+data PhysicsType =  HeatTransfer Identifier
+                 | FluidFlow Identifier
+                 | HeatConduction Identifier
                 deriving (Show)
 
 
@@ -56,7 +68,17 @@ data Model =
         , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
-  deriving(Show)
+instance Show Model where
+      show (Model i o t b p c l v e) =
+        (mkIndent "input" i)
+        ++ (mkIndent "output" o)
+        ++ (mkIndent "Technique" t)
+        ++ (mkIndent "Boundary" b)
+        ++ (mkIndent "PhysicsType" p)
+        ++ (mkIndent "constants" c)
+        ++ (mkIndent "libraries" l)
+        ++ (mkIndent "variables" v)
+        ++ (mkIndent "equations" e)
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier

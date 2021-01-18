@@ -97,7 +97,7 @@ parseModels =
          --inputDecl <- parseInputDecl
          outputDecl <- parseOutputDecl
          technique <- parseSettingTechnique
-         boundaryDecl <- parseBoundaryDecl
+         boundaryDecl <- parseBoundaryFieldsDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
          libs <- parseLibDecls
@@ -145,19 +145,44 @@ parseSettingTechnique =
                 TokenFVM -> FVM
                 _ -> error "This can't happen"
 
-parseBoundaryDecl :: Parser Boundary
-parseBoundaryDecl =
-  do tok' TokenBoundary
-     tok' TokenColon
-     methodTok <- tok TokenDirichlet <|> tok TokenNeumann
-     tok' TokenLParen
-     i <- parseIdentifier
+parseBoundaryType :: Parser BoundaryType
+parseBoundaryType =
+  do methodTok <- tok TokenDirichlet <|> tok TokenNeumann
+     return $ case methodTok of
+             TokenDirichlet -> Dirichlet
+             TokenNeumann -> Neumann
+             _ -> error "This can't happen"
+
+parseBoundaryField :: Parser BoundaryField
+parseBoundaryField =
+  do tok' TokenLParen
+     id <- parseIdentifier
+     tok' TokenComma
+     method <- parseBoundaryType
+     tok' TokenComma
+     n <- number
      tok' TokenRParen
      tok' TokenSemi
-     return $ case methodTok of
-                TokenDirichlet -> Dirichlet i
-                TokenNeumann -> Neumann i
-                _ -> error "This can't happen"
+     return (BoundaryField id method  n)
+
+parseBoundaryFieldsDecl :: Parser Boundary
+parseBoundaryFieldsDecl =
+  do
+    tok' TokenBoundaryField
+    tok' TokenColon
+    x <- (many parseBoundaryField)
+    return (F x)
+
+parseBoundaryTypeDecl :: Parser Boundary
+parseBoundaryTypeDecl =
+  do tok' TokenBoundary
+     tok' TokenColon
+     method <- parseBoundaryType
+     tok' TokenLParen
+     id <- parseIdentifier
+     tok' TokenRParen
+     tok' TokenSemi
+     return (T method id)
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -168,13 +193,14 @@ parsePhysicsType =
      return rhs
   where
     parsePhysicsTypeRHS =
-      do t <- tok TokenHeatTransfer <|> tok TokenFluidFlow
+      do t <- tok TokenHeatTransfer <|> tok TokenFluidFlow <|> tok TokenHeatConduction
          tok' TokenLCurl
-         n <- number
+         n <- parseIdentifier
          tok' TokenRCurl
          return $ case t of
                     TokenHeatTransfer -> HeatTransfer n
                     TokenFluidFlow -> FluidFlow n
+                    TokenHeatConduction -> HeatConduction n
                     _ -> error "This can't happen"
 
 parseConstDecls :: Parser (Map Identifier Int)
