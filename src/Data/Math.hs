@@ -40,7 +40,7 @@ data Exp = Laplacian Exp
          | InnerProduct Exp Exp
          | OuterProduct Exp Exp
          | FnApp Identifier Identifier
-         | IntE Int
+         | IntE Integer
          | Var String
 
 instance Show Exp where

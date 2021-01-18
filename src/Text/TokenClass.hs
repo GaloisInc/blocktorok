@@ -19,7 +19,7 @@ module Text.TokenClass
 -- | The type of LINK tokens
 data TokenClass =
     TokenUnit String
-  | TokenInt Int
+  | TokenInt Integer
   | TokenVar String
   | TokenConfig
   | TokenIterations

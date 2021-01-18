@@ -162,7 +162,7 @@ parsePhysicsType =
                     TokenFluidFlow -> FluidFlow n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier Int)
+parseConstDecls :: Parser (Map Identifier Integer)
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls

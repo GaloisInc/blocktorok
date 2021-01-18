@@ -37,14 +37,14 @@ instance Show Prog where
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
-data Duration = Iterations Int -- ^ The number of steps to take
-              | TotalTime Int -- ^ The amount of time to simulate
+data Duration = Iterations Integer -- ^ The number of steps to take
+              | TotalTime Integer -- ^ The amount of time to simulate
               deriving (Show)
 
 -- | LINK Configuration, consisting of the global simulation step size and the
 --   total @Duration@
 data Config =
-  Config { getGlobalStep :: Int -- ^ The global solving step size TODO: This should have units
+  Config { getGlobalStep :: Integer -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
          } deriving (Show)
 
