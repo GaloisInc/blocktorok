@@ -12,7 +12,7 @@ config {
     technique: FVM;
     boundaryField: (ModelSolid.top, Neumann, 0;
 		ModelSolid.right, Dirichlet, 273 K;
-		ModelSolid.top, Neumann, 0;
+		ModelSolid.bottom, Neumann, 0;
 		ModelSolid.left, Dirichlet, 573 K);
     physics: Heat Conduction
 
