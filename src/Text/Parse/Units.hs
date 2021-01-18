@@ -90,25 +90,6 @@ experiment = lookAhead . optionMaybe . try
 -- Datatypes
 ----------------------------------------------------------------------
 
--- data Op = NegO | MultO | DivO | PowO | OpenP | CloseP
-
--- instance Show Op where
---   show NegO    = "-"
---   show MultO   = "*"
---   show DivO    = "/"
---   show PowO    = "^"
---   show OpenP   = "("
---   show CloseP  = ")"
-
--- data Token = UnitT String
---            | NumberT Integer
---            | OpT Op
-
--- instance Show Token where
---   show (UnitT s)   = s
---   show (NumberT i) = show i
---   show (OpT op)    = show op
-
 -- | Parsed unit expressions, parameterized by a prefix identifier type and
 -- a unit identifier type
 data UnitExp pre u = Unity                     -- ^ "1"
@@ -129,45 +110,6 @@ instance (Show pre, Show u) => Show (UnitExp pre u) where
   show (Mult e1 e2)        = "(" ++ show e1 ++ " :* " ++ show e2 ++ ")"
   show (Div e1 e2)         = "(" ++ show e1 ++ " :/ " ++ show e2 ++ ")"
   show (Pow e i)           = show e ++ " :^ " ++ show i
-
-----------------------------------------------------------------------
--- Lexer
-----------------------------------------------------------------------
-
--- type Lexer = Parser
-
--- unitL :: Lexer Token
--- unitL = UnitT `fmap` (many1 letter)
-
--- opL :: Lexer Token
--- opL = fmap OpT $
---       do { nochar '-'; return NegO    }
---   <|> do { nochar '*'; return MultO   }
---   <|> do { nochar '/'; return DivO    }
---   <|> do { nochar '^'; return PowO    }
---   <|> do { nochar '('; return OpenP   }
---   <|> do { nochar ')'; return CloseP  }
-
--- numberL :: Lexer Token
--- numberL = (NumberT . read) `fmap` (many1 digit)
-
--- lexer1 :: Lexer Token
--- lexer1 = unitL <|> opL <|> numberL
-
--- lexer :: Lexer [Token]
--- lexer = do
---   spaces
---   choice
---     [ do eof <?> ""
---          return []
---     , do tok <- lexer1
---          spaces
---          toks <- lexer
---          return (tok : toks)
---     ]
-
--- lex :: String -> Either ParseError [Token]
--- lex = parse lexer ""
 
 ----------------------------------------------------------------------
 -- Symbol tables
@@ -290,28 +232,6 @@ type GenUnitParser pre u = ParsecT [Token] () (Reader (SymbolTable pre u))
 type UnitParser a = forall pre u. GenUnitParser pre u a
 type UnitParser_UnitExp =
   forall pre u. (Show pre, Show u) => GenUnitParser pre u (UnitExp pre u)
-
--- move a source position past a token
--- updatePosToken :: SourcePos -> Token -> [Token] -> SourcePos
--- updatePosToken pos (UnitT unit_str) _ = updatePosString pos unit_str
--- updatePosToken pos (NumberT i) _      = updatePosString pos (show i)
--- updatePosToken pos (OpT _) _          = incSourceColumn pos 1
-
--- parse a Token
--- uToken :: (Token -> Maybe a) -> UnitParser a
--- uToken = tokenPrim show updatePosToken
-
--- consume an lparen
--- lparenP :: UnitParser ()
--- lparenP = uToken $ \case
---   OpT OpenP -> Just ()
---   _         -> Nothing
-
--- consume an rparen
--- rparenP :: UnitParser ()
--- rparenP = uToken $ \case
---   OpT CloseP -> Just ()
---   _          -> Nothing
 
 -- parse a unit string
 unitStringP :: String -> UnitParser_UnitExp
