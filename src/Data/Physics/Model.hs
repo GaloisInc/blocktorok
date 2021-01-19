@@ -55,7 +55,7 @@ data Model =
         , getPhysicsType :: PhysicsType
         , getConsts :: Map Identifier (Integer, UnitExp Name Name)
         , getLib :: Map Identifier (Identifier, Identifier)
-        , getVars :: Set Identifier
+        , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
   deriving(Show)
@@ -65,6 +65,6 @@ mkModel :: Identifier -> Identifier
       -> Technique -> Boundary -> PhysicsType
       ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
-      -> Set Identifier
+      ->  Map Identifier (UnitExp Name Name)
       -> [Equation] -> Model
 mkModel = Model

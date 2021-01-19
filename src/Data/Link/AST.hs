@@ -14,10 +14,12 @@ is the target of the parser defined in @Parser.y@.
 module Data.Link.AST where
 
 import Data.Map.Strict (Map)
-import Data.Set (Set)
 import Data.Math
 import Data.Link.Identifier
 import Data.Physics.Model
+import Data.Units.UnitExp
+
+import Language.Haskell.TH.Syntax (Name)
 
 -- | A complete LINK program, which consists of configuration, a (nonempty)
 --   collection of 'Physics.Model.Model's, and a collection of @Coupling@s.
@@ -57,6 +59,6 @@ data Coupling = Coupling {
   , model2::Identifier
   , input::Identifier
   , output::Identifier
-  , getVars:: Set Identifier
+  , getVars:: Map Identifier (UnitExp Name Name)
   , getEqs :: [Equation] -- ^ The equations governing the model
   } deriving (Show)

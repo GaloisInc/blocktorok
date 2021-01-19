@@ -18,8 +18,6 @@ import Control.Monad.Reader
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
 
 import Data.Link.AST
 import Data.Link.Identifier
@@ -100,6 +98,7 @@ unitStrs =
   , "t"
   ]
 
+table :: SymbolTable Name Name
 table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
           Left e -> error e
           Right st -> st
@@ -268,16 +267,18 @@ parseLibDecls =
          m <- parseIdentifier
          return (scope, m)
 
-parseVarDecls :: Parser (Set Identifier)
+parseVarDecls :: Parser (Map Identifier (U.UnitExp Name Name))
 parseVarDecls =
   do decls <- many parseVarDecl
-     return $ Set.fromList decls
+     return $ Map.fromList decls
   where
     parseVarDecl =
       do tok' TokenV
          i <- parseIdentifier
+         tok' TokenColon
+         u <- UP.parseUnit
          tok' TokenSemi
-         return i
+         return (i, u)
 
 parseEqs :: Parser [Equation]
 parseEqs = many parseEq
