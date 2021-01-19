@@ -38,7 +38,7 @@ data Boundary = Neumann Identifier
               | Dirichlet Identifier
               deriving (Show)
 
-data PhysicsType =  HeatTransfer Integer
+data PhysicsType = HeatTransfer Integer
                  | FluidFlow Integer
                 deriving (Show)
 
@@ -46,8 +46,7 @@ data PhysicsType =  HeatTransfer Integer
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
-  Model {
-        getInput :: Identifier
+  Model { getInput :: Identifier
         , getOutput :: Identifier
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
@@ -60,10 +59,14 @@ data Model =
   deriving(Show)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Identifier -> Identifier
-      -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier (Integer, UnitExp Name Name)
-      ->  Map Identifier (Identifier, Identifier)
-      ->  Map Identifier (UnitExp Name Name)
-      -> [Equation] -> Model
+mkModel :: Identifier
+        -> Identifier
+        -> Technique
+        -> Boundary
+        -> PhysicsType
+        -> Map Identifier (Integer, UnitExp Name Name)
+        -> Map Identifier (Identifier, Identifier)
+        -> Map Identifier (UnitExp Name Name)
+        -> [Equation]
+        -> Model
 mkModel = Model
