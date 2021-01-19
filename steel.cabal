@@ -42,17 +42,18 @@ library
                      , units-defs
   hs-source-dirs:      src
   default-language:    Haskell2010
-  exposed-modules:     Data.Link.AST
-                       Language.Check
+  exposed-modules:     Data.Backends.SU2
+                       Data.Link.AST
                        Data.Link.Identifier
+                       Data.Math
+                       Data.Physics.Model
+                       Data.Solver.Technique
+                       Data.Units.SymbolTable
+                       Data.Units.UnitExp
+                       Language.Check
                        Text.Lexer
                        Text.Parse.Link
                        Text.Parse.Units
                        Text.Token
                        Text.TokenClass
-                       Data.Solver.Technique
-                       Data.Math
-                       Data.Physics.Model
-                       Data.Units.SymbolTable
-                       Data.Units.UnitExp
   ghc-options: -Wall
