@@ -14,6 +14,8 @@ module Text.Parse.Link
   ( parseDecl
   ) where
 
+import Control.Monad.Reader
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Set (Set)
@@ -22,19 +24,24 @@ import qualified Data.Set as Set
 import Data.Link.AST
 import Data.Link.Identifier
 import Text.Lexer
+import qualified Text.Parse.Units as UP
 import Text.Token
 import Text.TokenClass
 import Data.Math
 import Data.Physics.Model
 import Data.Solver.Technique
+import qualified Data.Units.UnitExp as U
+import Data.Units.SymbolTable
 
 import Text.Parsec
+
+table = mkSymbolTable [] []
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a
 parseNamedText p n s =
   case llex s of
-    Left e -> parse (reportLexError e) n []
-    Right xs -> parse p n xs
+    Left e -> flip runReader table $ runParserT (reportLexError e) () n []
+    Right xs -> flip runReader table $ runParserT p () n xs
 
 reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
@@ -162,7 +169,7 @@ parsePhysicsType =
                     TokenFluidFlow -> FluidFlow n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier Integer)
+parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp String String))
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls
@@ -172,8 +179,9 @@ parseConstDecls =
          i <- parseIdentifier
          tok' TokenEq
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
-         return (i, n)
+         return (i, (n, u))
 
 parseLibDecls :: Parser (Map Identifier (Identifier, Identifier))
 parseLibDecls =

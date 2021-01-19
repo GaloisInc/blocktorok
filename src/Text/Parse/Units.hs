@@ -35,27 +35,19 @@
 
 module Text.Parse.Units (
   -- * Parsing units
-  UnitExp(..), parseUnit,
-
-  -- * Symbol tables
-  SymbolTable(..), PrefixTable, UnitTable, mkSymbolTable,
-  unsafeMkSymbolTable, universalSymbolTable,
-
+  parseUnit,
   unitStringParser  -- these are pruned from the Haddock output
   ) where
 
 import Prelude hiding ( lex, div )
 
-import GHC.Generics (Generic)
 import Text.Parsec         hiding ( tab )
 import qualified Data.Map.Strict as Map
-import qualified Data.MultiMap as MM
 import Control.Monad.Reader
-import Control.Arrow       hiding ( app)
-import Data.Data (Data)
 import Data.Maybe
-import Data.Char
 
+import Data.Units.UnitExp
+import Data.Units.SymbolTable
 import Text.Lexer (Token(..))
 import Text.Token
 import Text.TokenClass
@@ -63,18 +55,6 @@ import Text.TokenClass
 #if __GLASGOW_HASKELL__ < 709
 import Data.Typeable ( Typeable )
 #endif
-
-----------------------------------------------------------------------
--- Basic combinators
-----------------------------------------------------------------------
-
--- copied from GHC
-partitionWith :: (a -> Either b c) -> [a] -> ([b], [c])
-partitionWith _ [] = ([],[])
-partitionWith f (x:xs) = case f x of
-                         Left  b -> (b:bs, cs)
-                         Right c -> (bs, c:cs)
-    where (bs,cs) = partitionWith f xs
 
 ----------------------------------------------------------------------
 -- Extra parser combinators
@@ -85,99 +65,6 @@ partitionWith f (x:xs) = case f x of
 -- In either case, no input is consumed and @experiment@ never fails.
 experiment :: Stream s m t => ParsecT s u m a -> ParsecT s u m (Maybe a)
 experiment = lookAhead . optionMaybe . try
-
-----------------------------------------------------------------------
--- Datatypes
-----------------------------------------------------------------------
-
--- | Parsed unit expressions, parameterized by a prefix identifier type and
--- a unit identifier type
-data UnitExp pre u = Unity                     -- ^ "1"
-                   | Unit (Maybe pre) u        -- ^ a unit with, perhaps, a prefix
-                   | Mult (UnitExp pre u) (UnitExp pre u)
-                   | Div (UnitExp pre u) (UnitExp pre u)
-                   | Pow (UnitExp pre u) Integer
-                   deriving (Eq, Ord, Generic, Data)
-
-#if __GLASGOW_HASKELL__ < 709
-deriving instance Typeable UnitExp
-#endif
-
-instance (Show pre, Show u) => Show (UnitExp pre u) where
-  show Unity               = "1"
-  show (Unit (Just pre) u) = show pre ++ " :@ " ++ show u
-  show (Unit Nothing u)    = show u
-  show (Mult e1 e2)        = "(" ++ show e1 ++ " :* " ++ show e2 ++ ")"
-  show (Div e1 e2)         = "(" ++ show e1 ++ " :/ " ++ show e2 ++ ")"
-  show (Pow e i)           = show e ++ " :^ " ++ show i
-
-----------------------------------------------------------------------
--- Symbol tables
-----------------------------------------------------------------------
-
--- | A finite mapping from prefix spellings to prefix identifiers (of
--- unspecified type @pre@). All prefix spellings must be strictly alphabetic.
-type PrefixTable pre = Map.Map String pre
-
--- | A mapping from unit spellings to unit identifiers (of unspecified type
--- @u@). All unit spellings must be strictly alphabetic.
-type UnitTable u = String -> Maybe u
-
--- | A "symbol table" for the parser, mapping prefixes and units to their
--- representations.
-data SymbolTable pre u = SymbolTable { prefixTable :: PrefixTable pre
-                                     , unitTable   :: UnitTable u
-                                     } deriving (Generic)
-
--- | Build a 'Map' from an association list, checking for ambiguity
-unambFromList :: (Ord a, Show b) => [(a,b)] -> Either [(a,[String])] (Map.Map a b)
-unambFromList list =
-  let multimap      = MM.fromList list
-      assocs        = MM.assocs multimap
-      (errs, goods) = partitionWith (\(key, vals) ->
-                                       case vals of
-                                         [val] -> Right (key, val)
-                                         _     -> Left (key, map show vals)) assocs
-      result        = Map.fromList goods
-  in
-  if null errs then Right result else Left errs
-
--- | Build a symbol table from prefix mappings and unit mappings. The prefix mapping
--- can be empty. This function checks to make sure that the strings are not
--- inherently ambiguous and are purely alphabetic.
-mkSymbolTable :: (Show pre, Show u)
-              => [(String, pre)]   -- ^ Association list of prefixes
-              -> [(String, u)]     -- ^ Association list of units
-              -> Either String (SymbolTable pre u)
-mkSymbolTable prefixes units =
-  let bad_strings = filter (not . all isLetter) (map fst prefixes ++ map fst units) in
-  if not (null bad_strings)
-  then Left $ "All prefixes and units must be composed entirely of letters.\nThe following are illegal: " ++ show bad_strings
-  else
-  let result = do
-        prefixTab <- unambFromList prefixes
-        unitTab   <- unambFromList units
-        return $ SymbolTable { prefixTable = prefixTab, unitTable = flip Map.lookup unitTab }
-  in left ((++ error_suffix) . concatMap mk_error_string) result
-  where
-    mk_error_string :: Show x => (String, [x]) -> String
-    mk_error_string (k, vs) =
-      "The label `" ++ k ++ "' is assigned to the following meanings:\n" ++
-      show vs ++ "\n"
-    error_suffix = "This is ambiguous. Please fix before building a unit parser."
-
--- | Make a symbol table without checking for ambiguity or non-purely
--- alphabetic strings.  The prefixes must be a (potentially empty)
--- finite map, but the units mapping need not be finite.
--- Note that this is unsafe in that the resulting parser may behave
--- unpredictably. It surely won't launch the rockets, though.
-unsafeMkSymbolTable :: PrefixTable pre -> UnitTable u -> SymbolTable pre u
-unsafeMkSymbolTable = SymbolTable
-
--- | A symbol table that accepts all unit strings, but supports no prefixes.
-universalSymbolTable :: SymbolTable a String
-universalSymbolTable = SymbolTable Map.empty Just
-
 
 ----------------------------------------------------------------------
 -- Unit string parser

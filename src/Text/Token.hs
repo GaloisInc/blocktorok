@@ -23,7 +23,9 @@ module Text.Token
   , Parser
   ) where
 
-import Control.Monad (void)
+import Control.Monad.Reader
+
+import Data.Units.SymbolTable
 
 import Text.Lexer (Token(..), AlexPosn(..))
 import Text.TokenClass
@@ -31,7 +33,7 @@ import Text.TokenClass
 import Text.Parsec hiding (satisfy)
 
 -- | The type of LINK parsers.
-type Parser = Parsec [Token] ()
+type Parser = ParsecT [Token] () (Reader (SymbolTable String String))
 
 satisfy :: (Stream [Token] m Token) => (Token -> Bool) -> ParsecT [Token] u m TokenClass
 satisfy f = tokenPrim show nextPos tokeq

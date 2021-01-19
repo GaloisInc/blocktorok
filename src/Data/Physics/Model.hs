@@ -31,7 +31,7 @@ import Data.Set (Set)
 import Data.Link.Identifier
 import Data.Math
 import Data.Solver.Technique
-
+import Data.Units.UnitExp
 
 data Boundary = Neumann Identifier
               | Dirichlet Identifier
@@ -51,7 +51,7 @@ data Model =
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier Integer
+        , getConsts :: Map Identifier (Integer, UnitExp String String)
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
@@ -61,7 +61,7 @@ data Model =
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
       -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier Integer
+      ->  Map Identifier (Integer, UnitExp String String)
       ->  Map Identifier (Identifier, Identifier)
       -> Set Identifier
       -> [Equation] -> Model
