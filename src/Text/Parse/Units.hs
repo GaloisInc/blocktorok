@@ -182,11 +182,3 @@ opP = satisfy' p <?> "op"
 -- parse a whole unit expression
 parseUnit :: UnitParser_UnitExp
 parseUnit = chainl unitFactorP opP Unity
-
--- | Parse a unit expression, interpreted with respect the given symbol table.
--- Returns either an error message or the successfully-parsed unit expression.
--- parseUnit :: (Show pre, Show u)
---           => SymbolTable pre u -> String -> Either String (UnitExp pre u)
--- parseUnit tab s = left show $ do
---   toks <- lex s
---   flip runReader tab $ runParserT (consumeAll parser) () "" toks
