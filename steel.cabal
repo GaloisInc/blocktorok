@@ -51,4 +51,6 @@ library
                        Data.Solver.Technique
                        Data.Math
                        Data.Physics.Model
+                       Data.Units.SymbolTable
+                       Data.Units.UnitExp
   ghc-options: -Wall

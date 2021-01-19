@@ -35,7 +35,9 @@ import Data.Units.SymbolTable
 
 import Text.Parsec
 
-table = mkSymbolTable [] []
+table = case mkSymbolTable [] [] of
+          Left e -> error e
+          Right st -> st
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a
 parseNamedText p n s =
