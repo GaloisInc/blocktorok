@@ -1,6 +1,6 @@
 {
 {-# OPTIONS -w  #-}
-module Language.Lexer
+module Text.Lexer
   ( Token(..)
   , AlexPosn(..)
   , Alex(..)
@@ -13,7 +13,7 @@ module Language.Lexer
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
 
-import Language.TokenClass
+import Text.TokenClass
 }
 
 %wrapper "monadUserState"
@@ -32,7 +32,7 @@ tokens :-
   couple                                { lex' TokenCouple       }
   step                                  { lex' TokenStep         }
   totalTime                             { lex' TokenTotalTime    }
-  input                                 { lex' TokenInput       }
+  input                                 { lex' TokenInput        }
   output                                { lex' TokenOutput       }
   technique                             { lex' TokenTechnique    }
   FEM                                   { lex' TokenFEM          }
@@ -41,11 +41,12 @@ tokens :-
   Neumann                               { lex' TokenNeumann      }
   Dirichlet                             { lex' TokenDirichlet    }
   physics                               { lex' TokenPhysics      }
-  HeatTransfer                         { lex' TokenHeatTransfer}
-  FluidFlow                             { lex' TokenFluidFlow}
+  HeatTransfer                          { lex' TokenHeatTransfer }
+  FluidFlow                             { lex' TokenFluidFlow    }
   var                                   { lex' TokenV            }
-  solve                                 { lex' TokenSolve            }
+  solve                                 { lex' TokenSolve        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
+  \^                                    { lex' TokenPow          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }
   \=                                    { lex' TokenEq           }

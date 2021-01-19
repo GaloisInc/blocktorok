@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Parser
+Module      : Text.Parse.Link
 Description : Parser for the LINK language
 Copyright   : Galois, Inc. 2021
 License     : N/A
@@ -10,34 +10,104 @@ Portability : N/A
 This module defines the parser for the LINK language, using Parsec.
 -}
 
-module Language.Parser
+module Text.Parse.Link
   ( parseDecl
   ) where
 
+import Control.Monad.Reader
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
 
-import Language.AST
-import Language.Identifier
-import Language.Lexer
-import Language.Token
-import Language.TokenClass
+import Data.Link.AST
+import Data.Link.Identifier
+import Text.Lexer
+import qualified Text.Parse.Units as UP
+import Text.Token
+import Text.TokenClass
+import Data.Math
+import Data.Physics.Model
+import Data.Solver.Technique
+import qualified Data.Units.UnitExp as U
+import Data.Units.SymbolTable
+import Data.Units.SI
+import Data.Units.SI.Prefixes
 
-import Math
-
-import Physics.Model
-
-import Solver.Technique
-
+import Language.Haskell.TH.Syntax (Name)
 import Text.Parsec
+
+prefixStrs, unitStrs :: [String]
+prefixStrs =
+  [ "da"
+  , "h"
+  , "k"
+  , "M"
+  , "G"
+  , "T"
+  , "P"
+  , "E"
+  , "Z"
+  , "Y"
+  , "d"
+  , "c"
+  , "m"
+  , "μ"
+  , "n"
+  , "p"
+  , "f"
+  , "a"
+  , "z"
+  , "y"
+  ]
+
+unitStrs =
+  [ "m"
+  , "g"
+  , "s"
+  , "min"
+  , "h"
+  , "A"
+  , "K"
+  , "mol"
+  , "cd"
+  , "Hz"
+  , "L"
+  , "N"
+  , "Pa"
+  , "J"
+  , "W"
+  , "C"
+  , "V"
+  , "F"
+  , "Ω"
+  , "S"
+  , "Wb"
+  , "T"
+  , "H"
+  , "lm"
+  , "rad"
+  , "lx"
+  , "Bq"
+  , "Gy"
+  , "Sv"
+  , "kat"
+  , "deg"
+  , "arcminute"
+  , "arcsecond"
+  , "hectare"
+  , "t"
+  ]
+
+table :: SymbolTable Name Name
+table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
+          Left e -> error e
+          Right st -> st
 
 parseNamedText :: Parser a -> String -> String -> Either ParseError a
 parseNamedText p n s =
   case llex s of
-    Left e -> parse (reportLexError e) n []
-    Right xs -> parse p n xs
+    Left e -> flip runReader table $ runParserT (reportLexError e) () n []
+    Right xs -> flip runReader table $ runParserT p () n xs
 
 reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
@@ -165,7 +235,7 @@ parsePhysicsType =
                     TokenFluidFlow -> FluidFlow n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier Int)
+parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp Name Name))
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls
@@ -175,8 +245,9 @@ parseConstDecls =
          i <- parseIdentifier
          tok' TokenEq
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
-         return (i, n)
+         return (i, (n, u))
 
 parseLibDecls :: Parser (Map Identifier (Identifier, Identifier))
 parseLibDecls =
@@ -196,16 +267,18 @@ parseLibDecls =
          m <- parseIdentifier
          return (scope, m)
 
-parseVarDecls :: Parser (Set Identifier)
+parseVarDecls :: Parser (Map Identifier (U.UnitExp Name Name))
 parseVarDecls =
   do decls <- many parseVarDecl
-     return $ Set.fromList decls
+     return $ Map.fromList decls
   where
     parseVarDecl =
       do tok' TokenV
          i <- parseIdentifier
+         tok' TokenColon
+         u <- UP.parseUnit
          tok' TokenSemi
-         return i
+         return (i, u)
 
 parseEqs :: Parser [Equation]
 parseEqs = many parseEq
@@ -245,7 +318,13 @@ parseExp = parseExp1 `chainl1` pAddOp
                         _ -> error "This can't happen"
 
     parseExp3 :: Parser Exp
-    parseExp3 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp4
+    parseExp3 = parseExp4 `chainl1` pPow
+      where
+        pPow :: Parser (Exp -> Exp -> Exp)
+        pPow = tok' TokenPow >> return Pow
+
+    parseExp4 :: Parser Exp
+    parseExp4 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp5
       where
         p =
           do op <- choice [tok TokenTriangle, tok TokenNabla]
@@ -253,10 +332,10 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
                        _ -> error "This can't happen"
-             f <$> parseExp3
+             f <$> parseExp4
 
-    parseExp4 :: Parser Exp
-    parseExp4 = p <|> parseExp5
+    parseExp5 :: Parser Exp
+    parseExp5 = p <|> parseExp6
       where
         p =
           do op <- choice [tok TokenNablaCross, tok TokenNablaDot, tok TokenNablaOuter]
@@ -265,10 +344,10 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenNablaDot -> NablaDot
                        TokenNablaOuter -> NablaOuter
                        _ -> error "This can't happen"
-             f <$> parseExp4
+             f <$> parseExp5
 
-    parseExp5 :: Parser Exp
-    parseExp5 = (IntE <$> number)
+    parseExp6 :: Parser Exp
+    parseExp6 = (IntE <$> number)
              <|> try parseFnApp
              <|> (Var <$> variable)
              <|> parseNeg
@@ -283,7 +362,7 @@ parseExp = parseExp1 `chainl1` pAddOp
 
         parseNeg =
           do tok' TokenMinus
-             Negation <$> parseExp5
+             Negation <$> parseExp6
 
         parseParens =
           do tok' TokenLParen

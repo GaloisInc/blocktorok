@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Token
+Module      : Text.Token
 Description : Interface between Alex lexer and Parsec parser
 Copyright   : Galois, Inc. 2021
 License     : N/A
@@ -13,23 +13,28 @@ Parsec, which is used to parse LINK programs.
 
 {-# LANGUAGE FlexibleContexts, MonoLocalBinds #-}
 
-module Language.Token
+module Text.Token
   ( tok
   , tok'
   , number
+  , satisfy'
   , variable
   , Parser
   ) where
 
-import Control.Monad (void)
+import Control.Monad.Reader
 
-import Language.Lexer (Token(..), AlexPosn(..))
-import Language.TokenClass
+import Data.Units.SymbolTable
+
+import Language.Haskell.TH.Syntax (Name)
+
+import Text.Lexer (Token(..), AlexPosn(..))
+import Text.TokenClass
 
 import Text.Parsec hiding (satisfy)
 
 -- | The type of LINK parsers.
-type Parser = Parsec [Token] ()
+type Parser = ParsecT [Token] () (Reader (SymbolTable Name Name))
 
 satisfy :: (Stream [Token] m Token) => (Token -> Bool) -> ParsecT [Token] u m TokenClass
 satisfy f = tokenPrim show nextPos tokeq
@@ -53,7 +58,7 @@ tok' :: (Stream [Token] m Token) => TokenClass -> ParsecT [Token] u m ()
 tok' p = void $ tok p
 
 -- | Parse a @TokenInt@.
-number :: Monad m => ParsecT [Token] u m Int
+number :: Monad m => ParsecT [Token] u m Integer
 number = satisfy' p <?> "integer"
   where p (Token _ t) = case t of
                           TokenInt n -> Just n
