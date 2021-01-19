@@ -155,7 +155,7 @@ unitP =
        1 -> return Unity
        _ -> unexpected $ "number " ++ show n
   <|>
-  do unit_str <- unitT
+  do unit_str <- variable
      u <- unitStringP unit_str
      maybe_pow <- powP
      return $ maybe_pow u

@@ -46,7 +46,6 @@ tokens :-
   var                                   { lex' TokenV            }
   solve                                 { lex' TokenSolve        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
-  $digit^$alpha+                        { lex  TokenUnit         }
   \^                                    { lex' TokenPow          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }

@@ -18,8 +18,7 @@ module Text.TokenClass
 
 -- | The type of LINK tokens
 data TokenClass =
-    TokenUnit String
-  | TokenInt Integer
+    TokenInt Integer
   | TokenVar String
   | TokenConfig
   | TokenIterations
@@ -70,7 +69,6 @@ data TokenClass =
 
 -- | Given a @TokenClass@, return a string for use in error messages.
 unLex :: TokenClass -> String
-unLex (TokenUnit u) = show u
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"

@@ -19,7 +19,6 @@ module Text.Token
   , number
   , satisfy'
   , variable
-  , unitT
   , Parser
   ) where
 
@@ -27,13 +26,15 @@ import Control.Monad.Reader
 
 import Data.Units.SymbolTable
 
+import Language.Haskell.TH.Syntax (Name)
+
 import Text.Lexer (Token(..), AlexPosn(..))
 import Text.TokenClass
 
 import Text.Parsec hiding (satisfy)
 
 -- | The type of LINK parsers.
-type Parser = ParsecT [Token] () (Reader (SymbolTable String String))
+type Parser = ParsecT [Token] () (Reader (SymbolTable Name Name))
 
 satisfy :: (Stream [Token] m Token) => (Token -> Bool) -> ParsecT [Token] u m TokenClass
 satisfy f = tokenPrim show nextPos tokeq
@@ -68,10 +69,4 @@ variable :: Monad m => ParsecT [Token] u m String
 variable = satisfy' p <?> "variable"
   where p (Token _ t) = case t of
                           TokenVar s -> Just s
-                          _ -> Nothing
-
-unitT :: Monad m => ParsecT [Token] u m String
-unitT = satisfy' p <?> "unit"
-  where p (Token _ t) = case t of
-                          TokenUnit s -> Just s
                           _ -> Nothing

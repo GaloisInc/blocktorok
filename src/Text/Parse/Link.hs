@@ -32,10 +32,75 @@ import Data.Physics.Model
 import Data.Solver.Technique
 import qualified Data.Units.UnitExp as U
 import Data.Units.SymbolTable
+import Data.Units.SI
+import Data.Units.SI.Prefixes
 
+import Language.Haskell.TH.Syntax (Name)
 import Text.Parsec
 
-table = case mkSymbolTable [] [] of
+prefixStrs, unitStrs :: [String]
+prefixStrs =
+  [ "da"
+  , "h"
+  , "k"
+  , "M"
+  , "G"
+  , "T"
+  , "P"
+  , "E"
+  , "Z"
+  , "Y"
+  , "d"
+  , "c"
+  , "m"
+  , "μ"
+  , "n"
+  , "p"
+  , "f"
+  , "a"
+  , "z"
+  , "y"
+  ]
+
+unitStrs =
+  [ "m"
+  , "g"
+  , "s"
+  , "min"
+  , "h"
+  , "A"
+  , "K"
+  , "mol"
+  , "cd"
+  , "Hz"
+  , "L"
+  , "N"
+  , "Pa"
+  , "J"
+  , "W"
+  , "C"
+  , "V"
+  , "F"
+  , "Ω"
+  , "S"
+  , "Wb"
+  , "T"
+  , "H"
+  , "lm"
+  , "rad"
+  , "lx"
+  , "Bq"
+  , "Gy"
+  , "Sv"
+  , "kat"
+  , "deg"
+  , "arcminute"
+  , "arcsecond"
+  , "hectare"
+  , "t"
+  ]
+
+table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
           Left e -> error e
           Right st -> st
 
@@ -171,7 +236,7 @@ parsePhysicsType =
                     TokenFluidFlow -> FluidFlow n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp String String))
+parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp Name Name))
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls

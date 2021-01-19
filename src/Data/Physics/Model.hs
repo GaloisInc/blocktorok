@@ -33,6 +33,8 @@ import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
 
+import Language.Haskell.TH.Syntax (Name)
+
 data Boundary = Neumann Identifier
               | Dirichlet Identifier
               deriving (Show)
@@ -51,7 +53,7 @@ data Model =
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier (Integer, UnitExp String String)
+        , getConsts :: Map Identifier (Integer, UnitExp Name Name)
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Set Identifier
         , getEqs :: [Equation] -- ^ The equations governing the model
@@ -61,7 +63,7 @@ data Model =
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
       -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier (Integer, UnitExp String String)
+      ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
       -> Set Identifier
       -> [Equation] -> Model
