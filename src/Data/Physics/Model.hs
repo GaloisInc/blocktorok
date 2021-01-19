@@ -40,7 +40,7 @@ data Boundary = Neumann Identifier
 
 data PhysicsType = HeatTransfer Integer
                  | FluidFlow Integer
-                deriving (Show)
+                 deriving (Show)
 
 
 -- | The type of a physical model; this will be computed with and eventually
@@ -56,7 +56,7 @@ data Model =
         , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
-  deriving(Show)
+        deriving (Show)
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier
