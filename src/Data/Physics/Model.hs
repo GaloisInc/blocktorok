@@ -55,8 +55,7 @@ data Model =
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
-        }
-        deriving (Show)
+        } deriving (Show)
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier
