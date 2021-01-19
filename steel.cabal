@@ -47,6 +47,8 @@ library
                        Language.Token
                        Language.TokenClass
                        Solver.Technique
+                       Solver.Backend
+                       --Solver.Example
                        Math
                        Physics.Model
   ghc-options: -Wall

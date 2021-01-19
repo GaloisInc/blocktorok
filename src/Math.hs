@@ -29,6 +29,7 @@ data Exp = Laplacian Exp
          | NablaOuter Exp
          | NablaExp Exp
          | NablaSingle
+         | Partial Exp
          | Paran Exp
          | Negation Exp
          | Plus Exp Exp
@@ -49,6 +50,7 @@ instance Show Exp where
   show (NablaExp e) = "(" ++ "∇" ++ show e ++ ")"
   show NablaSingle = "(" ++ "∇" ++ ")"
   show (Laplacian e) = "(" ++ "△" ++ show e ++ ")"
+  show (Partial e) = "∂"++show e 
   show (Paran e) = "(" ++ show e ++ ")"
   show (Negation e) = "(" ++ "-" ++ show e ++ ")"
   show (Plus e1 e2) = "(" ++ show e1 ++ " + " ++ show e2 ++ ")"

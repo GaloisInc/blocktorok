@@ -153,6 +153,17 @@ parseBoundaryType =
              TokenNeumann -> Neumann
              _ -> error "This can't happen"
 
+parseBoundaryTypeDecl :: Parser Boundary
+parseBoundaryTypeDecl =
+ do tok' TokenBoundary
+    tok' TokenColon
+    method <- parseBoundaryType
+    tok' TokenLParen
+    id <- parseIdentifier
+    tok' TokenRParen
+    tok' TokenSemi
+    return (T method id)
+
 parseBoundaryField :: Parser BoundaryField
 parseBoundaryField =
   do tok' TokenLParen
@@ -172,17 +183,6 @@ parseBoundaryFieldsDecl =
     tok' TokenColon
     x <- (many parseBoundaryField)
     return (F x)
-
-parseBoundaryTypeDecl :: Parser Boundary
-parseBoundaryTypeDecl =
-  do tok' TokenBoundary
-     tok' TokenColon
-     method <- parseBoundaryType
-     tok' TokenLParen
-     id <- parseIdentifier
-     tok' TokenRParen
-     tok' TokenSemi
-     return (T method id)
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -286,11 +286,12 @@ parseExp = parseExp1 `chainl1` pAddOp
     parseExp3 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp4
       where
         p =
-          do op <- choice [tok TokenTriangle, tok TokenNabla]
+          do op <- choice [tok TokenTriangle, tok TokenNabla, tok TokenPartial]
              let f = case op of
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
-                       _ -> error "This can't happen"
+                       TokenPartial -> Partial
+                       _ -> error "This can't happen-4"
              f <$> parseExp3
 
     parseExp4 :: Parser Exp
@@ -302,7 +303,7 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenNablaCross -> NablaCross
                        TokenNablaDot -> NablaDot
                        TokenNablaOuter -> NablaOuter
-                       _ -> error "This can't happen"
+                       _ -> error "This can't happen-5"
              f <$> parseExp4
 
     parseExp5 :: Parser Exp

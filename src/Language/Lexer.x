@@ -57,6 +57,7 @@ tokens :-
   \∇\⊗                                  { lex' TokenNablaOuter   }
   \∇                                    { lex' TokenNabla        }
   \△                                    { lex' TokenTriangle     }
+  \∂                                    { lex' TokenPartial      }
   \+                                    { lex' TokenPlus         }
   \-                                    { lex' TokenMinus        }
   \*                                    { lex' TokenTimes        }

@@ -50,6 +50,7 @@ data TokenClass = TokenInt Int
                 | TokenNablaDot
                 | TokenNablaOuter
                 | TokenNabla
+                | TokenPartial
                 | TokenPlus
                 | TokenMinus
                 | TokenTimes
@@ -102,6 +103,7 @@ unLex TokenNablaCross = "∇×"
 unLex TokenNablaDot = "∇•"
 unLex TokenNablaOuter = "∇⊗"
 unLex TokenNabla = "∇"
+unLex TokenPartial = "∂"
 unLex TokenPlus = "+"
 unLex TokenMinus = "-"
 unLex TokenTimes = "*"
