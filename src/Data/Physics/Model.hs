@@ -26,7 +26,6 @@ module Data.Physics.Model
   ) where
 
 import Data.Map.Strict (Map)
-import Data.Set (Set)
 
 import Data.Link.Identifier
 import Data.Math
