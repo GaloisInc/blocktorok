@@ -22,7 +22,7 @@ model StructureModel(qw) {
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;
-  var Tw;   -- solid temperature
+  var Tw: K;   -- solid temperature
   rhos*cps*∇Tw- ks*△Tw = qw;
 
   }
@@ -52,12 +52,12 @@ model FluidModel(Tw) {
   R =  standardAir.GasConstant; -- specific gas constant
   Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
   -- variables we are solving for
-  var u; -- velocities in x,y,z directions
-  var v;
-  var w;
-  var p; -- static pressure
-  var T;  -- temperature from ideal gas equation of state
-  var rhof; -- fluid density
+  var u: m/s; -- velocities in x,y,z directions
+  var v: m/s;
+  var w: m/s;
+  var p: m/s; -- static pressure
+  var T: K;  -- temperature from ideal gas equation of state
+  var rhof: m/s; -- fluid density
   -- T = p / (rhof * R);
   -- kappa =  mu * cp / Pr; -- thermal conductivity
   -- TODO Missing the support for equations
@@ -76,7 +76,7 @@ model FluidModel(Tw) {
 couple StructureModel FluidModel {
   input : Tin;
   output : Tout;
-  var qw; -- heat flux
+  var qw:K; -- heat flux
   qw = FluidModel(Tin);
   Tout = ModelSolid (qw);
   -- TODO add zone interface

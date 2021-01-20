@@ -14,9 +14,9 @@ model m1 (Temp) {
     physics : HeatConduction{tmp};    
     const DT = 4; -- e-05  m^2/s
     
-    --Temp - DT * △Temp =0; -- doesn't work?
+   -- Temp - DT * △Temp =0; -- doesn't work?
    --∇Temp - DT * △Temp = 0; --works 
-     ∂Temp - DT * △Temp = 0; -- works 
+    ∂Temp - DT * △Temp = 0; -- works 
    --(∂ Temp) /(∂ t)  -- doesn't work?
 }
 

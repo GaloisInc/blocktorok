@@ -167,7 +167,7 @@ parseModels =
          --inputDecl <- parseInputDecl
          outputDecl <- parseOutputDecl
          technique <- parseSettingTechnique
-         boundaryDecl <- parseBoundaryFieldsDecl
+         boundaryDecl <- parseBoundaryDecl --parseBoundaryFieldsDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
          libs <- parseLibDecls
@@ -234,6 +234,7 @@ parseBoundaryTypeDecl =
     tok' TokenSemi
     return (T method id)
 
+
 parseBoundaryField :: Parser BoundaryField
 parseBoundaryField =
   do tok' TokenLParen
@@ -253,6 +254,11 @@ parseBoundaryFieldsDecl =
     tok' TokenColon
     x <- (many parseBoundaryField)
     return (F x)
+
+parseBoundaryDecl :: Parser Boundary
+parseBoundaryDecl =
+  do
+    parseBoundaryFieldsDecl <|> parseBoundaryTypeDecl
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
