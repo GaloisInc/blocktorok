@@ -21,11 +21,11 @@ data Solver = PCG
 data Preconditioner = DIC
   deriving (Show)
 data Solvers =
-  T {
+  Solvers {
     solver :: Solver,
     preconditioner :: Preconditioner,
-    tolerance :: Int,
-    relTol :: Int
+    tolerance :: Integer,
+    relTol :: Integer
   }
   deriving (Show)
 
@@ -34,7 +34,7 @@ data Ddt = Euler
 data DerivKind = Gauss | Linear | Orthogonal
   deriving (Show)
 data NumericalScheme =
-  N {
+  NumericalScheme {
     ddt :: Ddt,
     grad :: [DerivKind],
     laplacian :: [DerivKind],

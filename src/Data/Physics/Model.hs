@@ -39,11 +39,8 @@ import Language.Haskell.TH.Syntax (Name)
 -- An ugly function I added. Forgive me.
 mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
 
-
-data BoundaryType = Neumann
-              | Dirichlet
+data BoundaryType = Neumann | Dirichlet
               deriving (Show)
-
 
 data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
               deriving (Show)
@@ -55,7 +52,6 @@ data PhysicsType =  HeatTransfer Identifier
                  | FluidFlow Identifier
                  | HeatConduction Identifier
                 deriving (Show)
-
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)

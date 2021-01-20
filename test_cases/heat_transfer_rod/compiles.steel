@@ -1,9 +1,22 @@
 
 config {
-    timeStep : 5; -- ms 
-    totalTime: 3; --s
-    Temp = 273;-- K
+    timeStep : 5 ms ;
+    totalTime: 3 s;
+    const Temp = 273 K;
     run: m1(Temp);
+}
+
+Backend {
+    solver : PCG;
+    preconditioner : DIC;
+    tolerance : 1;
+    relTol : 0;
+    ddt : Euler;
+    grad : Gauss; Linear;
+    laplacian : Gauss; Linear; Orthogonal;
+    interpolation : Linear;
+    snGrad : Orthogonal;
+    
 }
 
 
@@ -18,4 +31,6 @@ model m1 (Temp) {
    return Temp;
    
 }
+
+
 

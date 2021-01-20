@@ -1,18 +1,18 @@
 
 
 module Data.Solver.Example
-  ( 
+  (
   ) where
 
 import Data.Solver.Backend
 
-t =   T {
+t =   Solvers {
     solver = PCG,
     preconditioner = DIC,
     tolerance = 1,
     relTol = 0
   }
-n =   N {
+n =   NumericalScheme  {
     ddt = Euler,
     grad = [Gauss, Linear],
     laplacian = [Gauss, Linear, Orthogonal],

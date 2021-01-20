@@ -4,10 +4,10 @@
 -- import V = lib.fluid_flow;
 
 config {
-  timeStep : 2;
-  totalTime : 10;
+  timeStep : 2 ms;
+  totalTime : 10 ms;
   --Tw = P.InitialSolidTemperature;
-  Tw = 273;-- K
+  const Tw = 273 K;
   run: c1 (Tw);
   }
 
@@ -17,8 +17,6 @@ model StructureModel(qw) {
   technique : FEM;
   boundary : Neumann(qw);
   physics : HeatTransfer {P};
-  -- TODO arg to HeatTransfer should be 'P'
-  -- physics : HeatTransfer {P};
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;

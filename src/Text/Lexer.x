@@ -48,7 +48,25 @@ tokens :-
   HeatConduction                        { lex' TokenHeatConduction}
   FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
-  solve                                 { lex' TokenSolve        }
+  PCG                                   { lex' TokenPCG }
+  DIC                                   { lex' TokenDIC }
+  solver                                { lex' TokenTsolver }
+  preconditioner                        { lex' TokenTpreconditioner }
+  tolerance                             { lex' TokenTtolerance }
+  relTol                                { lex' TokenTrelTol }
+  Solvers                               { lex' TokenSolvers }
+  Euler                                 { lex' TokenEuler }
+  Gauss                                 { lex' TokenGauss }
+  Linear                                { lex' TokenLinear }
+  Orthogonal                            { lex' TokenOrthogonal }
+  ddt                                   { lex' TokenNddt }
+  grad                                  { lex' TokenNgrad }
+  laplacian                             { lex' TokenNlaplacian }
+  interpolation                         { lex' TokenNinterpolation }
+  snGrad                                { lex' TokenNsnGrad }
+  NumericalScheme                       { lex' TokenNumericalScheme }
+  Backend                               { lex' TokenBackend }
+  OpenFoam                              { lex' TokenOpenFoam }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
   \^                                    { lex' TokenPow          }
   \:                                    { lex' TokenColon        }

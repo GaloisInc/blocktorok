@@ -32,7 +32,7 @@ import qualified Data.Units.UnitExp as U
 import Data.Units.SymbolTable
 import Data.Units.SI
 import Data.Units.SI.Prefixes
-
+import Data.Solver.Backend
 import Language.Haskell.TH.Syntax (Name)
 import Text.Parsec
 
@@ -115,11 +115,107 @@ reportLexError msg = fail ("lexical error: " ++ msg)
 parseDecl :: FilePath -> String -> Either ParseError Prog
 parseDecl = parseNamedText parseProg
 
+parseSolver:: Parser Solver
+parseSolver =
+ do
+    tok' TokenTsolver
+    tok' TokenColon
+    s <- tok TokenPCG
+    tok' TokenSemi
+    return $ case s of
+            TokenPCG -> PCG
+            _ -> error "This can't happen"
+
+parsePreconditioner:: Parser Preconditioner
+parsePreconditioner =
+ do
+    tok' TokenTpreconditioner
+    tok' TokenColon
+    p <- tok TokenDIC
+    tok' TokenSemi
+    return $ case p of
+            TokenDIC -> DIC
+            _ -> error "This can't happen"
+
+parseDdt :: Parser Ddt
+parseDdt =
+ do
+    tok' TokenNddt
+    tok' TokenColon
+    d <- tok TokenEuler
+    tok' TokenSemi
+    return $ case d of
+            TokenEuler -> Euler
+            _ -> error "This can't happen"
+
+parseDerivkind :: Parser DerivKind
+parseDerivkind =
+ do
+    d <- tok TokenGauss <|> tok TokenLinear <|> tok TokenOrthogonal
+    tok' TokenSemi
+    return $ case d of
+            TokenGauss -> Gauss
+            TokenLinear -> Linear
+            TokenOrthogonal -> Orthogonal
+            _ -> error "This can't happen"
+
+parseDerivkindDecl setting =
+ do
+    tok' setting
+    tok' TokenColon
+    d <- parseDerivkind
+    return $ d
+
+parseDerivkindsDecl setting =
+ do
+    tok' setting
+    tok' TokenColon
+    d <- (many parseDerivkind)
+    return $ d
+
+parseIntSetting setting =
+ do
+    tok' setting
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n
+
+parseBackend :: Parser Backend
+parseBackend =
+  do tok' TokenBackend
+     tok' TokenLCurl
+     s <- parseSolver
+     p <- parsePreconditioner
+     t <- parseIntSetting TokenTtolerance
+     r <- parseIntSetting TokenTrelTol
+     let tmp1 =   Solvers {
+        solver = s,
+        preconditioner = p,
+        tolerance = t,
+        relTol = r
+       }
+     d <- parseDdt
+     g <- parseDerivkindsDecl TokenNgrad
+     l <- parseDerivkindsDecl TokenNlaplacian
+     i <- parseDerivkindDecl TokenNinterpolation
+     s <- parseDerivkindDecl TokenNsnGrad
+     let n =   NumericalScheme  {
+        ddt = d,
+        grad = g,
+        laplacian = l,
+        interpolation = i,
+        snGrad = s
+       }
+     tok' TokenRCurl
+     return $ OpenFoam { getSolvers = tmp1, getNumericalScheme = n}
+
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
+     backend <- parseBackend
      models <- parseModels
-     Prog cfg models <$> parseCouplings
+     Prog cfg backend models  <$> parseCouplings
 
 parseRunFn :: Parser RunFn
 parseRunFn =
@@ -138,26 +234,28 @@ parseConfig =
      tok' TokenLCurl
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
-     eqs <- parseEqs
+     consts <- parseConstDecls
      runfn <- parseRunFn
      tok' TokenRCurl
-     return $ Config timeStep duration eqs  runfn
+     return $ Config timeStep duration consts runfn
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
          tok' TokenColon
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
-         return n
+         return (n,u)
 
     parseDurationConfig =
       do mode <- tok TokenIterations <|> tok TokenTotalTime
          tok' TokenColon
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
-                    TokenIterations -> Iterations n
-                    TokenTotalTime -> TotalTime n
+                    TokenIterations -> Iterations n u
+                    TokenTotalTime -> TotalTime n u
                     _ -> error "This can't happen"
 parseSingleArg :: Parser Identifier
 parseSingleArg =

@@ -43,7 +43,25 @@ data TokenClass =
   | TokenHeatConduction
   | TokenFluidFlow
   | TokenV
-  | TokenSolve
+  | TokenPCG
+  | TokenDIC
+  | TokenTsolver
+  | TokenTpreconditioner
+  | TokenTtolerance
+  | TokenTrelTol
+  | TokenSolvers
+  | TokenEuler
+  | TokenGauss
+  | TokenLinear
+  | TokenOrthogonal
+  | TokenNddt
+  | TokenNgrad
+  | TokenNlaplacian
+  | TokenNinterpolation
+  | TokenNsnGrad
+  | TokenNumericalScheme
+  | TokenBackend
+  | TokenOpenFoam
   | TokenPow
   | TokenColon
   | TokenSemi
@@ -99,7 +117,6 @@ unLex TokenHeatTransfer = "HeatTransfer"
 unLex TokenHeatConduction  = "HeatConduction"
 unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
-unLex TokenSolve = "solve"
 unLex TokenPow = "^"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
@@ -118,6 +135,25 @@ unLex TokenCrossProduct ="×"
 unLex TokenInnerProduct="•"
 unLex TokenOuterProduct ="⊗"
 unLex TokenDot = "."
+unLex TokenPCG = "PCG"
+unLex TokenDIC = "DIC"
+unLex TokenTsolver ="solver"
+unLex TokenTpreconditioner = "preconditioner"
+unLex TokenTtolerance = "tolerance"
+unLex TokenTrelTol = "relTol"
+unLex TokenSolvers = "solvers"
+unLex TokenEuler = "Euler"
+unLex TokenGauss = "Gauss"
+unLex TokenLinear = "Linear"
+unLex TokenOrthogonal = "Orthogonal"
+unLex TokenNddt = "ddt"
+unLex TokenNgrad = "grad"
+unLex TokenNlaplacian = "laplacian"
+unLex TokenNinterpolation = "interpolation"
+unLex TokenNsnGrad ="snGrad"
+unLex TokenNumericalScheme = "NumericalScheme"
+unLex TokenBackend = "Backend"
+unLex TokenOpenFoam = "OpenFoam"
 unLex TokenComma = ","
 unLex TokenLParen = "("
 unLex TokenRParen = ")"
