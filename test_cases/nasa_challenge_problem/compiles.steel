@@ -7,11 +7,11 @@ config {
   timeStep : 2;
   totalTime : 10;
   --Tw = P.InitialSolidTemperature;
-  -- Run: couple (ModelFluid, ModelSolid, Tw);
+  Tw = 273;-- K
+  run: c1 (Tw);
   }
 
 model StructureModel(qw) {
-  output : Tw;
   -- Convention from the Zhang paper: Tw (YL)
   -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
@@ -24,11 +24,11 @@ model StructureModel(qw) {
   cps = P.SolidSpecificHeat;
   var Tw: K;   -- solid temperature
   rhos*cps*∇Tw- ks*△Tw = qw;
+  return Tw;
 
   }
 
 model FluidModel(Tw) {
-  output : qw;
   technique : FVM;
   boundary: Dirichlet (Tw);
   -- TODO change input to boundary conditions
@@ -71,18 +71,16 @@ model FluidModel(Tw) {
   --    } -- convective fluxes
   -- FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
   -- FIXME what is this dot suppose to be?
+  
+  return qw;
   }
 
-couple StructureModel FluidModel {
-  input : Tin;
-  output : Tout;
+couple c1 FluidModel StructureModel (Tin){
   var qw:K; -- heat flux
   qw = FluidModel(Tin);
-  Tout = ModelSolid (qw);
+  Tout = StructureModel(qw);
   -- TODO add zone interface
+  return Tout;
   }
 
--- def couple (m1, m2, Tin):
---  qw = m1 (Tin)
---  Tout = m2 (qw);
---  return Tout
+

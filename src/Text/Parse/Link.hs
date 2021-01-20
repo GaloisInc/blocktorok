@@ -121,6 +121,17 @@ parseProg =
      models <- parseModels
      Prog cfg models <$> parseCouplings
 
+parseRunFn :: Parser RunFn
+parseRunFn =
+  do tok' TokenRun
+     tok' TokenColon
+     f <- parseIdentifier
+     tok' TokenLParen
+     arg <- parseIdentifier
+     tok' TokenRParen
+     tok' TokenSemi
+     return $ RFn f arg
+
 parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
@@ -128,8 +139,9 @@ parseConfig =
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
      eqs <- parseEqs
+     runfn <- parseRunFn
      tok' TokenRCurl
-     return $ Config timeStep duration eqs
+     return $ Config timeStep duration eqs  runfn
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
@@ -147,6 +159,13 @@ parseConfig =
                     TokenIterations -> Iterations n
                     TokenTotalTime -> TotalTime n
                     _ -> error "This can't happen"
+parseSingleArg :: Parser Identifier
+parseSingleArg =
+  do
+    tok' TokenLParen
+    j <-  parseIdentifier
+    tok' TokenRParen
+    return j
 
 parseModels :: Parser (Map Identifier Model)
 parseModels =
@@ -155,47 +174,27 @@ parseModels =
   where
     parseModel =
       do tok' TokenModel
-         i <- parseIdentifier
-         tok' TokenLParen
-         j <-  parseIdentifier
-         tok' TokenRParen
-         model <- parseModelBody j
-         return (i, model)
+         name <- parseIdentifier
+         i <- parseSingleArg
+         model <- parseModelBody i
+         return (name, model)
 
     parseModelBody inputDecl =
       do tok' TokenLCurl
-         --inputDecl <- parseInputDecl
-         outputDecl <- parseOutputDecl
          technique <- parseSettingTechnique
-         boundaryDecl <- parseBoundaryDecl --parseBoundaryFieldsDecl
+         boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
          libs <- parseLibDecls
          vs <- parseVarDecls
          eqs <- parseEqs
-         --outputDecl <- parseReturnDecl
+         outputDecl <- parseReturnDecl
          tok' TokenRCurl
          return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
   do Identifier <$> variable
-
-parseInputDecl :: Parser Identifier
-parseInputDecl =
-  do tok' TokenInput
-     tok' TokenColon
-     var <- variable
-     tok' TokenSemi
-     return $ Identifier var
-
-parseOutputDecl :: Parser Identifier
-parseOutputDecl =
-  do tok' TokenOutput
-     tok' TokenColon
-     var <- variable
-     tok' TokenSemi
-     return $ Identifier var
 
 parseReturnDecl :: Parser Identifier
 parseReturnDecl =
@@ -420,12 +419,13 @@ parseCouplings = many parseCoupling
   where
     parseCoupling =
       do tok' TokenCouple
+         mname <- parseIdentifier
          ma <- parseIdentifier
          mb <- parseIdentifier
+         i <- parseSingleArg
          tok' TokenLCurl
-         i <- parseInputDecl
-         o <- parseOutputDecl
          vs <- parseVarDecls
          eqs <- parseEqs
+         o <- parseReturnDecl
          tok' TokenRCurl
-         return $ Coupling ma mb i o vs eqs
+         return $ Coupling mname ma mb i o vs eqs

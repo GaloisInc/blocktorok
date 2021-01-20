@@ -43,12 +43,16 @@ data Duration = Iterations Integer -- ^ The number of steps to take
               | TotalTime Integer -- ^ The amount of time to simulate
               deriving (Show)
 
+data RunFn = RFn Identifier Identifier
+              deriving (Show)
+
 -- | LINK Configuration, consisting of the global simulation step size and the
 --   total @Duration@
 data Config =
   Config { getGlobalStep :: Integer -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
-         , getInitEqs :: [Equation] -- ^ The equations initiating the simulation 
+         , getInitEqs :: [Equation] -- ^ The equations initiating the simulation
+         , getRun :: RunFn
          } deriving (Show)
 
 -- TODO: A coupling relates two models via boundary equations and knowledge of
@@ -56,7 +60,8 @@ data Config =
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
 data Coupling = Coupling {
-  model1::Identifier
+  name:: Identifier
+  , model1::Identifier
   , model2::Identifier
   , input::Identifier
   , output::Identifier

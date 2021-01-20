@@ -26,6 +26,7 @@ tokens :-
   "--".*                                ;
   $digit+                               { lex (TokenInt . read)  }
   config                                { lex' TokenConfig       }
+  run                                   { lex' TokenRun          }
   iterations                            { lex' TokenIterations   }
   model                                 { lex' TokenModel        }
   const                                 { lex' TokenConst        }

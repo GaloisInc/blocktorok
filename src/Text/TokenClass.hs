@@ -21,6 +21,7 @@ data TokenClass =
     TokenInt Integer
   | TokenVar String
   | TokenConfig
+  | TokenRun
   | TokenIterations
   | TokenModel
   | TokenConst
@@ -76,6 +77,7 @@ unLex :: TokenClass -> String
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
+unLex TokenRun ="Run"
 unLex TokenIterations = "iterations"
 unLex TokenModel = "model"
 unLex TokenConst = "const"
