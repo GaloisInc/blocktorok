@@ -8,8 +8,12 @@ Stability   : experimental
 Portability : N/A
 -}
 
-module Solver.Backend
-  ( Backend(..)
+module Data.Solver.Backend
+  (
+  Solver(..), Preconditioner(..),  Solvers (..)
+  , Ddt(..), DerivKind(..), NumericalScheme (..)
+  , Backend(..)
+
   ) where
 
 data Solver = PCG
@@ -32,7 +36,7 @@ data DerivKind = Gauss | Linear | Orthogonal
 data NumericalScheme =
   N {
     ddt :: Ddt,
-    grad :: DerivKind,
+    grad :: [DerivKind],
     laplacian :: [DerivKind],
     interpolation::DerivKind,
     snGrad :: DerivKind

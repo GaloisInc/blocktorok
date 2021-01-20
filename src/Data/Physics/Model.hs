@@ -1,5 +1,5 @@
 {-|
-Module      : Physics.Model
+Module      : Data.Physics.Model
 Description : High-level representation of physical models
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -13,7 +13,7 @@ here, probably, but for now it's as simple as it can be (basically a record
 designed to be extended with whatever we feel is important.)
 -}
 
-module Physics.Model
+module Data.Physics.Model
   ( Model
   , mkModel
   , getTechnique
@@ -30,19 +30,22 @@ module Physics.Model
 import Data.Map.Strict (Map)
 import Data.Set (Set)
 
-import Language.Identifier
-import Math
-import Solver.Technique
+import Data.Link.Identifier
+import Data.Math
+import Data.Solver.Technique
+import Data.Units.UnitExp
+import Language.Haskell.TH.Syntax (Name)
 
 -- An ugly function I added. Forgive me.
 mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
+
 
 data BoundaryType = Neumann
               | Dirichlet
               deriving (Show)
 
 
-data BoundaryField =  BoundaryField Identifier  BoundaryType Int
+data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
               deriving (Show)
 
 data Boundary =  T BoundaryType Identifier | F [BoundaryField]
@@ -63,9 +66,9 @@ data Model =
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier Int
+        , getConsts :: Map Identifier (Integer, UnitExp Name Name)
         , getLib :: Map Identifier (Identifier, Identifier)
-        , getVars :: Set Identifier
+        , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
         }
 instance Show Model where
@@ -83,8 +86,8 @@ instance Show Model where
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
       -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier Int
+      ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
-      -> Set Identifier
+      ->  Map Identifier (UnitExp Name Name)
       -> [Equation] -> Model
 mkModel = Model

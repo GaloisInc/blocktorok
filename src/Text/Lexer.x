@@ -1,6 +1,6 @@
 {
 {-# OPTIONS -w  #-}
-module Language.Lexer
+module Text.Lexer
   ( Token(..)
   , AlexPosn(..)
   , Alex(..)
@@ -13,7 +13,7 @@ module Language.Lexer
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
 
-import Language.TokenClass
+import Text.TokenClass
 }
 
 %wrapper "monadUserState"
@@ -44,11 +44,12 @@ tokens :-
   Dirichlet                             { lex' TokenDirichlet    }
   physics                               { lex' TokenPhysics      }
   HeatTransfer                          { lex' TokenHeatTransfer }
-  HeatConduction                        { lex' TokenHeatConduction }
+  HeatConduction                        { lex' TokenHeatConduction}
   FluidFlow                             { lex' TokenFluidFlow}
   var                                   { lex' TokenV            }
-  solve                                 { lex' TokenSolve            }
+  solve                                 { lex' TokenSolve        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
+  \^                                    { lex' TokenPow          }
   \:                                    { lex' TokenColon        }
   \;                                    { lex' TokenSemi         }
   \=                                    { lex' TokenEq           }

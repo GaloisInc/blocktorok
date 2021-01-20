@@ -48,10 +48,10 @@ model F {
     const kF = 1;
     const cp = 1;
 
-    var p;
-    var TF;
-    var g;
-    var QF;
+    var p: m/s;
+    var TF: K;
+    var g: m/s^2;
+    var QF: J;
 
     -u * △u + po * (u•∇) * u + ∇p + po * B * TF * g = po * (1 + B * To) * g;
     ∇•u = 0;
@@ -72,10 +72,10 @@ model S {
     const n = 1;
     const ks = 1;
 
-    var TS;
-    var TF;
-    var Ts;
-    var Qs;
+    var TS: K;
+    var TF: K;
+    var Ts: K;
+    var Qs: J;
 
     TS = TF;
     kF * (n • ∇TF) = ks * (n • ∇TS);

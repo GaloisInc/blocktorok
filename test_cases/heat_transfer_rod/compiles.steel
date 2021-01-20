@@ -3,13 +3,14 @@ config {
     timeStep : 5; -- ms 
     totalTime: 3; --s
     Temp = 273;-- K
+    -- run: m1(Temp);
 }
 
 
 model m1 (Temp) {
     output : Temp;
     technique : FVM;
-    boundaryField : (top, Neumann, 0); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573); 
+    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573); 
     physics : HeatConduction{tmp};    
     const DT = 4; -- e-05  m^2/s
     

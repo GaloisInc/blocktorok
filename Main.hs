@@ -1,7 +1,7 @@
 module Main(main) where
 
 import Language.Check (hasAllCouplings, allVarsDeclared)
-import Language.Parser ( parseDecl )
+import Text.Parse.Link ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
 
