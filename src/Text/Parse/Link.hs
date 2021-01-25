@@ -473,8 +473,8 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
                        TokenPartial -> Partial
-                       _ -> error "This can't happen-4"
-             f <$> parseExp3
+                       _ -> error "This can't happen"
+             f <$> parseExp4
 
     parseExp5 :: Parser Exp
     parseExp5 = p <|> parseExp6
@@ -485,8 +485,8 @@ parseExp = parseExp1 `chainl1` pAddOp
                        TokenNablaCross -> NablaCross
                        TokenNablaDot -> NablaDot
                        TokenNablaOuter -> NablaOuter
-                       _ -> error "This can't happen-5"
-             f <$> parseExp4
+                       _ -> error "This can't happen"
+             f <$> parseExp5
 
     parseExp6 :: Parser Exp
     parseExp6 = (IntE <$> number)

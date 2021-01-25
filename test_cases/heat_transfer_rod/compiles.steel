@@ -16,7 +16,6 @@ Backend {
     laplacian : Gauss; Linear; Orthogonal;
     interpolation : Linear;
     snGrad : Orthogonal;
-    
 }
 
 
@@ -25,9 +24,9 @@ model m1 (Temp) {
     boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573); 
     physics : HeatConduction{tmp};    
     const DT = 4; -- e-05  m^2/s
-    ∂Temp - DT * △Temp = 0; -- works 
-   -- Temp - DT * △Temp =0; -- doesn't work?
-   --(∂ Temp) /(∂ t)  -- doesn't work?
+    --∂Temp - DT * △Temp = 0; -- works 
+    Temp - DT * △Temp =0; -- doesn't work?
+    --(∂ Temp) /(∂ t)  -- doesn't work?
    return Temp;
    
 }
