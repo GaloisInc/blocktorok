@@ -98,6 +98,7 @@ data SU2Config =
             , getMaxTime :: SU2Double -- TODO: Units?
             , getInternalIter :: SU2Integer
             , getTimeIter :: SU2Integer
+            , getMarkerIso :: [(String, SU2Double)] -- TODO: Reader for zone markers?
             }
 instance Render SU2Config where
   render su2conf = "SOLVER= " ++ render (getSolver su2conf) ++ "\n"
@@ -109,3 +110,4 @@ instance Render SU2Config where
                 ++ "MAX_TIME= " ++ render (getMaxTime su2conf) ++ "\n"
                 ++ "INNER_ITER= " ++ render (getInternalIter su2conf) ++ "\n"
                 ++ "TIME_ITER= " ++ render (getTimeIter su2conf) ++ "\n"
+                ++ "MARKER_ISOTHERMAL= " ++ "( " ++ " )"
