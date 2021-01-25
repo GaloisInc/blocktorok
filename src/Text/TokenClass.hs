@@ -29,6 +29,7 @@ data TokenClass =
   | TokenTimeStep
   | TokenTotalTime
   | TokenInput
+  | TokenImport
   | TokenOutput
   | TokenReturn
   | TokenTechnique
@@ -104,6 +105,7 @@ unLex TokenTimeStep  = "TimeStep"
 unLex TokenTotalTime = "totalTime"
 unLex TokenTechnique = "technique"
 unLex TokenInput = "input"
+unLex TokenImport = "import"
 unLex TokenOutput = "output"
 unLex TokenReturn = "return"
 unLex TokenFEM = "FEM"

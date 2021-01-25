@@ -24,76 +24,77 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-  $digit+                               { lex (TokenInt . read)  }
-  config                                { lex' TokenConfig       }
-  run                                   { lex' TokenRun          }
-  iterations                            { lex' TokenIterations   }
-  model                                 { lex' TokenModel        }
-  const                                 { lex' TokenConst        }
-  couple                                { lex' TokenCouple       }
+  $digit+                               { lex (TokenInt . read)     }
+  config                                { lex' TokenConfig          }
+  run                                   { lex' TokenRun             }
+  iterations                            { lex' TokenIterations      }
+  model                                 { lex' TokenModel           }
+  const                                 { lex' TokenConst           }
+  couple                                { lex' TokenCouple          }
   timeStep                              { lex' TokenTimeStep        }
-  totalTime                             { lex' TokenTotalTime    }
-  input                                 { lex' TokenInput        }
-  output                                { lex' TokenOutput       }
-  return                                { lex' TokenReturn       }
-  technique                             { lex' TokenTechnique    }
-  FEM                                   { lex' TokenFEM          }
-  FVM                                   { lex' TokenFVM          }
-  boundaryField                         { lex' TokenBoundaryField }
-  boundary                              { lex' TokenBoundary     }
-  Neumann                               { lex' TokenNeumann      }
-  Dirichlet                             { lex' TokenDirichlet    }
-  physics                               { lex' TokenPhysics      }
-  HeatTransfer                          { lex' TokenHeatTransfer }
-  HeatConduction                        { lex' TokenHeatConduction}
-  FluidFlow                             { lex' TokenFluidFlow}
-  var                                   { lex' TokenV            }
-  PCG                                   { lex' TokenPCG }
-  DIC                                   { lex' TokenDIC }
-  solver                                { lex' TokenTsolver }
+  totalTime                             { lex' TokenTotalTime       }
+  input                                 { lex' TokenInput           }
+  import                                { lex' TokenImport          }
+  output                                { lex' TokenOutput          }
+  return                                { lex' TokenReturn          }
+  technique                             { lex' TokenTechnique       }
+  FEM                                   { lex' TokenFEM             }
+  FVM                                   { lex' TokenFVM             }
+  boundaryField                         { lex' TokenBoundaryField   }
+  boundary                              { lex' TokenBoundary        }
+  Neumann                               { lex' TokenNeumann         }
+  Dirichlet                             { lex' TokenDirichlet       }
+  physics                               { lex' TokenPhysics         }
+  HeatTransfer                          { lex' TokenHeatTransfer    }
+  HeatConduction                        { lex' TokenHeatConduction  }
+  FluidFlow                             { lex' TokenFluidFlow       }
+  var                                   { lex' TokenV               }
+  PCG                                   { lex' TokenPCG             }
+  DIC                                   { lex' TokenDIC             }
+  solver                                { lex' TokenTsolver         }
   preconditioner                        { lex' TokenTpreconditioner }
-  tolerance                             { lex' TokenTtolerance }
-  relTol                                { lex' TokenTrelTol }
-  Solvers                               { lex' TokenSolvers }
-  Euler                                 { lex' TokenEuler }
-  Gauss                                 { lex' TokenGauss }
-  Linear                                { lex' TokenLinear }
-  Orthogonal                            { lex' TokenOrthogonal }
-  ddt                                   { lex' TokenNddt }
-  grad                                  { lex' TokenNgrad }
-  laplacian                             { lex' TokenNlaplacian }
-  interpolation                         { lex' TokenNinterpolation }
-  snGrad                                { lex' TokenNsnGrad }
+  tolerance                             { lex' TokenTtolerance      }
+  relTol                                { lex' TokenTrelTol         }
+  Solvers                               { lex' TokenSolvers         }
+  Euler                                 { lex' TokenEuler           }
+  Gauss                                 { lex' TokenGauss           }
+  Linear                                { lex' TokenLinear          }
+  Orthogonal                            { lex' TokenOrthogonal      }
+  ddt                                   { lex' TokenNddt            }
+  grad                                  { lex' TokenNgrad           }
+  laplacian                             { lex' TokenNlaplacian      }
+  interpolation                         { lex' TokenNinterpolation  }
+  snGrad                                { lex' TokenNsnGrad         }
   NumericalScheme                       { lex' TokenNumericalScheme }
-  Backend                               { lex' TokenBackend }
-  OpenFoam                              { lex' TokenOpenFoam }
-  $alpha [$alpha $digit \_ \']*         { lex  TokenVar          }
-  \^                                    { lex' TokenPow          }
-  \:                                    { lex' TokenColon        }
-  \;                                    { lex' TokenSemi         }
-  \=                                    { lex' TokenEq           }
-  \∇\×                                  { lex' TokenNablaCross   }
-  \∇\•                                  { lex' TokenNablaDot     }
-  \∇\⊗                                  { lex' TokenNablaOuter   }
-  \∇                                    { lex' TokenNabla        }
-  \△                                    { lex' TokenTriangle     }
-  \∂                                    { lex' TokenPartial      }
-  \+                                    { lex' TokenPlus         }
-  \-                                    { lex' TokenMinus        }
-  \*                                    { lex' TokenTimes        }
-  \/                                    { lex' TokenDiv          }
-  \×                                    { lex' TokenCrossProduct }
-  \•                                    { lex' TokenInnerProduct }
-  \⊗                                    { lex' TokenOuterProduct }
-  \⊗                                    { lex' TokenOuterProduct }
-  \.                                    { lex' TokenDot          }
-  \,                                    { lex' TokenComma        }
-  \(                                    { lex' TokenLParen       }
-  \)                                    { lex' TokenRParen       }
-  \[                                    { lex' TokenLBracket     }
-  \]                                    { lex' TokenRBracket     }
-  \{                                    { lex' TokenLCurl        }
-  \}                                    { lex' TokenRCurl        }
+  Backend                               { lex' TokenBackend         }
+  OpenFoam                              { lex' TokenOpenFoam        }
+  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
+  \^                                    { lex' TokenPow             }
+  \:                                    { lex' TokenColon           }
+  \;                                    { lex' TokenSemi            }
+  \=                                    { lex' TokenEq              }
+  \∇\×                                  { lex' TokenNablaCross      }
+  \∇\•                                  { lex' TokenNablaDot        }
+  \∇\⊗                                  { lex' TokenNablaOuter      }
+  \∇                                    { lex' TokenNabla           }
+  \△                                    { lex' TokenTriangle        }
+  \∂                                    { lex' TokenPartial         }
+  \+                                    { lex' TokenPlus            }
+  \-                                    { lex' TokenMinus           }
+  \*                                    { lex' TokenTimes           }
+  \/                                    { lex' TokenDiv             }
+  \×                                    { lex' TokenCrossProduct    }
+  \•                                    { lex' TokenInnerProduct    }
+  \⊗                                    { lex' TokenOuterProduct    }
+  \⊗                                    { lex' TokenOuterProduct    }
+  \.                                    { lex' TokenDot             }
+  \,                                    { lex' TokenComma           }
+  \(                                    { lex' TokenLParen          }
+  \)                                    { lex' TokenRParen          }
+  \[                                    { lex' TokenLBracket        }
+  \]                                    { lex' TokenRBracket        }
+  \{                                    { lex' TokenLCurl           }
+  \}                                    { lex' TokenRCurl           }
 
 {
 -- To improve error messages, We keep the path of the file we are

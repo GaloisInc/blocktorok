@@ -396,7 +396,8 @@ parseLibDecls =
      return $ Map.fromList decls
   where
     parseLibDecl =
-      do i <- parseIdentifier
+      do tok' TokenImport
+         i <- parseIdentifier
          tok' TokenEq
          lib <- parseImport
          tok' TokenSemi
