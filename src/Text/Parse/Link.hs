@@ -466,19 +466,20 @@ parseExp = parseExp1 `chainl1` pAddOp
                     _ -> error "This can't happen"
 
     parseExp1 :: Parser Exp
-    parseExp1 = parseExp2 `chainl1` return Div
+    parseExp1 = parseExp2 `chainl1` return Plus
 
     parseExp2 :: Parser Exp
     parseExp2 = parseExp3 `chainl1` pMulOp
       where
         pMulOp :: Parser (Exp -> Exp -> Exp)
         pMulOp =
-          do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct])
+          do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct, TokenDiv])
              return $ case op of
                         TokenTimes -> Times
                         TokenInnerProduct -> InnerProduct
                         TokenCrossProduct -> CrossProduct
                         TokenOuterProduct -> OuterProduct
+                        TokenDiv -> Div
                         _ -> error "This can't happen"
 
     parseExp3 :: Parser Exp
