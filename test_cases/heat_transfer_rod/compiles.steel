@@ -6,11 +6,14 @@ config {
     run: m1(Temp);
 }
 
-Backend {
+SolvingTechnique sTemp {
     solver : PCG;
     preconditioner : DIC;
     tolerance : 1;
     relTol : 0;
+    }
+
+NumericalScheme nTemp {
     ddt : Euler;
     grad : Gauss; Linear;
     laplacian : Gauss; Linear; Orthogonal;
@@ -18,18 +21,14 @@ Backend {
     snGrad : Orthogonal;
 }
 
-
 model m1 (Temp) {
     technique : FVM;
-    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573); 
-    physics : HeatConduction{tmp};    
+    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
+    physics : HeatConduction{tmp};
     const DT = 4; -- e-05  m^2/s
-    --∂Temp - DT * △Temp = 0; -- works 
-    Temp - DT * △Temp =0; -- doesn't work?
-    --(∂ Temp) /(∂ t)  -- doesn't work?
+    ∂Temp - DT * △Temp = 0; -- works
+    --(∂ Temp) /(∂ t) = 0;  -- doesn't work?
+   solve(Temp, sTemp, nTemp);
    return Temp;
-   
+
 }
-
-
-

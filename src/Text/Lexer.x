@@ -49,6 +49,7 @@ tokens :-
   HeatConduction                        { lex' TokenHeatConduction  }
   FluidFlow                             { lex' TokenFluidFlow       }
   var                                   { lex' TokenV               }
+  solve                                 { lex' TokenSolve           }
   PCG                                   { lex' TokenPCG             }
   DIC                                   { lex' TokenDIC             }
   solver                                { lex' TokenTsolver         }
@@ -66,6 +67,7 @@ tokens :-
   interpolation                         { lex' TokenNinterpolation  }
   snGrad                                { lex' TokenNsnGrad         }
   NumericalScheme                       { lex' TokenNumericalScheme }
+  SolvingTechnique                      { lex' TokenSolvingTechnique }
   Backend                               { lex' TokenBackend         }
   OpenFoam                              { lex' TokenOpenFoam        }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }

@@ -10,9 +10,9 @@ Portability : N/A
 
 module Data.Solver.Backend
   (
-  Solver(..), Preconditioner(..),  Solvers (..)
+  Solver(..), Preconditioner(..), SolvingTechnique (..)
   , Ddt(..), DerivKind(..), NumericalScheme (..)
-  , Backend(..)
+
 
   ) where
 
@@ -20,8 +20,8 @@ data Solver = PCG
   deriving (Show)
 data Preconditioner = DIC
   deriving (Show)
-data Solvers =
-  Solvers {
+data SolvingTechnique =
+  SolvingTechnique{
     solver :: Solver,
     preconditioner :: Preconditioner,
     tolerance :: Integer,
@@ -41,12 +41,4 @@ data NumericalScheme =
     interpolation::DerivKind,
     snGrad :: DerivKind
   }
-  deriving (Show)
-
--- | OpenFoam solvers and numerical schemes
-data Backend =
-  OpenFoam {
-    getSolvers :: Solvers,
-    getNumericalScheme:: NumericalScheme
-    }
   deriving (Show)

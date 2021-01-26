@@ -21,6 +21,7 @@ module Data.Physics.Model
   , getVars
   , getLib
   , getEqs
+  , VarSolve(..)
   , BoundaryType(..)
   , BoundaryField(..)
   , Boundary(..)
@@ -52,6 +53,11 @@ data PhysicsType =  HeatTransfer Identifier
                  | FluidFlow Identifier
                  | HeatConduction Identifier
                 deriving (Show)
+data VarSolve = VarSolve
+  Identifier   --  ^ Variable we are solving for
+  Identifier    -- , solving technique
+  Identifier   ---, and numerical scheme
+  deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
@@ -66,9 +72,10 @@ data Model =
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
+        , getSolve :: VarSolve
         }
 instance Show Model where
-      show (Model i o t b p c l v e) =
+      show (Model i o t b p c l v e s) =
         (mkIndent "input" i)
         ++ (mkIndent "output" o)
         ++ (mkIndent "Technique" t)
@@ -78,6 +85,7 @@ instance Show Model where
         ++ (mkIndent "libraries" l)
         ++ (mkIndent "variables" v)
         ++ (mkIndent "equations" e)
+        ++ (mkIndent "solvingvariables" s)
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
@@ -85,5 +93,7 @@ mkModel :: Identifier -> Identifier
       ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
       ->  Map Identifier (UnitExp Name Name)
-      -> [Equation] -> Model
+      -> [Equation]
+      -> VarSolve
+      -> Model
 mkModel = Model

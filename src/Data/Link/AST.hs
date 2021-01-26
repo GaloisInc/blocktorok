@@ -30,15 +30,17 @@ import Language.Haskell.TH.Syntax (Name)
 --   @length couplings = (length models * (length models - 1)) / 2@
 data Prog =
   Prog { getConfig :: Config -- ^ The global configuration
-       , getBackend :: Backend
+       , getSolvingTechnique :: SolvingTechnique
+       , getNumericalScheme :: NumericalScheme
        , getModels :: Map Identifier Model -- ^ The specified models
        , getCouplings :: [Coupling] -- ^ The model couplings
        }
 instance Show Prog where
-     show (Prog b c1 m c2 ) = "\n\n\t" ++ show c1
+     show (Prog s n c1 m c2 ) = "\n\n\t" ++ show c1
       ++ "\n\n\t" ++ show m
       ++ "\n\n\t" ++ show c2
-      ++ "\n\n\t" ++ show b
+      ++ "\n\n\t" ++ show s
+      ++ "\n\n\t" ++ show n
 
 
 -- | A @Duration@ specifies how long a simulation should run, either as an

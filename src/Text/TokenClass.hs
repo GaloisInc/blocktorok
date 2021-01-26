@@ -44,6 +44,7 @@ data TokenClass =
   | TokenHeatConduction
   | TokenFluidFlow
   | TokenV
+  | TokenSolve
   | TokenPCG
   | TokenDIC
   | TokenTsolver
@@ -61,6 +62,7 @@ data TokenClass =
   | TokenNinterpolation
   | TokenNsnGrad
   | TokenNumericalScheme
+  | TokenSolvingTechnique
   | TokenBackend
   | TokenOpenFoam
   | TokenPow
@@ -119,6 +121,7 @@ unLex TokenHeatTransfer = "HeatTransfer"
 unLex TokenHeatConduction  = "HeatConduction"
 unLex TokenFluidFlow = "FluidFlow"
 unLex TokenV = "var"
+unLex TokenSolve = "solve"
 unLex TokenPow = "^"
 unLex TokenColon = ":"
 unLex TokenSemi = ";"
@@ -154,6 +157,7 @@ unLex TokenNlaplacian = "laplacian"
 unLex TokenNinterpolation = "interpolation"
 unLex TokenNsnGrad ="snGrad"
 unLex TokenNumericalScheme = "NumericalScheme"
+unLex TokenSolvingTechnique = "SolvingTechnique"
 unLex TokenBackend = "Backend"
 unLex TokenOpenFoam = "OpenFoam"
 unLex TokenComma = ","

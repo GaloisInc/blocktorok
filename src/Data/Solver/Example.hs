@@ -6,7 +6,7 @@ module Data.Solver.Example
 
 import Data.Solver.Backend
 
-t =   Solvers {
+t =   SolvingTechnique {
     solver = PCG,
     preconditioner = DIC,
     tolerance = 1,
@@ -19,6 +19,3 @@ n =   NumericalScheme  {
     interpolation = Linear,
     snGrad = Orthogonal
   }
-
-openFoam =
-  OpenFoam { getSolvers = t, getNumericalScheme = n}

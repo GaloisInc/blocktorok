@@ -181,41 +181,49 @@ parseIntSetting setting =
     tok' TokenSemi
     return n
 
-parseBackend :: Parser Backend
-parseBackend =
-  do tok' TokenBackend
+parseSolvingTechnique:: Parser SolvingTechnique
+parseSolvingTechnique =
+  do tok' TokenSolvingTechnique
+     name <- parseIdentifier
      tok' TokenLCurl
      s <- parseSolver
      p <- parsePreconditioner
      t <- parseIntSetting TokenTtolerance
      r <- parseIntSetting TokenTrelTol
-     let tmp1 =   Solvers {
+     tok' TokenRCurl
+     return $ SolvingTechnique {
         solver = s,
         preconditioner = p,
         tolerance = t,
         relTol = r
        }
+
+parseNumericalScheme:: Parser NumericalScheme
+parseNumericalScheme =
+  do tok' TokenNumericalScheme
+     name <- parseIdentifier
+     tok' TokenLCurl
      d <- parseDdt
      g <- parseDerivkindsDecl TokenNgrad
      l <- parseDerivkindsDecl TokenNlaplacian
      i <- parseDerivkindDecl TokenNinterpolation
      s <- parseDerivkindDecl TokenNsnGrad
-     let n =   NumericalScheme  {
+     tok' TokenRCurl
+     return $  NumericalScheme  {
         ddt = d,
         grad = g,
         laplacian = l,
         interpolation = i,
         snGrad = s
        }
-     tok' TokenRCurl
-     return $ OpenFoam { getSolvers = tmp1, getNumericalScheme = n}
 
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
-     backend <- parseBackend
+     solvingTechnique <- parseSolvingTechnique
+     numericalScheme <- parseNumericalScheme
      models <- parseModels
-     Prog cfg backend models  <$> parseCouplings
+     Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
 
 parseRunFn :: Parser RunFn
 parseRunFn =
@@ -286,9 +294,10 @@ parseModels =
          libs <- parseLibDecls
          vs <- parseVarDecls
          eqs <- parseEqs
+         varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs
+         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
@@ -300,6 +309,19 @@ parseReturnDecl =
       var <- variable
       tok' TokenSemi
       return $ Identifier var
+
+parseVarSolveDecl :: Parser VarSolve
+parseVarSolveDecl =
+   do tok' TokenSolve
+      tok' TokenLParen
+      var <- variable
+      tok' TokenComma
+      s <- variable
+      tok' TokenComma
+      n <- variable
+      tok' TokenRParen
+      tok' TokenSemi
+      return $ VarSolve (Identifier var) (Identifier s) (Identifier n)
 
 parseSettingTechnique :: Parser Technique
 parseSettingTechnique =
