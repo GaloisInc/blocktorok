@@ -89,6 +89,14 @@ instance Render Objective where
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach = "SURFACE_MACH"
 
+data IncScheme = InitValues
+               | RefValues
+               | Dim
+instance Render IncScheme where
+  render InitValues = "INITIAL_VALUES"
+  render RefValues = "REFERENCE_VALUES"
+  render Dim = "DIMENSIONAL"
+
 data SU2Config =
   SU2Config { getSolver :: SU2Solver
             , isRestart :: SU2Bool
@@ -102,6 +110,12 @@ data SU2Config =
             , getMarkerIso :: [(String, SU2Double)] -- TODO: Reader for zone markers?
             , getMarkerHeatFlux :: [(String, SU2Double)]
             , getMarkerPlot :: [String]
+            , getMarkerMonitor :: Maybe [String]
+            , getIncScheme :: IncScheme
+            , getSolidTempInit :: SU2Double -- TODO: Units?
+            , getSolidDensity :: SU2Double -- TODO: Units?
+            , getSpecHeat :: SU2Double -- TODO: Units?
+            , getSolidThermCond :: SU2Double -- TODO: Units?
             }
 instance Render SU2Config where
   render su2conf = "SOLVER= " ++ render (getSolver su2conf) ++ "\n"
@@ -116,3 +130,10 @@ instance Render SU2Config where
                 ++ "MARKER_ISOTHERMAL= ( " ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerIso su2conf) ++ " )\n"
                 ++ "MARKER_HEATFLUX= (" ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerHeatFlux su2conf) ++ " )\n"
                 ++ "MARKER_PLOTTING= (" ++ intercalate ", " (getMarkerPlot su2conf) ++ " )\n"
+                ++ "MARKER_MONITORING= (" ++ case getMarkerMonitor su2conf of { Nothing -> "NONE"; Just markers -> intercalate ", " markers } ++ " )\n"
+                ++ "INC_NONDIM= " ++ render (getIncScheme su2conf) ++ "\n"
+                ++ "SOLID_TEMPERATURE_INIT= " ++ render (getSolidTempInit su2conf) ++ "\n"
+                ++ "SOLID_DENSITY= " ++ render (getSolidDensity su2conf) ++ "\n"
+                ++ "SPECIFIC_HEAT_CP= " ++ render (getSpecHeat su2conf) ++ "\n"
+                ++ "SOLID_THERMAL_CONDUCTIVITY= " ++ render (getSolidThermCond su2conf) ++ "\n"
+
