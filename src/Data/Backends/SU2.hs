@@ -97,6 +97,28 @@ instance Render IncScheme where
   render RefValues = "REFERENCE_VALUES"
   render Dim = "DIMENSIONAL"
 
+data GradMethod = GGauss
+                | WLS
+instance Render GradMethod where
+  render GGauss = "GREEN_GAUSS"
+  render WLS = "WEIGHTED_LEAST_SQUARES"
+
+data LinearSolver = FGMRes
+                  | RestartFGMRes
+                  | BCGStab
+instance Render LinearSolver where
+  render FGMRes = "FGMRES"
+  render RestartFGMRes = "RESTARTED_FGMRES"
+  render BCGStab = "BCGSTAB"
+
+data Stiffness = InvVol
+               | WallDist
+               | ConstStiff
+instance Render Stiffness where
+  render InvVol = "INVERSE_VOLUME"
+  render WallDist = "WALL_DISTANCE"
+  render ConstStiff = "CONSTANT_STIFFNESS"
+
 data SU2Config =
   SU2Config { getSolver :: SU2Solver
             , isRestart :: SU2Bool
@@ -116,24 +138,68 @@ data SU2Config =
             , getSolidDensity :: SU2Double -- TODO: Units?
             , getSpecHeat :: SU2Double -- TODO: Units?
             , getSolidThermCond :: SU2Double -- TODO: Units?
+            , getGradMethod :: GradMethod
+            , getCFLNum :: SU2Double
+            , isCFLAdapt :: SU2Bool
+            , getCFLAdapParam :: (SU2Double, SU2Double, SU2Double, SU2Double)
+            , getRKCoeff :: (SU2Double, SU2Double, SU2Double)
+            , getDefLinSolver :: LinearSolver
+            , getStiffType :: Stiffness
             }
 instance Render SU2Config where
-  render su2conf = "SOLVER= " ++ render (getSolver su2conf) ++ "\n"
-                ++ "RESTART_SOL= " ++ render (isRestart su2conf) ++ "\n"
-                ++ "OBJECTIVE_FUNCTION= " ++ render (getObjectiveFn su2conf) ++ "\n"
-                ++ "OBJECTIVE_WEIGHT= " ++ render (getObjectiveWt su2conf) ++ "\n"
-                ++ "TIME_DOMAIN= " ++ render (isTimeDomain su2conf) ++ "\n"
-                ++ "TIME_STEP= " ++ render (getTimeStep su2conf) ++ "\n"
-                ++ "MAX_TIME= " ++ render (getMaxTime su2conf) ++ "\n"
-                ++ "INNER_ITER= " ++ render (getInternalIter su2conf) ++ "\n"
-                ++ "TIME_ITER= " ++ render (getTimeIter su2conf) ++ "\n"
-                ++ "MARKER_ISOTHERMAL= ( " ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerIso su2conf) ++ " )\n"
-                ++ "MARKER_HEATFLUX= (" ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerHeatFlux su2conf) ++ " )\n"
-                ++ "MARKER_PLOTTING= (" ++ intercalate ", " (getMarkerPlot su2conf) ++ " )\n"
-                ++ "MARKER_MONITORING= (" ++ case getMarkerMonitor su2conf of { Nothing -> "NONE"; Just markers -> intercalate ", " markers } ++ " )\n"
-                ++ "INC_NONDIM= " ++ render (getIncScheme su2conf) ++ "\n"
-                ++ "SOLID_TEMPERATURE_INIT= " ++ render (getSolidTempInit su2conf) ++ "\n"
-                ++ "SOLID_DENSITY= " ++ render (getSolidDensity su2conf) ++ "\n"
-                ++ "SPECIFIC_HEAT_CP= " ++ render (getSpecHeat su2conf) ++ "\n"
-                ++ "SOLID_THERMAL_CONDUCTIVITY= " ++ render (getSolidThermCond su2conf) ++ "\n"
-
+  render su2conf = "SOLVER= "                     ++ render (getSolver su2conf)                                                                               ++   "\n"
+                ++ "RESTART_SOL= "                ++ render (isRestart su2conf)                                                                               ++   "\n"
+                ++ "OBJECTIVE_FUNCTION= "         ++ render (getObjectiveFn su2conf)                                                                          ++   "\n"
+                ++ "OBJECTIVE_WEIGHT= "           ++ render (getObjectiveWt su2conf)                                                                          ++   "\n"
+                ++ "TIME_DOMAIN= "                ++ render (isTimeDomain su2conf)                                                                            ++   "\n"
+                ++ "TIME_STEP= "                  ++ render (getTimeStep su2conf)                                                                             ++   "\n"
+                ++ "MAX_TIME= "                   ++ render (getMaxTime su2conf)                                                                              ++   "\n"
+                ++ "INNER_ITER= "                 ++ render (getInternalIter su2conf)                                                                         ++   "\n"
+                ++ "TIME_ITER= "                  ++ render (getTimeIter su2conf)                                                                             ++   "\n"
+                ++ "MARKER_ISOTHERMAL= ( "        ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerIso su2conf)             ++ " )\n"
+                ++ "MARKER_HEATFLUX= ( "          ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ render value) <$> getMarkerHeatFlux su2conf)        ++ " )\n"
+                ++ "MARKER_PLOTTING= ( "          ++ intercalate ", " (getMarkerPlot su2conf)                                                                 ++ " )\n"
+                ++ "MARKER_MONITORING= ( "        ++ case getMarkerMonitor su2conf of { Nothing -> "NONE"; Just markers -> intercalate ", " markers }         ++ " )\n"
+                ++ "INC_NONDIM= "                 ++ render (getIncScheme su2conf)                                                                            ++   "\n"
+                ++ "SOLID_TEMPERATURE_INIT= "     ++ render (getSolidTempInit su2conf)                                                                        ++   "\n"
+                ++ "SOLID_DENSITY= "              ++ render (getSolidDensity su2conf)                                                                         ++   "\n"
+                ++ "SPECIFIC_HEAT_CP= "           ++ render (getSpecHeat su2conf)                                                                             ++   "\n"
+                ++ "SOLID_THERMAL_CONDUCTIVITY= " ++ render (getSolidThermCond su2conf)                                                                       ++   "\n"
+                ++ "NUM_METHOD_GRAD= "            ++ render (getGradMethod su2conf)                                                                           ++   "\n"
+                ++ "CFL_NUMBER= "                 ++ render (getCFLNum su2conf)                                                                               ++   "\n"
+                ++ "CFL_ADAPT= "                  ++ render (isCFLAdapt su2conf)                                                                              ++   "\n"
+                ++ "CFL_ADAPT_PARAM= ( "          ++ intercalate ", " (let (fd, fu, minV, maxV) = getCFLAdapParam su2conf in render <$> [fd, fu, minV, maxV]) ++ " )\n"
+                ++ "RK_ALPHA_COEFF= "             ++ intercalate ", " (let (x, y, z) = getRKCoeff su2conf in render <$> [x, y, z])                            ++   "\n"
+                ++ "LINEAR_SOLVER= "                                                                                                                          ++   "\n"
+                ++ "LINEAR_SOLVER_PREC= "                                                                                                                     ++   "\n"
+                ++ "LINEAR_SOLVER_ILU_FILL_IN= "                                                                                                              ++   "\n"
+                ++ "LINEAR_SOLVER_ERROR= "                                                                                                                    ++   "\n"
+                ++ "LINEAR_SOLVER_ITER= "                                                                                                                     ++   "\n"
+                ++ "TIME_DISCRE_HEAT= "                                                                                                                       ++   "\n"
+                ++ "CONV_RESIDUAL_MINVAL= "                                                                                                                   ++   "\n"
+                ++ "CONV_STARTITER= "                                                                                                                         ++   "\n"
+                ++ "CONV_CAUCHY_EPS= "                                                                                                                        ++   "\n"
+                ++ "MESH_FILENAME= "                                                                                                                          ++   "\n" -- TODO: Get this from clargs
+                ++ "MESH_FORMAT= SU2\n"
+                ++ "MESH_OUT_FILENAME= "                                                                                                                      ++   "\n" -- TODO: Get this from clargs
+                ++ "TABULAR_FORMAT= "                                                                                                                         ++   "\n"
+                ++ "SOLUTION_FILENAME= "                                                                                                                      ++   "\n"
+                ++ "SOLUTION_ADJ_FILENAME= "                                                                                                                  ++   "\n"
+                ++ "CONV_FILENAME= "                                                                                                                          ++   "\n"
+                ++ "BREAKDOWN_FILENAME= "                                                                                                                     ++   "\n"
+                ++ "RESTART_FILENAME= "                                                                                                                       ++   "\n"
+                ++ "RESTART_ADJ_FILENAME= "                                                                                                                   ++   "\n"
+                ++ "VOLUME_FILENAME= "                                                                                                                        ++   "\n"
+                ++ "VOLUME_ADJ_FILENAME= "                                                                                                                    ++   "\n"
+                ++ "VALUE_OBJFUNC_FILENAME= "                                                                                                                 ++   "\n"
+                ++ "GRAD_OBJFUNC_FILENAME= "                                                                                                                  ++   "\n"
+                ++ "SURFACE_FILENAME= "                                                                                                                       ++   "\n"
+                ++ "SURFACE_ADJ_FILENAME= "                                                                                                                   ++   "\n"
+                ++ "WRT_SOL_FREQ= "                                                                                                                           ++   "\n"
+                ++ "WRT_CON_FREQ= "                                                                                                                           ++   "\n"
+                ++ "DEFORM_LINEAR_SOLVER= "       ++ render (getDefLinSolver su2conf)                                                                         ++   "\n"
+                ++ "DEFORM_LINEAR_SOLVER_ITER= "                                                                                                              ++   "\n"
+                ++ "DEFORM_NONLINEAR_ITER= "                                                                                                                  ++   "\n"
+                ++ "DEFORM_CONSOLE_OUTPUT= "                                                                                                                  ++   "\n"
+                ++ "DEFORM_STIFFNESS_TYPE= "      ++ render (getStiffType su2conf)                                                                            ++   "\n"
+                ++ "VISUALIZE_VOLUME_DEF= "                                                                                                                   ++   "\n"
