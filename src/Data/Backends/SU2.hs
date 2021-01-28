@@ -106,10 +106,28 @@ instance Render GradMethod where
 data LinearSolver = FGMRes
                   | RestartFGMRes
                   | BCGStab
+                  | SJacobi
+                  | SILU
+                  | SLUSGS
+                  | SLinelet
 instance Render LinearSolver where
   render FGMRes = "FGMRES"
   render RestartFGMRes = "RESTARTED_FGMRES"
   render BCGStab = "BCGSTAB"
+  render SJacobi = "SMOOTHER_JACOBI"
+  render SILU = "SMOOTHER_ILU"
+  render SLUSGS = "SMOOTHER_LUSGS"
+  render SLinelet = "SMOOTHER_LINELET"
+
+data Preconditioner = ILU
+                    | LU_SGS
+                    | Linelet
+                    | Jacobi
+instance Render Preconditioner where
+  render ILU = "ILU"
+  render LU_SGS = "LU_SGS"
+  render Linelet = "LINELET"
+  render Jacobi = "Jacobi"
 
 data Stiffness = InvVol
                | WallDist
@@ -143,8 +161,16 @@ data SU2Config =
             , isCFLAdapt :: SU2Bool
             , getCFLAdapParam :: (SU2Double, SU2Double, SU2Double, SU2Double)
             , getRKCoeff :: (SU2Double, SU2Double, SU2Double)
-            , getDefLinSolver :: LinearSolver
+            , getLinSolver :: LinearSolver
+            , getPreconditioner :: Preconditioner
+            , getFillLevel :: SU2Integer
+            , getLinSolvIter :: SU2Integer
+            , getDefLinSolver :: LinearSolver -- TODO: This can't be everything this type offers. Should mitigate.
+            , getDefLinSolvIter :: SU2Integer
+            , getDefNonlinIter :: SU2Integer
+            , shouldDefOut :: SU2Bool
             , getStiffType :: Stiffness
+            , shouldVizVolDef :: SU2Bool
             }
 instance Render SU2Config where
   render su2conf = "SOLVER= "                     ++ render (getSolver su2conf)                                                                               ++   "\n"
@@ -170,11 +196,11 @@ instance Render SU2Config where
                 ++ "CFL_ADAPT= "                  ++ render (isCFLAdapt su2conf)                                                                              ++   "\n"
                 ++ "CFL_ADAPT_PARAM= ( "          ++ intercalate ", " (let (fd, fu, minV, maxV) = getCFLAdapParam su2conf in render <$> [fd, fu, minV, maxV]) ++ " )\n"
                 ++ "RK_ALPHA_COEFF= "             ++ intercalate ", " (let (x, y, z) = getRKCoeff su2conf in render <$> [x, y, z])                            ++   "\n"
-                ++ "LINEAR_SOLVER= "                                                                                                                          ++   "\n"
-                ++ "LINEAR_SOLVER_PREC= "                                                                                                                     ++   "\n"
-                ++ "LINEAR_SOLVER_ILU_FILL_IN= "                                                                                                              ++   "\n"
+                ++ "LINEAR_SOLVER= "              ++ render (getLinSolver su2conf)                                                                            ++   "\n"
+                ++ "LINEAR_SOLVER_PREC= "         ++ render (getPreconditioner su2conf)                                                                       ++   "\n"
+                ++ "LINEAR_SOLVER_ILU_FILL_IN= "  ++ render (getFillLevel su2conf)                                                                            ++   "\n"
                 ++ "LINEAR_SOLVER_ERROR= "                                                                                                                    ++   "\n"
-                ++ "LINEAR_SOLVER_ITER= "                                                                                                                     ++   "\n"
+                ++ "LINEAR_SOLVER_ITER= "         ++ render (getLinSolvIter su2conf)                                                                          ++   "\n"
                 ++ "TIME_DISCRE_HEAT= "                                                                                                                       ++   "\n"
                 ++ "CONV_RESIDUAL_MINVAL= "                                                                                                                   ++   "\n"
                 ++ "CONV_STARTITER= "                                                                                                                         ++   "\n"
@@ -198,8 +224,8 @@ instance Render SU2Config where
                 ++ "WRT_SOL_FREQ= "                                                                                                                           ++   "\n"
                 ++ "WRT_CON_FREQ= "                                                                                                                           ++   "\n"
                 ++ "DEFORM_LINEAR_SOLVER= "       ++ render (getDefLinSolver su2conf)                                                                         ++   "\n"
-                ++ "DEFORM_LINEAR_SOLVER_ITER= "                                                                                                              ++   "\n"
-                ++ "DEFORM_NONLINEAR_ITER= "                                                                                                                  ++   "\n"
-                ++ "DEFORM_CONSOLE_OUTPUT= "                                                                                                                  ++   "\n"
+                ++ "DEFORM_LINEAR_SOLVER_ITER= "  ++ render (getDefLinSolvIter su2conf)                                                                       ++   "\n"
+                ++ "DEFORM_NONLINEAR_ITER= "      ++ render (getDefNonlinIter su2conf)                                                                        ++   "\n"
+                ++ "DEFORM_CONSOLE_OUTPUT= "      ++ render (shouldDefOut su2conf)                                                                            ++   "\n"
                 ++ "DEFORM_STIFFNESS_TYPE= "      ++ render (getStiffType su2conf)                                                                            ++   "\n"
-                ++ "VISUALIZE_VOLUME_DEF= "                                                                                                                   ++   "\n"
+                ++ "VISUALIZE_VOLUME_DEF= "       ++ render (shouldVizVolDef su2conf)                                                                         ++   "\n"
