@@ -155,60 +155,63 @@ instance Render TabFormat where
   render TECPLOT = "TECPLOT"
   render CSV = "CSV"
 
+-- TODO: Given that the order of these things in SU2 configs doesn't matter, this should probably just be a map
+-- Problem: Need a type to capture the things valid on the RHS of config lines. Not too hard but could make it
+-- difficult to extend/make changes later.
 data SU2Config =
-  SU2Config { getSolver :: SU2Solver
-            , isRestart :: SU2Bool
-            , getObjectiveFn :: Objective -- TODO: Support multiple
-            , getObjectiveWt :: SU2Double -- TODO: Support multiple
-            , isTimeDomain :: SU2Bool
-            , getTimeStep :: SU2Double -- TODO: Units?
-            , getMaxTime :: SU2Double -- TODO: Units?
-            , getInternalIter :: SU2Integer
-            , getTimeIter :: SU2Integer
-            , getMarkerIso :: [(String, SU2Double)] -- TODO: Reader for zone markers?
+  SU2Config { getSolver         :: SU2Solver
+            , isRestart         :: SU2Bool
+            , getObjectiveFn    :: Objective -- TODO: Support multiple
+            , getObjectiveWt    :: SU2Double -- TODO: Support multiple
+            , isTimeDomain      :: SU2Bool
+            , getTimeStep       :: SU2Double -- TODO: Units?
+            , getMaxTime        :: SU2Double -- TODO: Units?
+            , getInternalIter   :: SU2Integer
+            , getTimeIter       :: SU2Integer
+            , getMarkerIso      :: [(String, SU2Double)] -- TODO: Reader for zone markers?
             , getMarkerHeatFlux :: [(String, SU2Double)]
-            , getMarkerPlot :: [String]
-            , getMarkerMonitor :: Maybe [String]
-            , getIncScheme :: IncScheme
-            , getSolidTempInit :: SU2Double -- TODO: Units?
-            , getSolidDensity :: SU2Double -- TODO: Units?
-            , getSpecHeat :: SU2Double -- TODO: Units?
+            , getMarkerPlot     :: [String]
+            , getMarkerMonitor  :: Maybe [String]
+            , getIncScheme      :: IncScheme
+            , getSolidTempInit  :: SU2Double -- TODO: Units?
+            , getSolidDensity   :: SU2Double -- TODO: Units?
+            , getSpecHeat       :: SU2Double -- TODO: Units?
             , getSolidThermCond :: SU2Double -- TODO: Units?
-            , getGradMethod :: GradMethod
-            , getCFLNum :: SU2Double
-            , isCFLAdapt :: SU2Bool
-            , getCFLAdapParam :: (SU2Double, SU2Double, SU2Double, SU2Double)
-            , getRKCoeff :: (SU2Double, SU2Double, SU2Double)
-            , getLinSolver :: LinearSolver
+            , getGradMethod     :: GradMethod
+            , getCFLNum         :: SU2Double
+            , isCFLAdapt        :: SU2Bool
+            , getCFLAdapParam   :: (SU2Double, SU2Double, SU2Double, SU2Double)
+            , getRKCoeff        :: (SU2Double, SU2Double, SU2Double)
+            , getLinSolver      :: LinearSolver
             , getPreconditioner :: Preconditioner
-            , getFillLevel :: SU2Integer
-            , getLinSolvIter :: SU2Integer
-            , getTimeDiscHeat :: TimeDiscre -- TODO: This can't be everything this type offers. Should mitigate.
-            , getConvResMin :: SU2Integer -- TODO: This might need to be a float
-            , getConvStartIter :: SU2Integer
-            , getMeshfile :: String
-            , getMeshOutFile :: String
-            , getTabFormat :: TabFormat
-            , getSolnFile :: String
-            , getSolnAdjFile :: String
-            , getConvFile :: String
-            , getBreakdownFile :: String
-            , getRestartFile :: String
+            , getFillLevel      :: SU2Integer
+            , getLinSolvIter    :: SU2Integer
+            , getTimeDiscHeat   :: TimeDiscre -- TODO: This can't be everything this type offers. Should mitigate.
+            , getConvResMin     :: SU2Integer -- TODO: This might need to be a float
+            , getConvStartIter  :: SU2Integer
+            , getMeshfile       :: String
+            , getMeshOutFile    :: String
+            , getTabFormat      :: TabFormat
+            , getSolnFile       :: String
+            , getSolnAdjFile    :: String
+            , getConvFile       :: String
+            , getBreakdownFile  :: String
+            , getRestartFile    :: String
             , getRestartAdjFile :: String
-            , getVolFile :: String
-            , getVolAdjFile :: String
-            , getVolObjFile :: String
-            , getGradFile :: String
-            , getSurfaceFile :: String
+            , getVolFile        :: String
+            , getVolAdjFile     :: String
+            , getVolObjFile     :: String
+            , getGradFile       :: String
+            , getSurfaceFile    :: String
             , getSurfaceAdjFile :: String
-            , getWrtSolFreq :: SU2Integer
-            , getWrtConFreq :: SU2Integer
-            , getDefLinSolver :: LinearSolver -- TODO: This can't be everything this type offers. Should mitigate.
+            , getWrtSolFreq     :: SU2Integer
+            , getWrtConFreq     :: SU2Integer
+            , getDefLinSolver   :: LinearSolver -- TODO: This can't be everything this type offers. Should mitigate.
             , getDefLinSolvIter :: SU2Integer
-            , getDefNonlinIter :: SU2Integer
-            , shouldDefOut :: SU2Bool
-            , getStiffType :: Stiffness
-            , shouldVizVolDef :: SU2Bool
+            , getDefNonlinIter  :: SU2Integer
+            , shouldDefOut      :: SU2Bool
+            , getStiffType      :: Stiffness
+            , shouldVizVolDef   :: SU2Bool
             }
 instance Render SU2Config where
   render su2conf = "SOLVER= "                     ++ render (getSolver su2conf)                                                                               ++   "\n"
