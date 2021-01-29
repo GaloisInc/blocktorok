@@ -137,6 +137,24 @@ instance Render Stiffness where
   render WallDist = "WALL_DISTANCE"
   render ConstStiff = "CONSTANT_STIFFNESS"
 
+data TimeDiscre = EulerImp
+                | RKExp
+                | EulerExp
+                | RK4Exp
+                | AderDG
+instance Render TimeDiscre where
+  render EulerImp = "EULER_IMPLICIT"
+  render RKExp = "RUNGE-KUTTA_EXPLICIT"
+  render EulerExp = "EULER_EXPLICIT"
+  render RK4Exp = "CLASSICAL_RK4_EXPLICIT"
+  render AderDG = "ADER_DG"
+
+data TabFormat = TECPLOT
+               | CSV
+instance Render TabFormat where
+  render TECPLOT = "TECPLOT"
+  render CSV = "CSV"
+
 data SU2Config =
   SU2Config { getSolver :: SU2Solver
             , isRestart :: SU2Bool
@@ -165,6 +183,26 @@ data SU2Config =
             , getPreconditioner :: Preconditioner
             , getFillLevel :: SU2Integer
             , getLinSolvIter :: SU2Integer
+            , getTimeDiscHeat :: TimeDiscre -- TODO: This can't be everything this type offers. Should mitigate.
+            , getConvResMin :: SU2Integer -- TODO: This might need to be a float
+            , getConvStartIter :: SU2Integer
+            , getMeshfile :: String
+            , getMeshOutFile :: String
+            , getTabFormat :: TabFormat
+            , getSolnFile :: String
+            , getSolnAdjFile :: String
+            , getConvFile :: String
+            , getBreakdownFile :: String
+            , getRestartFile :: String
+            , getRestartAdjFile :: String
+            , getVolFile :: String
+            , getVolAdjFile :: String
+            , getVolObjFile :: String
+            , getGradFile :: String
+            , getSurfaceFile :: String
+            , getSurfaceAdjFile :: String
+            , getWrtSolFreq :: SU2Integer
+            , getWrtConFreq :: SU2Integer
             , getDefLinSolver :: LinearSolver -- TODO: This can't be everything this type offers. Should mitigate.
             , getDefLinSolvIter :: SU2Integer
             , getDefNonlinIter :: SU2Integer
@@ -201,28 +239,28 @@ instance Render SU2Config where
                 ++ "LINEAR_SOLVER_ILU_FILL_IN= "  ++ render (getFillLevel su2conf)                                                                            ++   "\n"
                 ++ "LINEAR_SOLVER_ERROR= "                                                                                                                    ++   "\n"
                 ++ "LINEAR_SOLVER_ITER= "         ++ render (getLinSolvIter su2conf)                                                                          ++   "\n"
-                ++ "TIME_DISCRE_HEAT= "                                                                                                                       ++   "\n"
-                ++ "CONV_RESIDUAL_MINVAL= "                                                                                                                   ++   "\n"
-                ++ "CONV_STARTITER= "                                                                                                                         ++   "\n"
+                ++ "TIME_DISCRE_HEAT= "           ++ render (getTimeDiscHeat su2conf)                                                                         ++   "\n"
+                ++ "CONV_RESIDUAL_MINVAL= "       ++ render (getConvResMin su2conf)                                                                           ++   "\n"
+                ++ "CONV_STARTITER= "             ++ render (getConvStartIter su2conf)                                                                        ++   "\n"
                 ++ "CONV_CAUCHY_EPS= "                                                                                                                        ++   "\n"
-                ++ "MESH_FILENAME= "                                                                                                                          ++   "\n" -- TODO: Get this from clargs
+                ++ "MESH_FILENAME= "              ++ getMeshfile su2conf                                                                                      ++   "\n" -- TODO: Get this from clargs
                 ++ "MESH_FORMAT= SU2\n"
-                ++ "MESH_OUT_FILENAME= "                                                                                                                      ++   "\n" -- TODO: Get this from clargs
-                ++ "TABULAR_FORMAT= "                                                                                                                         ++   "\n"
-                ++ "SOLUTION_FILENAME= "                                                                                                                      ++   "\n"
-                ++ "SOLUTION_ADJ_FILENAME= "                                                                                                                  ++   "\n"
-                ++ "CONV_FILENAME= "                                                                                                                          ++   "\n"
-                ++ "BREAKDOWN_FILENAME= "                                                                                                                     ++   "\n"
-                ++ "RESTART_FILENAME= "                                                                                                                       ++   "\n"
-                ++ "RESTART_ADJ_FILENAME= "                                                                                                                   ++   "\n"
-                ++ "VOLUME_FILENAME= "                                                                                                                        ++   "\n"
-                ++ "VOLUME_ADJ_FILENAME= "                                                                                                                    ++   "\n"
-                ++ "VALUE_OBJFUNC_FILENAME= "                                                                                                                 ++   "\n"
-                ++ "GRAD_OBJFUNC_FILENAME= "                                                                                                                  ++   "\n"
-                ++ "SURFACE_FILENAME= "                                                                                                                       ++   "\n"
-                ++ "SURFACE_ADJ_FILENAME= "                                                                                                                   ++   "\n"
-                ++ "WRT_SOL_FREQ= "                                                                                                                           ++   "\n"
-                ++ "WRT_CON_FREQ= "                                                                                                                           ++   "\n"
+                ++ "MESH_OUT_FILENAME= "          ++ getMeshOutFile su2conf                                                                                   ++   "\n" -- TODO: Get this from clargs
+                ++ "TABULAR_FORMAT= "             ++ render (getTabFormat su2conf)                                                                            ++   "\n"
+                ++ "SOLUTION_FILENAME= "          ++ getSolnFile su2conf                                                                                      ++   "\n"
+                ++ "SOLUTION_ADJ_FILENAME= "      ++ getSolnAdjFile su2conf                                                                                   ++   "\n"
+                ++ "CONV_FILENAME= "              ++ getConvFile su2conf                                                                                      ++   "\n"
+                ++ "BREAKDOWN_FILENAME= "         ++ getBreakdownFile su2conf                                                                                 ++   "\n"
+                ++ "RESTART_FILENAME= "           ++ getRestartFile su2conf                                                                                   ++   "\n"
+                ++ "RESTART_ADJ_FILENAME= "       ++ getRestartAdjFile su2conf                                                                                ++   "\n"
+                ++ "VOLUME_FILENAME= "            ++ getVolFile su2conf                                                                                       ++   "\n"
+                ++ "VOLUME_ADJ_FILENAME= "        ++ getVolAdjFile su2conf                                                                                    ++   "\n"
+                ++ "VALUE_OBJFUNC_FILENAME= "     ++ getVolObjFile su2conf                                                                                    ++   "\n"
+                ++ "GRAD_OBJFUNC_FILENAME= "      ++ getGradFile su2conf                                                                                      ++   "\n"
+                ++ "SURFACE_FILENAME= "           ++ getSurfaceFile su2conf                                                                                   ++   "\n"
+                ++ "SURFACE_ADJ_FILENAME= "       ++ getSurfaceAdjFile su2conf                                                                                ++   "\n"
+                ++ "WRT_SOL_FREQ= "               ++ render (getWrtSolFreq su2conf)                                                                           ++   "\n"
+                ++ "WRT_CON_FREQ= "               ++ render (getWrtConFreq su2conf)                                                                           ++   "\n"
                 ++ "DEFORM_LINEAR_SOLVER= "       ++ render (getDefLinSolver su2conf)                                                                         ++   "\n"
                 ++ "DEFORM_LINEAR_SOLVER_ITER= "  ++ render (getDefLinSolvIter su2conf)                                                                       ++   "\n"
                 ++ "DEFORM_NONLINEAR_ITER= "      ++ render (getDefNonlinIter su2conf)                                                                        ++   "\n"
