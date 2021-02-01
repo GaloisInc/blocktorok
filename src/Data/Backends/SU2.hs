@@ -38,12 +38,12 @@ data SU2Solver = Euler
                | ElasticityFEM
                | Poisson
 instance Render SU2Solver where
-  render Euler = "EULER"
-  render NS = "NAVIER_STOKES"
-  render Wave = "WAVE_EQUATION"
-  render Heat = "HEAT_EQUATION"
+  render Euler         = "EULER"
+  render NS            = "NAVIER_STOKES"
+  render Wave          = "WAVE_EQUATION"
+  render Heat          = "HEAT_EQUATION"
   render ElasticityFEM = "FEM_ELASTICITY"
-  render Poisson = "POISSON_EQUATION"
+  render Poisson       = "POISSON_EQUATION"
 
 data Objective = Drag
                | Lift
@@ -68,42 +68,42 @@ data Objective = Drag
                | SurfStatPressure
                | SurfMach
 instance Render Objective where
-  render Drag = "DRAG"
-  render Lift = "LIFT"
-  render Sideforce = "SIDEFORCE"
-  render XMoment = "MOMENT_X"
-  render YMoment = "MOMENT_Y"
-  render ZMoment = "MOMENT_Z"
-  render Efficiency = "EFFICIENCY"
-  render EquivArea = "EQUIVALENT_AREA"
-  render NearPressure = "NEARFIELD_PRESSURE"
-  render XForce = "FORCE_X"
-  render YForce = "FORCE_Y"
-  render ZForce = "FORCE_Z"
-  render Thrust = "THRUST"
-  render Torque = "TORQUE"
-  render TotalHeatFlux = "TOTAL_HEATFLUX"
-  render MaxHeatFlux = "MAXIMUM_HEATFLUX"
-  render InvDesPressure = "INVERSE_DESIGN_PRESSURE"
-  render InvDesHeatFlux = "INVERSE_DESIGN_HEATFLUX"
-  render SurfTotPressure = "SURFACE_TOTAL_PRESSURE"
-  render SurfMassFlow = "SURFACE_MASSFLOW"
+  render Drag             = "DRAG"
+  render Lift             = "LIFT"
+  render Sideforce        = "SIDEFORCE"
+  render XMoment          = "MOMENT_X"
+  render YMoment          = "MOMENT_Y"
+  render ZMoment          = "MOMENT_Z"
+  render Efficiency       = "EFFICIENCY"
+  render EquivArea        = "EQUIVALENT_AREA"
+  render NearPressure     = "NEARFIELD_PRESSURE"
+  render XForce           = "FORCE_X"
+  render YForce           = "FORCE_Y"
+  render ZForce           = "FORCE_Z"
+  render Thrust           = "THRUST"
+  render Torque           = "TORQUE"
+  render TotalHeatFlux    = "TOTAL_HEATFLUX"
+  render MaxHeatFlux      = "MAXIMUM_HEATFLUX"
+  render InvDesPressure   = "INVERSE_DESIGN_PRESSURE"
+  render InvDesHeatFlux   = "INVERSE_DESIGN_HEATFLUX"
+  render SurfTotPressure  = "SURFACE_TOTAL_PRESSURE"
+  render SurfMassFlow     = "SURFACE_MASSFLOW"
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
-  render SurfMach = "SURFACE_MACH"
+  render SurfMach         = "SURFACE_MACH"
 
 data IncScheme = InitValues
                | RefValues
                | Dim
 instance Render IncScheme where
   render InitValues = "INITIAL_VALUES"
-  render RefValues = "REFERENCE_VALUES"
-  render Dim = "DIMENSIONAL"
+  render RefValues  = "REFERENCE_VALUES"
+  render Dim        = "DIMENSIONAL"
 
 data GradMethod = GGauss
                 | WLS
 instance Render GradMethod where
   render GGauss = "GREEN_GAUSS"
-  render WLS = "WEIGHTED_LEAST_SQUARES"
+  render WLS    = "WEIGHTED_LEAST_SQUARES"
 
 data LinearSolver = FGMRes
                   | RestartFGMRes
@@ -113,30 +113,30 @@ data LinearSolver = FGMRes
                   | SLUSGS
                   | SLinelet
 instance Render LinearSolver where
-  render FGMRes = "FGMRES"
+  render FGMRes        = "FGMRES"
   render RestartFGMRes = "RESTARTED_FGMRES"
-  render BCGStab = "BCGSTAB"
-  render SJacobi = "SMOOTHER_JACOBI"
-  render SILU = "SMOOTHER_ILU"
-  render SLUSGS = "SMOOTHER_LUSGS"
-  render SLinelet = "SMOOTHER_LINELET"
+  render BCGStab       = "BCGSTAB"
+  render SJacobi       = "SMOOTHER_JACOBI"
+  render SILU          = "SMOOTHER_ILU"
+  render SLUSGS        = "SMOOTHER_LUSGS"
+  render SLinelet      = "SMOOTHER_LINELET"
 
 data Preconditioner = ILU
                     | LU_SGS
                     | Linelet
                     | Jacobi
 instance Render Preconditioner where
-  render ILU = "ILU"
-  render LU_SGS = "LU_SGS"
+  render ILU     = "ILU"
+  render LU_SGS  = "LU_SGS"
   render Linelet = "LINELET"
-  render Jacobi = "Jacobi"
+  render Jacobi  = "Jacobi"
 
 data Stiffness = InvVol
                | WallDist
                | ConstStiff
 instance Render Stiffness where
-  render InvVol = "INVERSE_VOLUME"
-  render WallDist = "WALL_DISTANCE"
+  render InvVol     = "INVERSE_VOLUME"
+  render WallDist   = "WALL_DISTANCE"
   render ConstStiff = "CONSTANT_STIFFNESS"
 
 data TimeDiscre = EulerImp
@@ -146,16 +146,16 @@ data TimeDiscre = EulerImp
                 | AderDG
 instance Render TimeDiscre where
   render EulerImp = "EULER_IMPLICIT"
-  render RKExp = "RUNGE-KUTTA_EXPLICIT"
+  render RKExp    = "RUNGE-KUTTA_EXPLICIT"
   render EulerExp = "EULER_EXPLICIT"
-  render RK4Exp = "CLASSICAL_RK4_EXPLICIT"
-  render AderDG = "ADER_DG"
+  render RK4Exp   = "CLASSICAL_RK4_EXPLICIT"
+  render AderDG   = "ADER_DG"
 
 data TabFormat = TECPLOT
                | CSV
 instance Render TabFormat where
   render TECPLOT = "TECPLOT"
-  render CSV = "CSV"
+  render CSV     = "CSV"
 
 data SU2RHS = Solver SU2Solver
             | Boolean Bool
