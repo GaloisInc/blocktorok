@@ -155,6 +155,46 @@ instance Render TabFormat where
   render TECPLOT = "TECPLOT"
   render CSV = "CSV"
 
+data SU2RHS = Solver SU2Solver
+            | Boolean Bool
+            | ObjectiveFns [Objective]
+            | ObjectiveWts [Double]
+            | Floating Double
+            | Integral Integer
+            | MarkerData [(String, Double)]
+            | Markers (Maybe [String])
+            | IncompressibleScheme IncScheme
+            | GradientMehod GradMethod
+            | CFLAdaptParam Double Double Double Double Double
+            | RKCoefficient Double Double Double
+            | LinearSolver LinearSolver
+            | Preconditioner Preconditioner
+            | TimeDiscre TimeDiscre
+            | Filename String
+            | TabularFormat TabFormat
+            | Stiffness Stiffness
+instance Render SU2RHS where
+  render (Solver s)                           = render s
+  render (Boolean True)                       = "YES"
+  render (Boolean False)                      = "NO"
+  render (ObjectiveFns fns)                   = intercalate ", " $ render <$> fns
+  render (ObjectiveWts wts)                   = intercalate ", " $ show <$> wts
+  render (Floating f)                         = show f
+  render (Integral i)                         = show i
+  render (MarkerData md)                      = "(" ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ show value) <$> md) ++ ")"
+  render (Markers Nothing)                    = "NONE"
+  render (Markers (Just ms))                  = "(" ++ intercalate ", " ms ++ ")"
+  render (IncompressibleScheme is)            = render is
+  render (GradientMehod gm)                   = render gm
+  render (CFLAdaptParam fd fu minV maxV conv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV, conv]) ++ ")"
+  render (RKCoefficient x y z)                = "(" ++ intercalate ", " (show <$> [x, y, z]) ++ ")"
+  render (LinearSolver ls)                    = render ls
+  render (Preconditioner p)                   = render p
+  render (TimeDiscre t)                       = render t
+  render (Filename f)                         = f
+  render (TabularFormat tf)                   = render tf
+  render (Stiffness s)                        = render s
+
 -- TODO: Given that the order of these things in SU2 configs doesn't matter, this should probably just be a map
 -- Problem: Need a type to capture the things valid on the RHS of config lines. Not too hard but could make it
 -- difficult to extend/make changes later.
