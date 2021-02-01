@@ -14,5 +14,10 @@ equivalent to @Show@, but may be distinct as it is intended for writing output.
 module Data.Class.Render
   where
 
+-- | The @Render@ class is for types that should be renderable as 'String's. It
+--   is often sufficient for a type's @Render@ instance to simply be equivalent
+--   to 'Show', but as a separate class, it allows a distinction between debug
+--   and formatted output.
 class Render a where
+  -- | Render a value as a 'String'.
   render :: a -> String

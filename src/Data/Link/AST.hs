@@ -54,7 +54,9 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-data Coupling = 
+-- | The type of model couplings given by references to the coupled models, the
+--   input/output variables, the transfer variables, and governing equations
+data Coupling =
   Coupling { model1::Identifier
            , model2::Identifier
            , input::Identifier

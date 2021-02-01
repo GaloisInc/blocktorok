@@ -34,12 +34,14 @@ import Data.Units.UnitExp
 
 import Language.Haskell.TH.Syntax (Name)
 
-data Boundary = Neumann Identifier
-              | Dirichlet Identifier
+-- | The type of boundary conditions
+data Boundary = Neumann Identifier -- ^ A Von-Neumann boundary condition on a variable
+              | Dirichlet Identifier -- ^ A Dirichlet boundary condition on a variable
               deriving (Show)
 
-data PhysicsType = HeatTransfer Integer
-                 | FluidFlow Integer
+-- | The type of physics domains (e.g. heat transfer, fluid dynamics, material stress)
+data PhysicsType = HeatTransfer Integer -- ^ The heat transfer domain (TODO: What's the int?)
+                 | FluidFlow Integer -- ^ The fluid domain (TODO: What's the int?)
                  deriving (Show)
 
 
@@ -51,9 +53,9 @@ data Model =
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier (Integer, UnitExp Name Name)
-        , getLib :: Map Identifier (Identifier, Identifier)
-        , getVars :: Map Identifier (UnitExp Name Name)
+        , getConsts :: Map Identifier (Integer, UnitExp Name Name) -- ^ The named constants used in this model
+        , getLib :: Map Identifier (Identifier, Identifier) -- ^ Named library imports to support model expression/simulation
+        , getVars :: Map Identifier (UnitExp Name Name) -- ^ The variables appearing in the model equations
         , getEqs :: [Equation] -- ^ The equations governing the model
         } deriving (Show)
 

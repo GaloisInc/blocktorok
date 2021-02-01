@@ -112,6 +112,7 @@ parseNamedText p n s =
 reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
 
+-- | Parse an entire LINK script.
 parseDecl :: FilePath -> String -> Either ParseError Prog
 parseDecl = parseNamedText parseProg
 

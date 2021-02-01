@@ -197,6 +197,7 @@ instance Render SU2RHS where
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
 
+-- | The type of SU2 configuration scripts.
 newtype SU2Config = SU2Config { getOptions :: Map String SU2RHS }
 instance Render SU2Config where
   render (SU2Config opts) = Map.foldMapWithKey renderOpt opts
