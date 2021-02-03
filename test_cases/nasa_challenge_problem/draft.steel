@@ -68,8 +68,15 @@ model FluidModel {
   \frac{\partial \rho}{\partial t} + \div \rho \vec{U} = 0
   \frac{\partial \rho \vec{U}}{\partial t} + \div \rho \vec{U} \times \vec{U} + \div( \tau - PI) = 0
   \frac{\partial \rho e}{\partial t} + \div(\rho e + P)\vec{U} - \div \tau \vec{U} - \div k \grad T = 0
+  \tau_{xy} = \tau_{yx} = \mu (\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x})
+  \tau_{xz} = \tau_{zx} = \mu (\frac{\partial u}{\partial z} + \frac{\partial w}{\partial x})
+  \tau_{yz} = \tau_{yz} = \mu (\frac{\partial v}{\partial z} + \frac{\partial w}{\partial y})
+  \tau_{xx} = \frac{2}{3} \mu (2\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
+  \tau_{yy} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} + 2\frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
+  \tau_{zz} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} + 2\frac{\partial w}{\partial z})
   P = \rho R T
   e = \frac{R}{\gamma - 1}T
+  e = \frac{P}{\gamma - 1} + \frac{1}{2} \sqrt{u^2 + v^2 + w^2}
   \mu = \mu_0 \frac{T_0 + C}{T + C}(\frac{T}{T_0})^\frac{3}{2}
   k = \frac{\gamma R \mu}{P_r (\gamma - 1)}
   }
