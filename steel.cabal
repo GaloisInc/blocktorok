@@ -52,7 +52,7 @@ library
                        Text.TokenClass
                        Data.Solver.Technique
                        Data.Solver.Backend
-                       Data.Solver.Example
+       
                        Data.Math
                        Data.Physics.Model
                        Data.Units.SymbolTable

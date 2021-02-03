@@ -15,8 +15,8 @@ SolvingTechnique sTemp {
 
 NumericalScheme nTemp {
     ddt : Euler;
-    grad : Gauss; Linear;
-    laplacian : Gauss; Linear; Orthogonal;
+    grad : Gauss Linear;
+    laplacian : Gauss Linear Orthogonal;
     interpolation : Linear;
     snGrad : Orthogonal;
 }

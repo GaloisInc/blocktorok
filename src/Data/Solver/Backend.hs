@@ -31,13 +31,15 @@ data SolvingTechnique =
 
 data Ddt = Euler
   deriving (Show)
-data DerivKind = Gauss | Linear | Orthogonal
+data DerivKind = GaussLinear
+  | Gauss | Linear | Orthogonal
+  | GaussLinearOrthongonal
   deriving (Show)
 data NumericalScheme =
   NumericalScheme {
     ddt :: Ddt,
-    grad :: [DerivKind],
-    laplacian :: [DerivKind],
+    grad :: DerivKind,
+    laplacian :: DerivKind,
     interpolation::DerivKind,
     snGrad :: DerivKind
   }

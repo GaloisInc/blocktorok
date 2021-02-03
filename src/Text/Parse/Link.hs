@@ -151,13 +151,34 @@ parseDdt =
 parseDerivkind :: Parser DerivKind
 parseDerivkind =
  do
-    d <- tok TokenGauss <|> tok TokenLinear <|> tok TokenOrthogonal
+    d <- tok TokenLinear <|> tok TokenOrthogonal
     tok' TokenSemi
     return $ case d of
-            TokenGauss -> Gauss
             TokenLinear -> Linear
             TokenOrthogonal -> Orthogonal
+            TokenGauss -> Gauss
             _ -> error "This can't happen"
+
+parseGradKind :: Parser DerivKind
+parseGradKind =
+ do
+    tok' TokenNgrad
+    tok' TokenColon
+    tok' TokenGauss
+    tok' TokenLinear
+    tok' TokenSemi
+    return $ GaussLinear
+
+parseLaplacianKind :: Parser DerivKind
+parseLaplacianKind =
+ do
+    tok' TokenNlaplacian
+    tok' TokenColon
+    tok' TokenGauss
+    tok' TokenLinear
+    tok' TokenOrthogonal
+    tok' TokenSemi
+    return $ GaussLinearOrthongonal
 
 parseDerivkindDecl setting =
  do
@@ -204,8 +225,8 @@ parseNumericalScheme =
      name <- parseIdentifier
      tok' TokenLCurl
      d <- parseDdt
-     g <- parseDerivkindsDecl TokenNgrad
-     l <- parseDerivkindsDecl TokenNlaplacian
+     g <- parseGradKind
+     l <- parseLaplacianKind
      i <- parseDerivkindDecl TokenNinterpolation
      s <- parseDerivkindDecl TokenNsnGrad
      tok' TokenRCurl

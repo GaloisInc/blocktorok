@@ -49,7 +49,7 @@ tokens :-
   HeatConduction                        { lex' TokenHeatConduction  }
   FluidFlow                             { lex' TokenFluidFlow       }
   var                                   { lex' TokenV               }
-  solve                                 { lex' TokenSolve           }
+  solve                                 { lex' TokenSolve            }
   PCG                                   { lex' TokenPCG             }
   DIC                                   { lex' TokenDIC             }
   solver                                { lex' TokenTsolver         }
