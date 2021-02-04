@@ -27,7 +27,7 @@ model m1 (Temp) {
     physics : HeatConduction{tmp};
     const DT = 4; -- e-05  m^2/s
     (∂ Temp) /(∂ t) - DT * △Temp  = 0;
-   solve Temp with {sTemp, nTemp};
-   return Temp;
+    solve Temp with {sTemp, nTemp};
+    return Temp;
 
 }
