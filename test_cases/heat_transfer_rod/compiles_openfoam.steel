@@ -4,6 +4,7 @@ config {
     totalTime: 3 s;
     const Temp = 273 K;
     run: m1(Temp);
+    -- backend : OpenFoam;
 }
 
 SolvingTechnique sTemp {
