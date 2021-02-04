@@ -83,6 +83,7 @@ data TokenClass =
   | TokenInnerProduct
   | TokenOuterProduct
   | TokenDot
+  | TokenWith
   | TokenComma
   | TokenLParen
   | TokenRParen
@@ -160,6 +161,7 @@ unLex TokenNumericalScheme = "NumericalScheme"
 unLex TokenSolvingTechnique = "SolvingTechnique"
 unLex TokenBackend = "Backend"
 unLex TokenOpenFoam = "OpenFoam"
+unLex TokenWith = "with"
 unLex TokenComma = ","
 unLex TokenLParen = "("
 unLex TokenRParen = ")"

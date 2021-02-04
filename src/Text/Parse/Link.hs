@@ -334,13 +334,13 @@ parseReturnDecl =
 parseVarSolveDecl :: Parser VarSolve
 parseVarSolveDecl =
    do tok' TokenSolve
-      tok' TokenLParen
       var <- variable
-      tok' TokenComma
+      tok' TokenWith
+      tok' TokenLCurl
       s <- variable
       tok' TokenComma
       n <- variable
-      tok' TokenRParen
+      tok' TokenRCurl
       tok' TokenSemi
       return $ VarSolve (Identifier var) (Identifier s) (Identifier n)
 

@@ -26,8 +26,8 @@ model m1 (Temp) {
     boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
     physics : HeatConduction{tmp};
     const DT = 4; -- e-05  m^2/s
-    (∂ Temp) /(∂ t) - DT * △Temp  = 0;  -- doesn't work?
-   solve(Temp, sTemp, nTemp);
+    (∂ Temp) /(∂ t) - DT * △Temp  = 0;
+   solve Temp with {sTemp, nTemp};
    return Temp;
 
 }

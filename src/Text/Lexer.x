@@ -70,6 +70,7 @@ tokens :-
   SolvingTechnique                      { lex' TokenSolvingTechnique }
   Backend                               { lex' TokenBackend         }
   OpenFoam                              { lex' TokenOpenFoam        }
+  with                                  { lex' TokenWith            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
   \^                                    { lex' TokenPow             }
   \:                                    { lex' TokenColon           }
