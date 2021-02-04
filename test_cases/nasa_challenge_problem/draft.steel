@@ -46,33 +46,39 @@ model FluidModel {
   -- }
 
 
-  const IBar = 0; -- FIXME initiation
-  const s = 0; -- FIXME initiation
-  const E = 0; -- FIXME initiation
+-- some of these are variables too!
+-- listed here are the initial values that will get updated with time (mu)
   gamma = standardAir.ratio_Specific_Heat; -- a perfect gas
-  mu = sutherland.viscosityRef; -- viscosity
+  mu = sutherland.viscosityRef; -- dynamic viscosity, depends on temperature!
   R =  standardAir.GasConstant; -- specific gas constant
   Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
+
   -- variables we are solving for
   var u; -- velocities in x,y,z directions
   var v;
-  var w;
-  var p; -- static pressure
-  var T;  -- temperature from ideal gas equation of state
+  var e;  -- internal energy
   var rhof; -- fluid density
-  -- T = p / (rhof * R);
-  -- kappa =  mu * cp / Pr; -- thermal conductivity
-  -- TODO Missing the support for equations
-  -- vBar = {u, v, w} -- flowspeed in cartesian system
-  -- U = {rhof, rhof*vBar, rhof*E } -- conservative variables
-  -- p = (γ-1) rhof [E-0.5(vbar • vbar)]
-  -- R(U) = ∇U + ∇•FC(U) - ∇•FV(U, ∇U) - S = 0;
-  -- tauBar = mu (∇ vBar + ∇ vBar^T) - mu *(2/3) *IBar (∇•vBar)-- viscous stress tensor
-  --  FC = {
-  --    rhof*vBar, rhof*vBar ⊗ vBar + IBar*p,  rhof*E*vBar  + p*vBar
-  --    } -- convective fluxes
-  -- FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
-  -- FIXME what is this dot suppose to be?
+  var T; -- fluid temperature, depends on e
+  var k; -- thermal conductivity, depends on mu
+  var mu; -- dynamic viscosity, depends on T
+  var P; -- pressure, depends on T
+  var tau; -- viscous stress tensor
+
+  -- Navier-Stokes and closure equations
+  \frac{\partial \rho}{\partial t} + \div \rho \vec{U} = 0
+  \frac{\partial \rho \vec{U}}{\partial t} + \div \rho \vec{U} \times \vec{U} + \div( \tau - PI) = 0
+  \frac{\partial \rho e}{\partial t} + \div(\rho e + P)\vec{U} - \div \tau \vec{U} - \div k \grad T = 0
+  \tau_{xy} = \tau_{yx} = \mu (\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x})
+  \tau_{xz} = \tau_{zx} = \mu (\frac{\partial u}{\partial z} + \frac{\partial w}{\partial x})
+  \tau_{yz} = \tau_{yz} = \mu (\frac{\partial v}{\partial z} + \frac{\partial w}{\partial y})
+  \tau_{xx} = \frac{2}{3} \mu (2\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
+  \tau_{yy} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} + 2\frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
+  \tau_{zz} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} + 2\frac{\partial w}{\partial z})
+  P = \rho R T
+  e = \frac{R}{\gamma - 1}T
+  e = \frac{P}{\gamma - 1} + \frac{1}{2} \sqrt{u^2 + v^2 + w^2}
+  \mu = \mu_0 \frac{T_0 + C}{T + C}(\frac{T}{T_0})^\frac{3}{2}
+  k = \frac{\gamma R \mu}{P_r (\gamma - 1)}
   }
 
 couple StructureModel FluidModel {

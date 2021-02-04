@@ -1,4 +1,3 @@
-
 config {
     totalTime: 3 s;
     tiemstep = 5 ms;
@@ -31,7 +30,7 @@ config {
       interpolation = linear,
       snGrad = orthogonal
       }
-
+    
     -- Heat conduction along a rod
     solveV:
         T;  -- solid temperature
@@ -39,37 +38,4 @@ config {
         DT = 4e-05 m^2/s
 	\frac{\partial T}{\partial t} - DT \nabla^2 T = 0
 }
-}
-=======
-
-config {
-    timeStep : 5 ms ;
-    totalTime: 3 s;
-    const Temp = 273 K;
-    run: m1(Temp);
-}
-
-Backend {
-    solver : PCG;
-    preconditioner : DIC;
-    tolerance : 1;
-    relTol : 0;
-    ddt : Euler;
-    grad : Gauss linear;
-    laplacian : Gauss linear orthogonal;
-    interpolation : Linear;
-    snGrad : Orthogonal;
-}
-
-
-model m1 (Temp) {
-    technique : FVM;
-    boundaryField : (Temp, top, Neumann, 0 ); (Temp, right, Dirichlet, 273); (Temp, bottom, Neumann, 0); (Temp, left, Dirichlet, 573);
-    physics : HeatConduction{tmp};
-    const DT = 4; -- e-05  m^2/s
-    --∂Temp - DT * △Temp = 0; -- works
-    Temp - DT * △Temp =0; -- doesn't work?
-    --(∂ Temp) /(∂ t)  -- doesn't work?
-   return Temp;
-
 }
