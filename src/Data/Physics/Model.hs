@@ -21,6 +21,9 @@ module Data.Physics.Model
   , getVars
   , getLib
   , getEqs
+  , VarSolve(..)
+  , BoundaryType(..)
+  , BoundaryField(..)
   , Boundary(..)
   , PhysicsType(..)
   ) where
@@ -32,17 +35,29 @@ import Data.Link.Identifier
 import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
-
 import Language.Haskell.TH.Syntax (Name)
 
-data Boundary = Neumann Identifier
-              | Dirichlet Identifier
+-- An ugly function I added. Forgive me.
+mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
+
+data BoundaryType = Neumann | Dirichlet
               deriving (Show)
 
-data PhysicsType =  HeatTransfer Integer
-                 | FluidFlow Integer
-                deriving (Show)
+data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
+              deriving (Show)
 
+data Boundary =  T BoundaryType Identifier | F [BoundaryField]
+              deriving (Show)
+
+data PhysicsType =  HeatTransfer Identifier
+                 | FluidFlow Identifier
+                 | HeatConduction Identifier
+                deriving (Show)
+data VarSolve = VarSolve
+  Identifier   --  ^ Variable we are solving for
+  Identifier    -- , solving technique
+  Identifier   ---, and numerical scheme
+  deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
@@ -57,8 +72,20 @@ data Model =
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Map Identifier (UnitExp Name Name)
         , getEqs :: [Equation] -- ^ The equations governing the model
+        , getSolve :: VarSolve
         }
-  deriving(Show)
+instance Show Model where
+      show (Model i o t b p c l v e s) =
+        (mkIndent "input" i)
+        ++ (mkIndent "output" o)
+        ++ (mkIndent "Technique" t)
+        ++ (mkIndent "Boundary" b)
+        ++ (mkIndent "PhysicsType" p)
+        ++ (mkIndent "constants" c)
+        ++ (mkIndent "libraries" l)
+        ++ (mkIndent "variables" v)
+        ++ (mkIndent "equations" e)
+        ++ (mkIndent "solvingvariables" s)
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
@@ -66,5 +93,7 @@ mkModel :: Identifier -> Identifier
       ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
       ->  Map Identifier (UnitExp Name Name)
-      -> [Equation] -> Model
+      -> [Equation]
+      -> VarSolve
+      -> Model
 mkModel = Model

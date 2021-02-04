@@ -4,38 +4,34 @@
 -- import V = lib.fluid_flow;
 
 config {
-  step : 2;
-  totalTime : 10;
-  -- Tw = P.InitialSolidTemperature;
-  -- Run: couple (ModelFluid, ModelSolid, Tw);
+  timeStep : 2 ms;
+  totalTime : 10 ms;
+  --Tw = P.InitialSolidTemperature;
+  const Tw = 273 K;
+  run: c1 (Tw);
   }
 
-model StructureModel {
-  input : qw;
-  output : Tw;
+model StructureModel(qw) {
   -- Convention from the Zhang paper: Tw (YL)
   -- Convention from the toy problem #3: Ts (YL)
   technique : FEM;
   boundary : Neumann(qw);
-  physics : HeatTransfer { 2};
-  -- TODO arg to HeatTransfer should be 'P'
-  -- physics : HeatTransfer {P};
+  physics : HeatTransfer {P};
   rhos = P.SolidDensity;
   ks = P.SolidThermalConductivity;
   cps = P.SolidSpecificHeat;
-  var Tw;   -- solid temperature
+  var Tw: K;   -- solid temperature
   rhos*cps*∇Tw- ks*△Tw = qw;
+  return Tw;
 
   }
 
-model FluidModel {
-  input : Tw;
-  output : qw;
+model FluidModel(Tw) {
   technique : FVM;
   boundary: Dirichlet (Tw);
   -- TODO change input to boundary conditions
   -- boundary: Dirichlet (P.InitialSolidTemperature);
-  physics : FluidFlow {2};
+  physics : FluidFlow {tmp};
   -- Why don't we put this in a library, just to be consistent with HeatTransfer
   -- TODO Add Fluid constructor
   -- physics : ModelType : FluidFlow {
@@ -54,12 +50,12 @@ model FluidModel {
   R =  standardAir.GasConstant; -- specific gas constant
   Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
   -- variables we are solving for
-  var u; -- velocities in x,y,z directions
-  var v;
-  var w;
-  var p; -- static pressure
-  var T;  -- temperature from ideal gas equation of state
-  var rhof; -- fluid density
+  var u: m/s; -- velocities in x,y,z directions
+  var v: m/s;
+  var w: m/s;
+  var p: m/s; -- static pressure
+  var T: K;  -- temperature from ideal gas equation of state
+  var rhof: m/s; -- fluid density
   -- T = p / (rhof * R);
   -- kappa =  mu * cp / Pr; -- thermal conductivity
   -- TODO Missing the support for equations
@@ -73,18 +69,16 @@ model FluidModel {
   --    } -- convective fluxes
   -- FV = {., tauBar, tauBar•v + kappa * ∇T }  -- viscous fluxes
   -- FIXME what is this dot suppose to be?
+  
+  return qw;
   }
 
-couple StructureModel FluidModel {
-  input : Tin;
-  output : Tout;
-  var qw; -- heat flux
+couple c1 FluidModel StructureModel (Tin){
+  var qw:K; -- heat flux
   qw = FluidModel(Tin);
-  Tout = ModelSolid (qw);
+  Tout = StructureModel(qw);
   -- TODO add zone interface
+  return Tout;
   }
 
--- def couple (m1, m2, Tin):
---  qw = m1 (Tin)
---  Tout = m2 (qw);
---  return Tout
+

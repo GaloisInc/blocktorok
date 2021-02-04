@@ -32,7 +32,7 @@ import qualified Data.Units.UnitExp as U
 import Data.Units.SymbolTable
 import Data.Units.SI
 import Data.Units.SI.Prefixes
-
+import Data.Solver.Backend
 import Language.Haskell.TH.Syntax (Name)
 import Text.Parsec
 
@@ -115,37 +115,184 @@ reportLexError msg = fail ("lexical error: " ++ msg)
 parseDecl :: FilePath -> String -> Either ParseError Prog
 parseDecl = parseNamedText parseProg
 
+parseSolver:: Parser Solver
+parseSolver =
+ do
+    tok' TokenTsolver
+    tok' TokenColon
+    s <- tok TokenPCG
+    tok' TokenSemi
+    return $ case s of
+            TokenPCG -> PCG
+            _ -> error "This can't happen"
+
+parsePreconditioner:: Parser Preconditioner
+parsePreconditioner =
+ do
+    tok' TokenTpreconditioner
+    tok' TokenColon
+    p <- tok TokenDIC
+    tok' TokenSemi
+    return $ case p of
+            TokenDIC -> DIC
+            _ -> error "This can't happen"
+
+parseDdt :: Parser Ddt
+parseDdt =
+ do
+    tok' TokenNddt
+    tok' TokenColon
+    d <- tok TokenEuler
+    tok' TokenSemi
+    return $ case d of
+            TokenEuler -> Euler
+            _ -> error "This can't happen"
+
+parseDerivkind :: Parser DerivKind
+parseDerivkind =
+ do
+    d <- tok TokenLinear <|> tok TokenOrthogonal
+    tok' TokenSemi
+    return $ case d of
+            TokenLinear -> Linear
+            TokenOrthogonal -> Orthogonal
+            TokenGauss -> Gauss
+            _ -> error "This can't happen"
+
+parseGradKind :: Parser DerivKind
+parseGradKind =
+ do
+    tok' TokenNgrad
+    tok' TokenColon
+    tok' TokenGauss
+    tok' TokenLinear
+    tok' TokenSemi
+    return $ GaussLinear
+
+parseLaplacianKind :: Parser DerivKind
+parseLaplacianKind =
+ do
+    tok' TokenNlaplacian
+    tok' TokenColon
+    tok' TokenGauss
+    tok' TokenLinear
+    tok' TokenOrthogonal
+    tok' TokenSemi
+    return $ GaussLinearOrthongonal
+
+parseDerivkindDecl setting =
+ do
+    tok' setting
+    tok' TokenColon
+    d <- parseDerivkind
+    return $ d
+
+parseDerivkindsDecl setting =
+ do
+    tok' setting
+    tok' TokenColon
+    d <- (many parseDerivkind)
+    return $ d
+
+parseIntSetting setting =
+ do
+    tok' setting
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n
+
+parseSolvingTechnique:: Parser SolvingTechnique
+parseSolvingTechnique =
+  do tok' TokenSolvingTechnique
+     name <- parseIdentifier
+     tok' TokenLCurl
+     s <- parseSolver
+     p <- parsePreconditioner
+     t <- parseIntSetting TokenTtolerance
+     r <- parseIntSetting TokenTrelTol
+     tok' TokenRCurl
+     return $ SolvingTechnique {
+        solver = s,
+        preconditioner = p,
+        tolerance = t,
+        relTol = r
+       }
+
+parseNumericalScheme:: Parser NumericalScheme
+parseNumericalScheme =
+  do tok' TokenNumericalScheme
+     name <- parseIdentifier
+     tok' TokenLCurl
+     d <- parseDdt
+     g <- parseGradKind
+     l <- parseLaplacianKind
+     i <- parseDerivkindDecl TokenNinterpolation
+     s <- parseDerivkindDecl TokenNsnGrad
+     tok' TokenRCurl
+     return $  NumericalScheme  {
+        ddt = d,
+        grad = g,
+        laplacian = l,
+        interpolation = i,
+        snGrad = s
+       }
+
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
+     solvingTechnique <- parseSolvingTechnique
+     numericalScheme <- parseNumericalScheme
      models <- parseModels
-     Prog cfg models <$> parseCouplings
+     Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+
+parseRunFn :: Parser RunFn
+parseRunFn =
+  do tok' TokenRun
+     tok' TokenColon
+     f <- parseIdentifier
+     tok' TokenLParen
+     arg <- parseIdentifier
+     tok' TokenRParen
+     tok' TokenSemi
+     return $ RFn f arg
 
 parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
      tok' TokenLCurl
-     steps <- parseStepConfig
+     timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
+     consts <- parseConstDecls
+     runfn <- parseRunFn
      tok' TokenRCurl
-     return $ Config steps duration
+     return $ Config timeStep duration consts runfn
   where
-    parseStepConfig =
-      do tok' TokenStep
+    parseTimeStepConfig =
+      do tok' TokenTimeStep
          tok' TokenColon
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
-         return n
+         return (n,u)
 
     parseDurationConfig =
       do mode <- tok TokenIterations <|> tok TokenTotalTime
          tok' TokenColon
          n <- number
+         u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
-                    TokenIterations -> Iterations n
-                    TokenTotalTime -> TotalTime n
+                    TokenIterations -> Iterations n u
+                    TokenTotalTime -> TotalTime n u
                     _ -> error "This can't happen"
+parseSingleArg :: Parser Identifier
+parseSingleArg =
+  do
+    tok' TokenLParen
+    j <-  parseIdentifier
+    tok' TokenRParen
+    return j
 
 parseModels :: Parser (Map Identifier Model)
 parseModels =
@@ -154,14 +301,13 @@ parseModels =
   where
     parseModel =
       do tok' TokenModel
-         i <- parseIdentifier
-         model <- parseModelBody
-         return (i, model)
+         name <- parseIdentifier
+         i <- parseSingleArg
+         model <- parseModelBody i
+         return (name, model)
 
-    parseModelBody =
+    parseModelBody inputDecl =
       do tok' TokenLCurl
-         inputDecl <- parseInputDecl
-         outputDecl <- parseOutputDecl
          technique <- parseSettingTechnique
          boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
@@ -169,28 +315,34 @@ parseModels =
          libs <- parseLibDecls
          vs <- parseVarDecls
          eqs <- parseEqs
+         varSolve <- parseVarSolveDecl
+         outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs
+         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
   do Identifier <$> variable
 
-parseInputDecl :: Parser Identifier
-parseInputDecl =
-  do tok' TokenInput
-     tok' TokenColon
-     var <- variable
-     tok' TokenSemi
-     return $ Identifier var
+parseReturnDecl :: Parser Identifier
+parseReturnDecl =
+   do tok' TokenReturn
+      var <- variable
+      tok' TokenSemi
+      return $ Identifier var
 
-parseOutputDecl :: Parser Identifier
-parseOutputDecl =
-  do tok' TokenOutput
-     tok' TokenColon
-     var <- variable
-     tok' TokenSemi
-     return $ Identifier var
+parseVarSolveDecl :: Parser VarSolve
+parseVarSolveDecl =
+   do tok' TokenSolve
+      var <- variable
+      tok' TokenWith
+      tok' TokenLCurl
+      s <- variable
+      tok' TokenComma
+      n <- variable
+      tok' TokenRCurl
+      tok' TokenSemi
+      return $ VarSolve (Identifier var) (Identifier s) (Identifier n)
 
 parseSettingTechnique :: Parser Technique
 parseSettingTechnique =
@@ -203,19 +355,50 @@ parseSettingTechnique =
                 TokenFVM -> FVM
                 _ -> error "This can't happen"
 
-parseBoundaryDecl :: Parser Boundary
-parseBoundaryDecl =
-  do tok' TokenBoundary
-     tok' TokenColon
-     methodTok <- tok TokenDirichlet <|> tok TokenNeumann
-     tok' TokenLParen
-     i <- parseIdentifier
+parseBoundaryType :: Parser BoundaryType
+parseBoundaryType =
+  do methodTok <- tok TokenDirichlet <|> tok TokenNeumann
+     return $ case methodTok of
+             TokenDirichlet -> Dirichlet
+             TokenNeumann -> Neumann
+             _ -> error "This can't happen"
+
+parseBoundaryTypeDecl :: Parser Boundary
+parseBoundaryTypeDecl =
+ do tok' TokenBoundary
+    tok' TokenColon
+    method <- parseBoundaryType
+    tok' TokenLParen
+    id <- parseIdentifier
+    tok' TokenRParen
+    tok' TokenSemi
+    return (T method id)
+
+
+parseBoundaryField :: Parser BoundaryField
+parseBoundaryField =
+  do tok' TokenLParen
+     id <- parseIdentifier
+     tok' TokenComma
+     method <- parseBoundaryType
+     tok' TokenComma
+     n <- number
      tok' TokenRParen
      tok' TokenSemi
-     return $ case methodTok of
-                TokenDirichlet -> Dirichlet i
-                TokenNeumann -> Neumann i
-                _ -> error "This can't happen"
+     return (BoundaryField id method  n)
+
+parseBoundaryFieldsDecl :: Parser Boundary
+parseBoundaryFieldsDecl =
+  do
+    tok' TokenBoundaryField
+    tok' TokenColon
+    x <- (many parseBoundaryField)
+    return (F x)
+
+parseBoundaryDecl :: Parser Boundary
+parseBoundaryDecl =
+  do
+    parseBoundaryFieldsDecl <|> parseBoundaryTypeDecl
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -226,13 +409,14 @@ parsePhysicsType =
      return rhs
   where
     parsePhysicsTypeRHS =
-      do t <- tok TokenHeatTransfer <|> tok TokenFluidFlow
+      do t <- tok TokenHeatTransfer <|> tok TokenFluidFlow <|> tok TokenHeatConduction
          tok' TokenLCurl
-         n <- number
+         n <- parseIdentifier
          tok' TokenRCurl
          return $ case t of
                     TokenHeatTransfer -> HeatTransfer n
                     TokenFluidFlow -> FluidFlow n
+                    TokenHeatConduction -> HeatConduction n
                     _ -> error "This can't happen"
 
 parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp Name Name))
@@ -255,7 +439,8 @@ parseLibDecls =
      return $ Map.fromList decls
   where
     parseLibDecl =
-      do i <- parseIdentifier
+      do tok' TokenImport
+         i <- parseIdentifier
          tok' TokenEq
          lib <- parseImport
          tok' TokenSemi
@@ -302,19 +487,20 @@ parseExp = parseExp1 `chainl1` pAddOp
                     _ -> error "This can't happen"
 
     parseExp1 :: Parser Exp
-    parseExp1 = parseExp2 `chainl1` return Div
+    parseExp1 = parseExp2 `chainl1` return Plus
 
     parseExp2 :: Parser Exp
     parseExp2 = parseExp3 `chainl1` pMulOp
       where
         pMulOp :: Parser (Exp -> Exp -> Exp)
         pMulOp =
-          do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct])
+          do op <- choice (tok <$> [TokenTimes, TokenInnerProduct, TokenCrossProduct, TokenOuterProduct, TokenDiv])
              return $ case op of
                         TokenTimes -> Times
                         TokenInnerProduct -> InnerProduct
                         TokenCrossProduct -> CrossProduct
                         TokenOuterProduct -> OuterProduct
+                        TokenDiv -> Div
                         _ -> error "This can't happen"
 
     parseExp3 :: Parser Exp
@@ -327,10 +513,11 @@ parseExp = parseExp1 `chainl1` pAddOp
     parseExp4 = try p <|> (tok' TokenNabla >> return NablaSingle) <|> parseExp5
       where
         p =
-          do op <- choice [tok TokenTriangle, tok TokenNabla]
+          do op <- choice [tok TokenTriangle, tok TokenNabla, tok TokenPartial]
              let f = case op of
                        TokenTriangle -> Laplacian
                        TokenNabla -> NablaExp
+                       TokenPartial -> Partial
                        _ -> error "This can't happen"
              f <$> parseExp4
 
@@ -375,12 +562,13 @@ parseCouplings = many parseCoupling
   where
     parseCoupling =
       do tok' TokenCouple
+         mname <- parseIdentifier
          ma <- parseIdentifier
          mb <- parseIdentifier
+         i <- parseSingleArg
          tok' TokenLCurl
-         i <- parseInputDecl
-         o <- parseOutputDecl
          vs <- parseVarDecls
          eqs <- parseEqs
+         o <- parseReturnDecl
          tok' TokenRCurl
-         return $ Coupling ma mb i o vs eqs
+         return $ Coupling mname ma mb i o vs eqs

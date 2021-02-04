@@ -36,7 +36,7 @@ hasAllCouplings p = couplings == modelPairs
     modelPairs = Set.filter (\s -> Set.size s == 2) $ Set.powerSet $ Map.keysSet $ getModels p
 
     couplings :: Set (Set Identifier)
-    couplings = Set.fromList $ Set.fromList . (\(Coupling a b _ _ _ _) -> [a, b]) <$> getCouplings p
+    couplings = Set.fromList $ Set.fromList . (\(Coupling _ a b _ _ _ _) -> [a, b]) <$> getCouplings p
 
 -- | Return true if and only if, for each model, the set of variables appearing
 --   in the model's equations have been declared.

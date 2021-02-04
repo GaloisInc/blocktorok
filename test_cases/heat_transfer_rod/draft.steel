@@ -1,5 +1,48 @@
 
 config {
+    totalTime: 3 s;
+    tiemstep = 5 ms;
+    T: uniform 273 K;
+    Run: Model1(T);
+    backend: OpenFoam
+}
+
+-------------------------------------------------------------------------------
+
+    output : T
+    technique: FVM;
+    boundaryField: (ModelSolid.top, Neumann, 0;
+		ModelSolid.right, Dirichlet, 273 K;
+		ModelSolid.bottom, Neumann, 0;
+		ModelSolid.left, Dirichlet, 573 K);
+    physics: Heat Conduction
+
+    Solvers: T {
+      solver = PCG,
+      preconditioner = DIC,
+      tolerance = 1e-06,
+      relTol = 0
+    }
+
+    Numerical Schemes: {
+      ddt = Euler,
+      grad = Gauss linear,
+      laplacian(DT, T) = Gauss linear orthogonal,
+      interpolation = linear,
+      snGrad = orthogonal
+      }
+
+    -- Heat conduction along a rod
+    solveV:
+        T;  -- solid temperature
+    math:
+        DT = 4e-05 m^2/s
+	\frac{\partial T}{\partial t} - DT \nabla^2 T = 0
+}
+}
+=======
+
+config {
     timeStep : 5 ms ;
     totalTime: 3 s;
     const Temp = 273 K;
@@ -21,15 +64,12 @@ Backend {
 
 model m1 (Temp) {
     technique : FVM;
-    boundaryField : (Temp, top, Neumann, 0 ); (Temp, right, Dirichlet, 273); (Temp, bottom, Neumann, 0); (Temp, left, Dirichlet, 573); 
-    physics : HeatConduction{tmp};    
+    boundaryField : (Temp, top, Neumann, 0 ); (Temp, right, Dirichlet, 273); (Temp, bottom, Neumann, 0); (Temp, left, Dirichlet, 573);
+    physics : HeatConduction{tmp};
     const DT = 4; -- e-05  m^2/s
-    --∂Temp - DT * △Temp = 0; -- works 
+    --∂Temp - DT * △Temp = 0; -- works
     Temp - DT * △Temp =0; -- doesn't work?
     --(∂ Temp) /(∂ t)  -- doesn't work?
    return Temp;
-   
+
 }
-
-
-

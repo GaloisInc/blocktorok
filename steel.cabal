@@ -51,6 +51,8 @@ library
                        Text.Token
                        Text.TokenClass
                        Data.Solver.Technique
+                       Data.Solver.Backend
+       
                        Data.Math
                        Data.Physics.Model
                        Data.Units.SymbolTable
