@@ -17,20 +17,6 @@ import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-newtype SU2Bool = SU2Bool Bool
-newtype SU2Double = SU2Double Double
-newtype SU2Integer = SU2Integer Integer
-
-instance Render SU2Bool where
-  render (SU2Bool True)  = "YES"
-  render (SU2Bool False) = "NO"
-
-instance Render SU2Double where
-  render (SU2Double x) = show x
-
-instance Render SU2Integer where
-  render (SU2Integer i) = show i
-
 data SU2Solver = Euler
                | NS
                | Wave
