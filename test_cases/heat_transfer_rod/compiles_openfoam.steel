@@ -6,7 +6,8 @@ config {
     -- backend : OpenFoam;
 }
 
-SolvingTechnique sTemp {
+SolvingTechnique sTemp
+    T {
     solver : PCG;
     preconditioner : DIC;
     tolerance : 1;
