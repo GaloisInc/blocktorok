@@ -31,8 +31,9 @@ model FluidModel(Tw) {
   const Pr = F.constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
 
   -- variables we are solving for
-  var u; -- velocities in x,y,z directions
-  var v;
+  var u; -- velocity in x direction (U = [u, v, w])
+  var v; --  velocity in y direction (U = [u, v, w])
+  var w; -- velocity in z direction (U = [u, v, w])
   var e;  -- internal energy
   var rhof; -- fluid density
   var T; -- fluid temperature, depends on e
