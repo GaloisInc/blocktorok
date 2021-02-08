@@ -1,4 +1,3 @@
-
 config {
     timeStep : 5 ms ;
     totalTime: 3 s;
@@ -17,7 +16,7 @@ SolvingTechnique sTemp {
 NumericalScheme nTemp {
     ddt : Euler;
     grad : Gauss Linear;
-    laplacian : Gauss Linear Orthogonal;
+    laplacian(DT, T) : Gauss Linear Orthogonal;
     interpolation : Linear;
     snGrad : Orthogonal;
 }
