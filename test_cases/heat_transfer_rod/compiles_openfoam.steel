@@ -6,13 +6,14 @@ config {
     -- backend : OpenFoam;
 }
 
-SolvingTechnique sTemp
+SolvingTechnique sTemp {
     T {
     solver : PCG;
     preconditioner : DIC;
     tolerance : 1;
     relTol : 0;
     }
+}
 
 NumericalScheme nTemp {
     ddt : Euler;
