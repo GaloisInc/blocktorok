@@ -1,54 +1,58 @@
-SolvingTechnique1 = LinearSolver {
-   LINEAR_SOLVER= FGMRES,
-   LINEAR_SOLVER_PREC= ILU,
-   LINEAR_SOLVER_ERROR= 1E-15,
-   LINEAR_SOLVER_ITER= 5
- }
 
-NumericalScheme1 = NumericalSchemes {
+-- Built-in Commands
+-- Tells the user what code is created
+--    when using certain keywords in the LINK language
+
+LIB_SolvingTechnique1 =
+  [
+  LinearSolver {
+    LINEAR_SOLVER= FGMRES,
+    LINEAR_SOLVER_PREC= ILU,
+    LINEAR_SOLVER_ERROR= 1E-15,
+    LINEAR_SOLVER_ITER= 5
+    }
+ Convergence {
+     CONV_RESIDUAL_MINVAL= -19,
+     CONV_STARTITER= 10,
+     CONV_CAUCHY_ELEMS= 100,
+     CONV_CAUCHY_EPS= 1E-6
+     }
+   ]
+
+LIB_NumericalScheme1 = NumericalSchemes {
    NUM_METHOD_GRAD = GREEN_GAUSS,
  }
 
-----------------------------------------------------------
-A = ProblemDefinition {
-  SOLVER = HEAT_EQUATION,
-  MATH_PROBLEM= DIRECT,
-  RESTART_SOL= NO, --maybe make default NO, then we can skip this line
-  OBJECTIVE_FUNCTION = TOTAL_HEATFLUX
+LIB_Plotting1  = Plotting: {
+     MARKER_PLOTTING= (left, right, top, bottom )
+   }
+
+LIB_Format1 = InputOutput {
+  MESH_FILENAME= mesh_solid_rod.su2,
+  MESH_FORMAT= SU2,
+  TABULAR_FORMAT= CSV,
+  CONV_FILENAME= history,
+  VOLUME_FILENAME= flow,
+  SURFACE_FILENAME= surface_flow,
+  OUTPUT_WRT_FREQ = 250,
+  SCREEN_WRT_FREQ_TIME = 1
   }
 
-B =  TimeDependent {
-    INNER_ITER = 200
-  }
+LIB_TimeDependent1 =  TimeDependent {
+      INNER_ITER = 200
+    }
 
-C = ConductionDefinition {
+LIB_PhysicsParameters1 = [
+  ProblemDefinition {
+    SOLVER = HEAT_EQUATION,
+    MATH_PROBLEM= DIRECT,
+    RESTART_SOL= NO, --maybe make default NO, then we can skip this line
+    OBJECTIVE_FUNCTION = TOTAL_HEATFLUX
+    }
+    ConductionDefinition {
     INC_NONDIM = DIMENSIONAL,
     SOLID_DENSITY = 19300i kg/m^3,
     SPECIFIC_HEAT_CP = 130 J/kg*K,
     SOLID_THERMAL_CONDUCTIVITY = 318 W/m*K
   }
-
-D = Convergence {
-    CONV_RESIDUAL_MINVAL= -19,
-    CONV_STARTITER= 10,
-    CONV_CAUCHY_ELEMS= 100,
-    CONV_CAUCHY_EPS= 1E-6
-  }
-
-ModelParameters = [A, B, C, D]
-----------------------------------------------------------
-
-Plotting: {
-    MARKER_PLOTTING= (left, right, top, bottom )
-  }
-
-Format1 = InputOutput {
-    MESH_FILENAME= mesh_solid_rod.su2,
-    MESH_FORMAT= SU2,
-    TABULAR_FORMAT= CSV,
-    CONV_FILENAME= history,
-    VOLUME_FILENAME= flow,
-    SURFACE_FILENAME= surface_flow,
-    OUTPUT_WRT_FREQ = 250,
-    SCREEN_WRT_FREQ_TIME = 1
-  }
+  ]

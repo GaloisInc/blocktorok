@@ -6,7 +6,7 @@ config {
     const Temp = 273 K;
     run: m1(Temp);
     backend : Su2;
-    output : LIB.Format1
+    format : LIB_Format1
 }
 
 model m1 (Temp) {
