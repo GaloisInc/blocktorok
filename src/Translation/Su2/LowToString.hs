@@ -28,7 +28,7 @@ baseToString (Neg n) = "-"++ (baseToString n)
 baseToString (Pair es) = "("++intercalate "," (map baseToString es)++")"
 
 stmtToString lowexp = case lowexp of
-  Constructor a es -> (baseToString a) ++ "{" ++(intercalate "," (map stmtToString es))++"}"
+  Constructor a es -> (baseToString a) ++ "{\n\t" ++(intercalate ",\n\t" (map stmtToString es))++"\n\t}"
   Equality a b -> (baseToString a) ++ "="++(baseToString b)
   Incomplete -> "Should raise an error"
 lowToString (Program es) = (map stmtToString es)
