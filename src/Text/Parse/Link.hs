@@ -241,10 +241,11 @@ parseNumericalScheme =
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
-     solvingTechnique <- parseSolvingTechnique
-     numericalScheme <- parseNumericalScheme
+     --solvingTechnique <- parseSolvingTechnique
+     --numericalScheme <- parseNumericalScheme
      models <- parseModels
-     Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+     --Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+     Prog cfg models  <$> parseCouplings
 
 parseRunFn :: Parser RunFn
 parseRunFn =
@@ -257,6 +258,26 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
+parseBackend :: Parser BackendConfig
+parseBackend =
+  do
+     tok' TokenBackend
+     tok' TokenColon
+     tok' TokenSu2
+     tok' TokenLCurl
+     tok' TokenFormat
+     tok' TokenColon
+     f <- parseIdentifier
+     tok' TokenTime
+     tok' TokenColon
+     t <- parseIdentifier
+     tok' TokenPlotting
+     tok' TokenColon
+     p <- parseIdentifier
+     tok' TokenRCurl
+     tok' TokenSemi
+     return $ Su2 f t p
+
 parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
@@ -265,8 +286,9 @@ parseConfig =
      duration <- parseDurationConfig
      consts <- parseConstDecls
      runfn <- parseRunFn
+     backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeStep duration consts runfn
+     return $ Config timeStep duration consts runfn backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep

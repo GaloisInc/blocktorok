@@ -68,8 +68,12 @@ tokens :-
   snGrad                                { lex' TokenNsnGrad         }
   NumericalScheme                       { lex' TokenNumericalScheme }
   SolvingTechnique                      { lex' TokenSolvingTechnique }
-  Backend                               { lex' TokenBackend         }
+  backend                               { lex' TokenBackend         }
   OpenFoam                              { lex' TokenOpenFoam        }
+  Su2                                   { lex' TokenSu2             }
+  format                                { lex' TokenFormat          }
+  time                                  { lex' TokenTime            }
+  plotting                              { lex' TokenPlotting        }
   with                                  { lex' TokenWith            }
   $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
   \^                                    { lex' TokenPow             }

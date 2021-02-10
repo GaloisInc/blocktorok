@@ -1,6 +1,6 @@
 {-|
 Module      : Solver.Backend
-Description : High-level representation of physical models
+Description : backend-related stuff
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
 Maintainer  : chiw@galois.com and cphifer@galois.com
@@ -10,11 +10,22 @@ Portability : N/A
 
 module Data.Solver.Backend
   (
-  Solver(..), Preconditioner(..), SolvingTechnique (..)
+  BackendConfig(..)
+  , Solver(..), Preconditioner(..), SolvingTechnique (..)
   , Ddt(..), DerivKind(..), NumericalScheme (..)
 
 
   ) where
+
+import Data.Link.Identifier
+
+data BackendConfig = Su2 {
+  format ::Identifier,
+  time :: Identifier,
+  plotting :: Identifier
+  }
+  | OpenFoam
+  deriving (Show)
 
 data Solver = PCG
   deriving (Show)
