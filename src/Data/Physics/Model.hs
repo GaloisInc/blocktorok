@@ -14,7 +14,7 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Data.Physics.Model
-  ( Model
+  ( Model(..)
   , mkModel
   , getTechnique
   , getConsts

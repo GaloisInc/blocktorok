@@ -1,5 +1,5 @@
 {-|
-Module      : Translation.Translate
+Module      : Translation.Su2.Low
 Description :  translation from LINK AST to backend
 Copyright   : Galois, Inc. 2021
 License     : N/A
@@ -10,7 +10,7 @@ Portability : N/A
 This module defines the parser for the LINK language, using Parsec.
 -}
 
-module Translation.Low
+module Translation.Su2.Low
   ( Base(..), Stmt(..), Program(..)
   ) where
 
@@ -22,7 +22,7 @@ import qualified Data.Map.Strict as Map
 import Data.List
 
 
-data Base = Int Integer | Name String
+data Base = Int Integer | Name String | Neg Base
 data Stmt = Constructor Base [Stmt]
   | Equality Base Base
   | Incomplete

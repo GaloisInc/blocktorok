@@ -258,8 +258,8 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
-parseBackend :: Parser BackendConfig
-parseBackend =
+parseBackendSu2 :: Parser BackendConfig
+parseBackendSu2 =
   do
      tok' TokenBackend
      tok' TokenColon
@@ -277,6 +277,21 @@ parseBackend =
      tok' TokenRCurl
      tok' TokenSemi
      return $ Su2 f t p
+
+parseBackendOpenFoam :: Parser BackendConfig
+parseBackendOpenFoam =
+   do
+      tok' TokenBackend
+      tok' TokenColon
+      tok' TokenOpenFoam
+      tok' TokenSemi
+      return $ OpenFoam
+
+parseBackend :: Parser BackendConfig
+parseBackend =
+  do
+    parseBackendOpenFoam <|> parseBackendSu2
+
 
 parseConfig :: Parser Config
 parseConfig =
