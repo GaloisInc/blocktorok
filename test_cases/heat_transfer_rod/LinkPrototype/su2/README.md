@@ -1,0 +1,4 @@
+- `draft.txt` is the file Yerim wrote that represents the problem
+- `compile.steel` is the LINK version of the file using LINK syntax
+- `out.su2` is the code LINK generates for the SU2 backend
+- `documentation.txt` documentation provided for the user when writing LINK code
