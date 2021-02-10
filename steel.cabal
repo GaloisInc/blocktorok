@@ -56,7 +56,8 @@ library
                        Data.Physics.Model
                        Data.Units.SymbolTable
                        Data.Units.UnitExp
-                       Translation.HighToLow
-                       Translation.LowToString 
-                       Translation.Low
+                       Translation.Su2.HighToLow
+                       Translation.Su2.LowToString 
+                       Translation.Su2.Low
+                       Translation.HighToStr
   ghc-options: -Wall

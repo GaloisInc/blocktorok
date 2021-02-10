@@ -4,9 +4,9 @@ config {
     const Temp = 273 K;
     run: m1(Temp);
     backend : Su2 {
-        format : LIB_Format1
-        time : LIB_TimeDependent1
-        plotting : LIB_Plotting1
+        format : LIB_Format1,
+        time : 200,
+        plotting : (left, right, top, bottom )
       };
 }
 

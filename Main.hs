@@ -4,8 +4,8 @@ import Language.Check (hasAllCouplings, allVarsDeclared)
 import Text.Parse.Link ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
-import Translation.HighToLow ( highToLow )
-import Translation.LowToString ( lowToString )
+import Translation.HighToStr (highToStr)
+import Data.List
 
 main :: IO ()
 main = do
@@ -18,9 +18,10 @@ main = do
     Left e -> do
           print e
           exitFailure
-    Right e -> if hasAllCouplings e && allVarsDeclared e then
-                 --print e
-                 print (lowToString (highToLow e))
-
+    Right e -> if hasAllCouplings e && allVarsDeclared e then let
+                 _ = print e
+                 str = highToStr e
+                 in
+                 mapM_ putStrLn str
                else
                  error "static checks failed"
