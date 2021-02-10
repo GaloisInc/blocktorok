@@ -25,6 +25,8 @@ import Translation.Su2.Low
 baseToString (Int n) =  show(n)
 baseToString (Name n) = n
 baseToString (Neg n) = "-"++ (baseToString n)
+baseToString (Pair es) = "("++intercalate "," (map baseToString es)++")"
+
 stmtToString lowexp = case lowexp of
   Constructor a es -> (baseToString a) ++ "{" ++(intercalate "," (map stmtToString es))++"}"
   Equality a b -> (baseToString a) ++ "="++(baseToString b)

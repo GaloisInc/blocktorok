@@ -22,7 +22,7 @@ import qualified Data.Map.Strict as Map
 import Data.List
 
 
-data Base = Int Integer | Name String | Neg Base
+data Base = Int Integer | Name String | Neg Base | Pair [Base]
 data Stmt = Constructor Base [Stmt]
   | Equality Base Base
   | Incomplete

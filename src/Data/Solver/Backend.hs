@@ -11,18 +11,20 @@ Portability : N/A
 module Data.Solver.Backend
   (
   BackendConfig(..)
+  , PlotMarkers(..)
   , Solver(..), Preconditioner(..), SolvingTechnique (..)
   , Ddt(..), DerivKind(..), NumericalScheme (..)
-
-
   ) where
 
 import Data.Link.Identifier
 
+data PlotMarkers = PlotMarkers [Identifier]
+  deriving (Show)
+
 data BackendConfig = Su2 {
   format ::Identifier,
-  time :: Identifier,
-  plotting :: Identifier
+  time :: Integer,
+  plotting :: PlotMarkers
   }
   | OpenFoam
   deriving (Show)

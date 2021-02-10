@@ -27,6 +27,7 @@ err = error  "unsupported library feature"
 mkVarEq lhs rhs =     Equality (Name lhs) (Name rhs)
 mkVarIntEq lhs rhs =  Equality (Name lhs) (Int rhs)
 mkVarNIntEq lhs rhs = Equality (Name lhs) (Neg (Int rhs))
+idToVar (Identifier e) = Name e
 ------------ Config ------------
 ------ Backend Config ------
 bcFormatToLow (Identifier id) = case id of
@@ -43,22 +44,22 @@ bcFormatToLow (Identifier id) = case id of
       in [Constructor n [s1, s2, s3, s4, s5, s6, s7, s8]]
     _ ->  err
 
-bcTimeToLow (Identifier id) = case id of
-    "LIB_TimeDependent1" -> let
-      n = Name "TimeDependent"
-      s = mkVarIntEq "INNER_ITER" 200
-      in [Constructor n [s]]
-    _ -> err
+bcTimeToLow (n) =
+  let
+      t = Name "TimeDependent"
+      s = mkVarIntEq "INNER_ITER" n
+  in [Constructor t [s]]
 
-bcPlottingToLow (Identifier id) = case id of
-    "LIB_Plotting1" ->  let
-      n = Name "Plotting"
-      s = Equality (Name "MARKER_PLOTTING") (Name "(left, right, top, bottom)")
-      in [Constructor n [s]]
-    _ -> err
+bcPlottingToLow (PlotMarkers es) =  let
+  n = Name "Plotting"
+  p = Pair (map idToVar es)
+  s = Equality (Name "MARKER_PLOTTING") p
+  in [Constructor n [s]]
+
+
 bcToLow (Su2 format time plotting) = let
   f = bcFormatToLow  format
-  t = bcTimeToLow  time
+  t = bcTimeToLow time
   p = bcPlottingToLow  plotting
   parameters = f ++ t++ p
   in (parameters)
@@ -95,8 +96,29 @@ solvingTechniqueToLow (Identifier id) = case id of
 varSolveToLow (VarSolve v n t) =
   (numericalSchemesToLow t) ++ (solvingTechniqueToLow n)
 
-modelToBackendParams(Model i o t b p c l v e varsolve) =
-  varSolveToLow varsolve
+physTypeToLow (HeatTransfer id)= []
+physTypeToLow (FluidFlow id) = []
+physTypeToLow (HeatConduction (Identifier id)) =  case id of
+    "LIB_PhysicsParameters1" ->  let
+      n1 = Name "ProblemDefinition"
+      s1 = mkVarEq "SOLVER" "HEAT_EQUATION"
+      s2 = mkVarEq "MATH_PROBLEM" "DIRECT"
+      s3 = mkVarEq "RESTART_SO" "NO"
+      s4 = mkVarEq "OBJECTIVE_FUNCTION" "TOTAL_HEATFLUX"
+      n2 = Name "ConductionDefinition"
+      s5 = mkVarEq "INC_NONDIM" "DIMENSIONAL"
+      s6 = mkVarEq "SOLID_DENSITY" "19300i kg/m^3"
+      s7 = mkVarEq "SPECIFIC_HEAT_CP" "130 J/kg*K"
+      s8 = mkVarEq "SOLID_THERMAL_CONDUCTIVITY" "318 W/m*Ks"
+      c1 = Constructor n1 [s1, s2, s3, s4]
+      c2 = Constructor n2 [s5, s6, s7, s8]
+      in [c1, c2]
+    _ ->  error ("unsupported numericalSchemes"++id)
+
+modelToBackendParams(Model i o t b physicsType c l v e varsolve) = let
+  p = physTypeToLow physicsType
+  v = varSolveToLow varsolve
+  in p ++ v
 
 ------------ Program ------------
 highToLow(Prog config modelmap coupling)  = let

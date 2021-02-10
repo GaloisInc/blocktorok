@@ -258,31 +258,43 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
+parsePlotting :: Parser PlotMarkers
+parsePlotting =
+  do
+    tok' TokenLParen
+    m1 <- parseIdentifier
+    tok' TokenComma
+    m2 <- parseIdentifier
+    tok' TokenComma
+    m3 <- parseIdentifier
+    tok' TokenComma
+    m4 <- parseIdentifier
+    tok' TokenRParen
+    return $ PlotMarkers [m1, m2, m3, m4]
+
 parseBackendSu2 :: Parser BackendConfig
 parseBackendSu2 =
   do
-     tok' TokenBackend
-     tok' TokenColon
      tok' TokenSu2
      tok' TokenLCurl
      tok' TokenFormat
      tok' TokenColon
      f <- parseIdentifier
+     tok' TokenComma
      tok' TokenTime
      tok' TokenColon
-     t <- parseIdentifier
+     n <- number
+     tok' TokenComma
      tok' TokenPlotting
      tok' TokenColon
-     p <- parseIdentifier
+     p <- parsePlotting
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f t p
+     return $ Su2 f n p
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
    do
-      tok' TokenBackend
-      tok' TokenColon
       tok' TokenOpenFoam
       tok' TokenSemi
       return $ OpenFoam
@@ -290,6 +302,8 @@ parseBackendOpenFoam =
 parseBackend :: Parser BackendConfig
 parseBackend =
   do
+    tok' TokenBackend
+    tok' TokenColon
     parseBackendOpenFoam <|> parseBackendSu2
 
 
