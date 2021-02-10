@@ -7,8 +7,8 @@ import System.Exit
 import Translation.HighToStr (highToStr)
 import Data.List
 
--- destination for file 
-dst = "test_cases/heat_transfer_rod/LinkPrototype/su2/out.txt"
+-- destination for file
+dst = "test_cases/heat_transfer_rod/LinkPrototype/su2/out.su2"
 
 main :: IO ()
 main = do
