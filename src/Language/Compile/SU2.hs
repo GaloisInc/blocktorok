@@ -65,9 +65,10 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
 
     compileModel :: SU2Compiler
     compileModel =
-      do Model _ _ _ _ pType _ _ _ _ vSolve  <- lift $ lookupModel f models
+      do Model _ _ _ _ pType _ _ _ _ (VarSolve _ st ns)  <- lift $ lookupModel f models
          compilePType pType
-         compileVSolve vSolve
+         compileSolveTechnique st
+         compileNumScheme ns
 
     compilePType :: PhysicsType -> SU2Compiler
     compilePType (HeatConduction (Identifier pParams)) =
@@ -80,8 +81,19 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
            put $ SU2Config $ Map.union pSettings cfg
     compilePType _ = throwError "Unsupported physics type"
 
-    compileVSolve :: VarSolve -> SU2Compiler
-    compileVSolve = undefined
+    compileSolveTechnique :: Identifier -> SU2Compiler
+    compileSolveTechnique (Identifier st) =
+      if st /= "LIB_SolvingTechnique1" then
+        throwError "Unknown solving technique"
+      else
+        undefined
+
+    compileNumScheme :: Identifier -> SU2Compiler
+    compileNumScheme (Identifier ns) =
+      if ns /= "LIB_NumericalScheme1" then
+        throwError "Unknown numerical scheme"
+      else
+        undefined
 
     lookupModel :: Identifier -> Map Identifier Model -> Either String Model
     lookupModel ident ms =
