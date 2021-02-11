@@ -24,9 +24,17 @@ import Translation.Su2.Low
 import Data.Physics.Model
 
 err = error  "unsupported library feature"
+
+
+-- shortcuts to set equality between variables and integers
+-- prints as lhs = rhs
+mkVarEq :: String -> String -> Stmt
 mkVarEq lhs rhs =     Equality (Name lhs) (Name rhs)
+mkVarIntEq :: String -> Integer-> Stmt
 mkVarIntEq lhs rhs =  Equality (Name lhs) (Int rhs)
+mkVarNIntEq :: String -> Integer-> Stmt
 mkVarNIntEq lhs rhs = Equality (Name lhs) (Neg (Int rhs))
+idToVar :: Identifier -> Base
 idToVar (Identifier e) = Name e
 ------------ Config ------------
 ------ Backend Config ------
