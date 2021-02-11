@@ -25,6 +25,8 @@ import Data.List
 import Translation.Su2.Low
 import Data.Physics.Model
 
+-- converts AST to a list of strings based on backend 
+highToStr :: Prog -> [[Char]]
 highToStr e = let
   Prog config modelmap coupling = e
   (Config globalstep duration consts runfn backendconfig) = config

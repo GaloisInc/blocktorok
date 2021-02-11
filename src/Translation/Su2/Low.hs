@@ -1,17 +1,16 @@
 {-|
 Module      : Translation.Su2.Low
-Description :  translation from LINK AST to backend
+Description :  Low IR that represents SU2 code
 Copyright   : Galois, Inc. 2021
 License     : N/A
 Maintainer  : chiw@galois.com
 Stability   : Experimental
 Portability : N/A
 
-This module defines the parser for the LINK language, using Parsec.
 -}
 
 module Translation.Su2.Low
-  ( Base(..), Stmt(..), Program(..)
+  ( Base(..), Stmt(..), LowIR (..)
   ) where
 
 import Data.Link.AST
@@ -21,10 +20,12 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.List
 
-
+-- Base expressions
 data Base = Int Integer | Name String | Neg Base | Pair [Base]
+
+-- Statements
 data Stmt = Constructor Base [Stmt]
   | Equality Base Base
-  | Incomplete
-data Program = Program [Stmt]
-err = Incomplete -- "Should raise an error"
+
+-- Lower IR
+data LowIR = Program [Stmt]

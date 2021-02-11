@@ -22,13 +22,19 @@ import qualified Data.Map.Strict as Map
 import Data.List
 import Translation.Su2.Low
 
+-- covert lower ir base expressions into strings
+baseToString  :: Base -> String
 baseToString (Int n) =  show(n)
 baseToString (Name n) = n
 baseToString (Neg n) = "-"++ (baseToString n)
 baseToString (Pair es) = "("++intercalate "," (map baseToString es)++")"
 
+-- covert lower ir statements into strings
+stmtToString :: Stmt  -> String
 stmtToString lowexp = case lowexp of
   Constructor a es -> (baseToString a) ++ "{\n\t" ++(intercalate ",\n\t" (map stmtToString es))++"\n\t}"
   Equality a b -> (baseToString a) ++ "="++(baseToString b)
-  Incomplete -> "Should raise an error"
+
+-- covert lower ir to strings
+lowToString :: LowIR  -> [String]
 lowToString (Program es) = (map stmtToString es)
