@@ -57,12 +57,7 @@ library
                        Text.Parse.Units
                        Text.Token
                        Text.TokenClass
-                       Data.Solver.Technique
                        Data.Solver.Backend
-                       Data.Math
-                       Data.Physics.Model
-                       Data.Units.SymbolTable
-                       Data.Units.UnitExp
                        Translation.Su2.HighToLow
                        Translation.Su2.LowToString
                        Translation.Su2.Low
