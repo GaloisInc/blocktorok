@@ -18,6 +18,7 @@ import Data.Math
 import Data.Link.Identifier
 import Data.Physics.Model
 import Data.Units.UnitExp
+import Data.Solver.Backend
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -29,38 +30,49 @@ import Language.Haskell.TH.Syntax (Name)
 --   @length couplings = (length models * (length models - 1)) / 2@
 data Prog =
   Prog { getConfig :: Config -- ^ The global configuration
+       --, getSolvingTechnique :: SolvingTechnique
+       --, getNumericalScheme :: NumericalScheme
        , getModels :: Map Identifier Model -- ^ The specified models
        , getCouplings :: [Coupling] -- ^ The model couplings
        }
 instance Show Prog where
-     show (Prog c1 m c2) = "\n\n\t" ++ show c1 ++ "\n\n\t" ++ show m ++ "\n\n\t" ++ show c2
+     show (Prog c1 m c2 ) = "\n\n\t" ++ show c1
+      ++ "\n\n\t" ++ show m
+      ++ "\n\n\t" ++ show c2
+      -- ++ "\n\n\t" ++ show s
+      -- ++ "\n\n\t" ++ show n
 
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
-data Duration = Iterations Integer -- ^ The number of steps to take
-              | TotalTime Integer -- ^ The amount of time to simulate
+data Duration = Iterations Integer (UnitExp Name Name) -- ^ The number of steps to take
+              | TotalTime Integer  (UnitExp Name Name) -- ^ The amount of time to simulate
+              deriving (Show)
+
+data RunFn = RFn Identifier Identifier
               deriving (Show)
 
 -- | LINK Configuration, consisting of the global simulation step size and the
 --   total @Duration@
 data Config =
-  Config { getGlobalStep :: Integer -- ^ The global solving step size TODO: This should have units
-         , getDuration :: Duration -- ^ The duration of the simulation, in time or in #iterations
+  Config { getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
+         , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
+         , getConsts :: Map Identifier (Integer, UnitExp Name Name)
+         , getRunFn :: RunFn
+         , getBackendConfig ::BackendConfig
          } deriving (Show)
 
 -- TODO: A coupling relates two models via boundary equations and knowledge of
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
--- | The type of model couplings given by references to the coupled models, the
---   input/output variables, the transfer variables, and governing equations
-data Coupling =
-  Coupling { model1::Identifier
-           , model2::Identifier
-           , input::Identifier
-           , output::Identifier
-           , getVars:: Map Identifier (UnitExp Name Name)
-           , getEqs :: [Equation] -- ^ The equations governing the model
-           } deriving (Show)
+data Coupling = Coupling {
+  name:: Identifier
+  , model1::Identifier
+  , model2::Identifier
+  , input::Identifier
+  , output::Identifier
+  , getVars:: Map Identifier (UnitExp Name Name)
+  , getEqs :: [Equation] -- ^ The equations governing the model
+  } deriving (Show)

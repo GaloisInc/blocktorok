@@ -14,13 +14,16 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Data.Physics.Model
-  ( Model
+  ( Model(..)
   , mkModel
   , getTechnique
   , getConsts
   , getVars
   , getLib
   , getEqs
+  , VarSolve(..)
+  , BoundaryType(..)
+  , BoundaryField(..)
   , Boundary(..)
   , PhysicsType(..)
   ) where
@@ -31,19 +34,29 @@ import Data.Link.Identifier
 import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
-
 import Language.Haskell.TH.Syntax (Name)
 
--- | The type of boundary conditions
-data Boundary = Neumann Identifier -- ^ A Von-Neumann boundary condition on a variable
-              | Dirichlet Identifier -- ^ A Dirichlet boundary condition on a variable
+-- An ugly function I added. Forgive me.
+mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
+
+data BoundaryType = Neumann | Dirichlet
               deriving (Show)
 
--- | The type of physics domains (e.g. heat transfer, fluid dynamics, material stress)
-data PhysicsType = HeatTransfer Integer -- ^ The heat transfer domain (TODO: What's the int?)
-                 | FluidFlow Integer -- ^ The fluid domain (TODO: What's the int?)
-                 deriving (Show)
+data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
+              deriving (Show)
 
+data Boundary =  T BoundaryType Identifier | F [BoundaryField]
+              deriving (Show)
+
+data PhysicsType =  HeatTransfer Identifier
+                 | FluidFlow Identifier
+                 | HeatConduction Identifier
+                deriving (Show)
+data VarSolve = VarSolve
+  Identifier   --  ^ Variable we are solving for
+  Identifier    -- , solving technique
+  Identifier   ---, and numerical scheme
+  deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
@@ -57,17 +70,28 @@ data Model =
         , getLib :: Map Identifier (Identifier, Identifier) -- ^ Named library imports to support model expression/simulation
         , getVars :: Map Identifier (UnitExp Name Name) -- ^ The variables appearing in the model equations
         , getEqs :: [Equation] -- ^ The equations governing the model
-        } deriving (Show)
+        , getSolve :: VarSolve
+        }
+instance Show Model where
+      show (Model i o t b p c l v e s) =
+        (mkIndent "input" i)
+        ++ (mkIndent "output" o)
+        ++ (mkIndent "Technique" t)
+        ++ (mkIndent "Boundary" b)
+        ++ (mkIndent "PhysicsType" p)
+        ++ (mkIndent "constants" c)
+        ++ (mkIndent "libraries" l)
+        ++ (mkIndent "variables" v)
+        ++ (mkIndent "equations" e)
+        ++ (mkIndent "solvingvariables" s)
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Identifier
-        -> Identifier
-        -> Technique
-        -> Boundary
-        -> PhysicsType
-        -> Map Identifier (Integer, UnitExp Name Name)
-        -> Map Identifier (Identifier, Identifier)
-        -> Map Identifier (UnitExp Name Name)
-        -> [Equation]
-        -> Model
+mkModel :: Identifier -> Identifier
+      -> Technique -> Boundary -> PhysicsType
+      ->  Map Identifier (Integer, UnitExp Name Name)
+      ->  Map Identifier (Identifier, Identifier)
+      ->  Map Identifier (UnitExp Name Name)
+      -> [Equation]
+      -> VarSolve
+      -> Model
 mkModel = Model

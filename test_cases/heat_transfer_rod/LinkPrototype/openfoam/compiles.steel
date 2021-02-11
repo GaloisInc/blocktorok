@@ -1,0 +1,19 @@
+config {
+    timeStep : 5 ms ;
+    totalTime: 3 s;
+    const Temp = 273 K;
+    run: m1(Temp);
+    backend : OpenFoam;
+}
+
+
+model m1 (Temp) {
+    technique : FVM;
+    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
+    physics : HeatConduction{tmp};
+    const DT = 4; -- e-05  m^2/s
+    (∂ Temp) /(∂ t) - DT * △Temp  = 0;
+    solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};
+    return Temp;
+
+}

@@ -1,5 +1,5 @@
 {-|
-Module      : Data.Math
+Module      : Math
 Description : Representations of mathematical expressions
 Copyright   : (c) Galois, Inc. 2020
 License     : N/A
@@ -14,13 +14,13 @@ with all sorts of operations, notions of units, types, etc.
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.Math where
+module Math where
 
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Data.Link.Identifier
+import Language.Identifier
 
 -- | The type of mathematical expressions
 data Exp = Laplacian Exp
@@ -31,7 +31,6 @@ data Exp = Laplacian Exp
          | NablaSingle
          | Partial Exp
          | Paran Exp
-         | Pow Exp Exp
          | Negation Exp
          | Plus Exp Exp
          | Minus Exp Exp
@@ -41,7 +40,7 @@ data Exp = Laplacian Exp
          | InnerProduct Exp Exp
          | OuterProduct Exp Exp
          | FnApp Identifier Identifier
-         | IntE Integer
+         | IntE Int
          | Var String
 
 instance Show Exp where
@@ -53,7 +52,6 @@ instance Show Exp where
   show (Laplacian e) = "(" ++ "△" ++ show e ++ ")"
   show (Partial e) = "∂"++show e 
   show (Paran e) = "(" ++ show e ++ ")"
-  show (Pow e1 e2) = show e1 ++ "^" ++ show e2
   show (Negation e) = "(" ++ "-" ++ show e ++ ")"
   show (Plus e1 e2) = "(" ++ show e1 ++ " + " ++ show e2 ++ ")"
   show (Minus e1 e2) = "(" ++ show e1 ++ " - " ++ show e2 ++ ")"
@@ -83,7 +81,6 @@ instance Uniplate Exp where
   uniplate (NablaExp e)         = plate NablaExp |* e
   uniplate NablaSingle          = plate NablaSingle
   uniplate (Paran e)            = plate Paran |* e
-  uniplate (Pow e1 e2)          = plate Pow |* e1 |* e2
   uniplate (Negation e)         = plate Negation |* e
   uniplate (Plus e1 e2)         = plate Plus |* e1 |* e2
   uniplate (Minus e1 e2)        = plate Minus |* e1 |* e2

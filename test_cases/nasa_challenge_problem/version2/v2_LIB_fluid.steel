@@ -1,0 +1,6 @@
+FluidFlow {
+  --   solver = compressibleFreeStreamDefinition,
+  --   fluidModel = standardAir
+  --   ViscosityModel =  sutherland
+  --   thermalConductivityModel = constant_prandtl
+  -- }

@@ -1,0 +1,59 @@
+import v2_LIB_conduction.steel as P;
+import v2_LIB_fluid.steel as F
+config {
+  step : 2;
+  totalTime : 10 s;
+  const Tw = P.InitialSolidTemperature;
+  run: coupleModels1 (Tw);
+  }
+
+model StructureModel (qw) {
+  technique : FEM;
+  boundaryField : (Everywhere,  Neumann, qw);
+  physics : HeatTransfer{P};
+  const rhos = P.SolidDensity;
+  const ks = P.SolidThermalConductivity;
+  const cps = P.SolidSpecificHeat;
+  var Tw;
+  rhos*cps*∇Tw- ks*△Tw = qw;
+  solve Tw with {?, ?};
+  return Tw;
+  }
+
+model FluidModel(Tw) {
+  output : qw;
+  technique : FVM;
+  boundaryField: (Everywhere, Dirichlet, P.InitialSolidTemperature);
+  physics : FluidFlow {F};
+  const gamma = F.standardAir.ratio_Specific_Heat; -- a perfect gas
+  const mu = F.sutherland.viscosityRef; -- dynamic viscosity, depends on temperature!
+  const R =  F.standardAir.GasConstant; -- specific gas constant
+  const Pr = F.constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
+
+  -- variables we are solving for
+  var u; -- velocity in x direction (U = [u, v, w])
+  var v; --  velocity in y direction (U = [u, v, w])
+  var w; -- velocity in z direction (U = [u, v, w])
+  var e;  -- internal energy
+  var rhof; -- fluid density
+  var T; -- fluid temperature, depends on e
+  var k; -- thermal conductivity, depends on mu
+  var mu; -- dynamic viscosity, depends on T
+  var P; -- pressure, depends on T
+  var tau; -- viscous stress tensor
+
+  -- ... removing math for now
+
+  solve u with {?, ?};
+  solve e with {?, ?};
+  ...
+  solve tau with {?, ?};
+  return qw;
+  }
+
+couple coupleModels1 (Tin) {
+  var qw; -- heat flux
+  qw = FluidModel(Tin);
+  Tout = ModelSolid (qw);
+  return Tout;
+  }

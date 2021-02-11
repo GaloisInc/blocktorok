@@ -1,0 +1,14 @@
+LIB_SolvingTechnique1 = SolvingTechnique {
+    solver : PCG;
+    preconditioner : DIC;
+    tolerance : 1;
+    relTol : 0;
+    }
+
+LIB_NumericalScheme1 = NumericalScheme {
+    ddt : Euler;
+    grad : Gauss Linear;
+    laplacian : Gauss Linear Orthogonal;
+    interpolation : Linear;
+    snGrad : Orthogonal;
+}
