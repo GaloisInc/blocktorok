@@ -48,18 +48,19 @@ library
                        Data.Link.Identifier
                        Data.Math
                        Data.Physics.Model
+                       Data.Solver.Backend
                        Data.Solver.Technique
                        Data.Units.SymbolTable
                        Data.Units.UnitExp
                        Language.Check
+                       Language.Compile.SU2
                        Text.Lexer
                        Text.Parse.Link
                        Text.Parse.Units
                        Text.Token
                        Text.TokenClass
-                       Data.Solver.Backend
+                       Translation.HighToStr
                        Translation.Su2.HighToLow
                        Translation.Su2.LowToString
                        Translation.Su2.Low
-                       Translation.HighToStr
   ghc-options: -Wall
