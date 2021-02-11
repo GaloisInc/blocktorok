@@ -30,6 +30,9 @@ mkVarNIntEq lhs rhs = Equality (Name lhs) (Neg (Int rhs))
 idToVar (Identifier e) = Name e
 ------------ Config ------------
 ------ Backend Config ------
+-- Converts Highir format to lower ir list of statements
+-- Currently supported with a built-it keyword
+bcFormatToLow :: Identifier -> [Stmt]
 bcFormatToLow (Identifier id) = case id of
     "LIB_Format1" -> let
       n = Name "InputOutput"
@@ -44,12 +47,16 @@ bcFormatToLow (Identifier id) = case id of
       in [Constructor n [s1, s2, s3, s4, s5, s6, s7, s8]]
     _ ->  err
 
+-- Assumes number is used in this Su2 constructor and creates list of lower ir statements
+bcTimeToLow  :: Integer -> [Stmt]
 bcTimeToLow (n) =
   let
       t = Name "TimeDependent"
       s = mkVarIntEq "INNER_ITER" n
   in [Constructor t [s]]
 
+-- converts high ir PlotMarkers Constructor to lower ir statements
+bcPlottingToLow   :: PlotMarkers -> [Stmt]
 bcPlottingToLow (PlotMarkers es) =  let
   n = Name "Plotting"
   p = Pair (map idToVar es)
@@ -57,18 +64,26 @@ bcPlottingToLow (PlotMarkers es) =  let
   in [Constructor n [s]]
 
 
+-- converts high ir BackendConfig to lower ir statements
+bcToLow  :: BackendConfig -> [Stmt]
 bcToLow (Su2 format time plotting) = let
   f = bcFormatToLow  format
   t = bcTimeToLow time
   p = bcPlottingToLow  plotting
   parameters = f ++ t++ p
   in (parameters)
-bcToLow (OpenFoam) =  []
+bcToLow (OpenFoam) =  err
 
+-- converts high ir configuration Constructor to lower ir statements
+-- currently just looks at backendconfig for statements
+configToBackendParams :: Config -> [Stmt]
 configToBackendParams (Config globalstep duration consts runfn backendconfig) =
   bcToLow backendconfig
 
 ------------ Models ------------
+-- converts high ir numerical schemes to lower ir statements
+-- currently, this is a built in keyword
+numericalSchemesToLow :: Identifier -> [Stmt]
 numericalSchemesToLow (Identifier id) = case id of
     "LIB_NumericalScheme1" ->  let
       n = Name "NumericalSchemes"
@@ -76,6 +91,9 @@ numericalSchemesToLow (Identifier id) = case id of
       in [Constructor n [s]]
     _ ->  error ("unsupported numericalSchemes"++id)
 
+-- converts high ir solving techniques to lower ir statements
+-- currently, this is a built in keyword
+solvingTechniqueToLow :: Identifier -> [Stmt]
 solvingTechniqueToLow (Identifier id) = case id of
     "LIB_SolvingTechnique1" -> let
       n1 = Name "LinearSolver"
@@ -93,9 +111,13 @@ solvingTechniqueToLow (Identifier id) = case id of
       in [c1, c2]
     _ -> error  "unsupported solving technique"
 
+-- converts high ir solve functions to lower ir statements
+varSolveToLow :: VarSolve -> [Stmt]
 varSolveToLow (VarSolve v n t) =
   (numericalSchemesToLow t) ++ (solvingTechniqueToLow n)
 
+-- converts high ir physicsType to lower ir statements
+physTypeToLow :: PhysicsType -> [Stmt]
 physTypeToLow (HeatTransfer id)= []
 physTypeToLow (FluidFlow id) = []
 physTypeToLow (HeatConduction (Identifier id)) =  case id of
@@ -115,18 +137,28 @@ physTypeToLow (HeatConduction (Identifier id)) =  case id of
       in [c1, c2]
     _ ->  error ("unsupported numericalSchemes"++id)
 
+-- converts high ir Model to lower ir statements
+modelToBackendParams :: Model -> [Stmt]
 modelToBackendParams(Model i o t b physicsType c l v e varsolve) = let
   p = physTypeToLow physicsType
   v = varSolveToLow varsolve
   in p ++ v
 
------------- Program ------------
-highToLow(Prog config modelmap coupling)  = let
-    c = configToBackendParams config
-    (Config globalstep duration consts runfn backendconfig) = config
-    (RFn f arg )= runfn
-    model = case Map.lookup f modelmap of
+-- get the models
+findModel :: Config -> Map Identifier Model -> Model
+findModel config modelmap = let
+  (Config globalstep duration consts runfn backendconfig) = config
+  (RFn f arg )= runfn
+  in
+    case Map.lookup f modelmap of
       Nothing -> err
       Just model -> model
+
+------------ Program ------------
+-- converts high ir to lower ir
+highToLow :: Prog -> LowIR
+highToLow(Prog config modelmap coupling)  = let
+    c = configToBackendParams config
+    model = findModel config modelmap
     m = modelToBackendParams model
     in Program (c++m)

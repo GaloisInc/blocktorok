@@ -11,7 +11,7 @@ This module defines the parser for the LINK language, using Parsec.
 -}
 
 module Translation.Su2.Low
-  ( Base(..), Stmt(..), Program(..)
+  ( Base(..), Stmt(..), LowIR (..)
   ) where
 
 import Data.Link.AST
@@ -26,5 +26,5 @@ data Base = Int Integer | Name String | Neg Base | Pair [Base]
 data Stmt = Constructor Base [Stmt]
   | Equality Base Base
   | Incomplete
-data Program = Program [Stmt]
+data LowIR = Program [Stmt]
 err = Incomplete -- "Should raise an error"
