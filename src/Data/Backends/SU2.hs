@@ -9,7 +9,14 @@ Portability : N/A
 -}
 
 module Data.Backends.SU2
-  ( SU2Config(..)
+  ( IncScheme(..)
+  , MathProb(..)
+  , MeshFormat(..)
+  , Objective(..)
+  , SU2Config(..)
+  , SU2RHS(..)
+  , SU2Solver(..)
+  , TabFormat(..)
   ) where
 
 import Data.Class.Render
@@ -77,6 +84,14 @@ instance Render Objective where
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach         = "SURFACE_MACH"
 
+data MathProb = Direct
+              | ContAdjoint
+              | DiscAdjoint
+instance Render MathProb where
+  render Direct = "DIRECT"
+  render ContAdjoint = "CONTINUOUS_ADJOINT"
+  render DiscAdjoint = "DISCRETE_ADJOINT"
+
 data IncScheme = InitValues
                | RefValues
                | Dim
@@ -137,6 +152,10 @@ instance Render TimeDiscre where
   render RK4Exp   = "CLASSICAL_RK4_EXPLICIT"
   render AderDG   = "ADER_DG"
 
+data MeshFormat = SU2
+instance Render MeshFormat where
+  render SU2 = "SU2"
+
 data TabFormat = TECPLOT
                | CSV
 instance Render TabFormat where
@@ -147,6 +166,7 @@ data SU2RHS = Solver SU2Solver
             | Boolean Bool
             | ObjectiveFns [Objective]
             | ObjectiveWts [Double]
+            | MathProblem MathProb
             | Floating Double
             | Integral Integer
             | MarkerData [(String, Double)]
@@ -159,6 +179,7 @@ data SU2RHS = Solver SU2Solver
             | Preconditioner Preconditioner
             | TimeDiscre TimeDiscre
             | Filename String
+            | MeshFormat MeshFormat
             | TabularFormat TabFormat
             | Stiffness Stiffness
 instance Render SU2RHS where
@@ -167,6 +188,7 @@ instance Render SU2RHS where
   render (Boolean False)                      = "NO"
   render (ObjectiveFns fns)                   = intercalate ", " $ render <$> fns
   render (ObjectiveWts wts)                   = intercalate ", " $ show <$> wts
+  render (MathProblem mp)                     = render mp
   render (Floating f)                         = show f
   render (Integral i)                         = show i
   render (MarkerData md)                      = "(" ++ intercalate ", " ((\(name, value) -> name ++ ", " ++ show value) <$> md) ++ ")"
@@ -180,6 +202,7 @@ instance Render SU2RHS where
   render (Preconditioner p)                   = render p
   render (TimeDiscre t)                       = render t
   render (Filename f)                         = f
+  render (MeshFormat mf)                      = render mf
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
 
