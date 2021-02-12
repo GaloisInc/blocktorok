@@ -6,6 +6,14 @@ License     : N/A
 Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
+
+This module defines a representation of SU2 configuration scripts. Given that
+SU2 operates on what are essentially simple key-value pairings, this
+representation is as straightforward as possible: A map from string
+identifiers to a custom algebraic type capturing legal RHS values in SU2.
+
+The types presented here do not fully capture all SU2 options - it is merely
+enough to compile some of the simpler toy problems
 -}
 
 module Data.Backends.SU2
@@ -22,7 +30,7 @@ module Data.Backends.SU2
   , TabFormat(..)
   ) where
 
-import Data.Class.Render
+import Data.Class.Render (Render, render)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map

@@ -14,7 +14,11 @@ with all sorts of operations, notions of units, types, etc.
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.Math where
+module Data.Math
+  ( Equation(..)
+  , Exp(..)
+  , vars
+  ) where
 
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)

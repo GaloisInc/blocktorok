@@ -43,8 +43,8 @@ module Data.Units.SymbolTable
 import GHC.Generics (Generic)
 import qualified Data.Map.Strict as Map
 import qualified Data.MultiMap as MM
-import Control.Arrow
-import Data.Char
+import Control.Arrow (left)
+import Data.Char (isLetter)
 
 ----------------------------------------------------------------------
 -- Basic combinators

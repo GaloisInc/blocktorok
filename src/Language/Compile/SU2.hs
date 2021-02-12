@@ -15,17 +15,17 @@ module Language.Compile.SU2
   ( compile
   ) where
 
-import Control.Monad.Except
-import Control.Monad.State
+import Control.Monad.Except (throwError)
+import Control.Monad.State (StateT, execStateT, get, lift, put)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Backends.SU2
-import Data.Link.AST
-import Data.Link.Identifier
-import Data.Physics.Model
-import Data.Solver.Backend
+import Data.Backends.SU2 -- TODO: Explicit imports
+import Data.Link.AST (Config(..), Prog(..), RunFn(..))
+import Data.Link.Identifier (Identifier(..))
+import Data.Physics.Model (Model(..), PhysicsType(..), VarSolve(..))
+import Data.Solver.Backend (BackendConfig(..), PlotMarkers(..))
 
 -- TODO: Might want this to be generic in the return type, but for now all we care about is the state
 type SU2Compiler = StateT SU2Config (Either String) ()

@@ -12,7 +12,9 @@ equivalent to @Show@, but may be distinct as it is intended for writing output.
 -}
 
 module Data.Class.Render
-  where
+  ( Render
+  , render
+  ) where
 
 -- | The @Render@ class is for types that should be renderable as 'String's. It
 --   is often sufficient for a type's @Render@ instance to simply be equivalent

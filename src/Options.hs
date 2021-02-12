@@ -17,7 +17,7 @@ module Options
   , parseOpts
   ) where
 
-import Options.Applicative
+import Options.Applicative (Parser, help, metavar, long, short, strOption)
 
 data Options =
   Options { source :: String

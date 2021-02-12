@@ -14,13 +14,13 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Data.Physics.Model
-  ( Model(..)
-  , mkModel
-  , VarSolve(..)
-  , BoundaryType(..)
+  ( Boundary(..)
   , BoundaryField(..)
-  , Boundary(..)
+  , BoundaryType(..)
+  , Model(..)
   , PhysicsType(..)
+  , VarSolve(..)
+  , mkModel
   ) where
 
 import Data.Map.Strict (Map)
@@ -44,14 +44,14 @@ data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
 data Boundary =  T BoundaryType Identifier | F [BoundaryField]
               deriving (Show)
 
-data PhysicsType =  HeatTransfer Identifier
+data PhysicsType = HeatTransfer Identifier
                  | FluidFlow Identifier
                  | HeatConduction Identifier
                 deriving (Show)
 data VarSolve = VarSolve
-  Identifier   --  ^ Variable we are solving for
-  Identifier    -- , solving technique
-  Identifier   ---, and numerical scheme
+  Identifier   -- ^ Variable we are solving for
+  Identifier   -- ^ Solving technique
+  Identifier   -- ^ Numerical scheme
   deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
@@ -70,24 +70,24 @@ data Model =
         }
 instance Show Model where
       show (Model i o t b p c l v e s) =
-        (mkIndent "input" i)
-        ++ (mkIndent "output" o)
-        ++ (mkIndent "Technique" t)
-        ++ (mkIndent "Boundary" b)
-        ++ (mkIndent "PhysicsType" p)
-        ++ (mkIndent "constants" c)
-        ++ (mkIndent "libraries" l)
-        ++ (mkIndent "variables" v)
-        ++ (mkIndent "equations" e)
-        ++ (mkIndent "solvingvariables" s)
+           mkIndent "input" i
+        ++ mkIndent "output" o
+        ++ mkIndent "Technique" t
+        ++ mkIndent "Boundary" b
+        ++ mkIndent "PhysicsType" p
+        ++ mkIndent "constants" c
+        ++ mkIndent "libraries" l
+        ++ mkIndent "variables" v
+        ++ mkIndent "equations" e
+        ++ mkIndent "solvingvariables" s
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
-      -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier (Integer, UnitExp Name Name)
-      ->  Map Identifier (Identifier, Identifier)
-      ->  Map Identifier (UnitExp Name Name)
-      -> [Equation]
-      -> VarSolve
-      -> Model
+        -> Technique -> Boundary -> PhysicsType
+        -> Map Identifier (Integer, UnitExp Name Name)
+        -> Map Identifier (Identifier, Identifier)
+        -> Map Identifier (UnitExp Name Name)
+        -> [Equation]
+        -> VarSolve
+        -> Model
 mkModel = Model
