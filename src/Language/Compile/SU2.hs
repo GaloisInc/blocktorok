@@ -38,7 +38,12 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler
-    compile' = compileFmt >> compileTime >> compilePlotting >> compileModel
+    compile' =
+      do compileFmt
+         compileTime
+         compilePlotting
+         compileModel
+         compileMagic
 
     compileFmt :: SU2Compiler
     compileFmt =
@@ -98,6 +103,13 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
       else
         do SU2Config cfg <- get
            put $ SU2Config $ Map.insert "NUM_METHOD_GRAD" (GradientMehod GGauss) cfg
+
+    compileMagic :: SU2Compiler
+    compileMagic =
+      do SU2Config cfg <- get
+         let magic = Map.fromList $ zip ["TIME_DOMAIN", "TIME_STEP", "MAX_TIME", "TIME_ITER"]
+                                        [Boolean True, Floating 0.005, Integral 3, Integral 600]
+         put $ SU2Config $ Map.union magic cfg
 
     lookupModel :: Identifier -> Map Identifier Model -> Either String Model
     lookupModel ident ms =
