@@ -59,8 +59,4 @@ library
                        Text.Parse.Units
                        Text.Token
                        Text.TokenClass
-                       Translation.HighToStr
-                       Translation.Su2.HighToLow
-                       Translation.Su2.LowToString
-                       Translation.Su2.Low
   ghc-options: -Wall
