@@ -9,10 +9,13 @@ Portability : N/A
 -}
 
 module Data.Backends.SU2
-  ( IncScheme(..)
+  ( GradMethod(..)
+  , IncScheme(..)
+  , LinearSolver(..)
   , MathProb(..)
   , MeshFormat(..)
   , Objective(..)
+  , Preconditioner(..)
   , SU2Config(..)
   , SU2RHS(..)
   , SU2Solver(..)

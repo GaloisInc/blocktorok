@@ -86,14 +86,18 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
       if st /= "LIB_SolvingTechnique1" then
         throwError "Unknown solving technique"
       else
-        undefined
+        do SU2Config cfg <- get
+           let stSettings = Map.fromList $ zip ["LINEAR_SOLVER", "LINEAR_SOLVER_PREC", "LINEAR_SOLVER_ERROR","LINEAR_SOLVER_ITER", "CONV_RESIDUAL_MINVAL", "CONV_STARTITER", "CONV_CAUCY_ELEMS", "CONV_CAUCHY_EPS"]
+                                               [LinearSolver FGMRes, Preconditioner ILU, Floating 1e-15, Integral 5, Integral 19, Integral 10, Integral 100, Floating 1e-6]
+           put $ SU2Config $ Map.union stSettings cfg
 
     compileNumScheme :: Identifier -> SU2Compiler
     compileNumScheme (Identifier ns) =
       if ns /= "LIB_NumericalScheme1" then
         throwError "Unknown numerical scheme"
       else
-        undefined
+        do SU2Config cfg <- get
+           put $ SU2Config $ Map.insert "NUM_METHOD_GRAD" (GradientMehod GGauss) cfg
 
     lookupModel :: Identifier -> Map Identifier Model -> Either String Model
     lookupModel ident ms =
