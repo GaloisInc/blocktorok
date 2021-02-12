@@ -15,6 +15,7 @@ module Text.Parse.Link
   ) where
 
 import Control.Monad.Reader
+import Control.Monad((>=>))
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -568,7 +569,118 @@ parseCouplings = many parseCoupling
          i <- parseSingleArg
          tok' TokenLCurl
          vs <- parseVarDecls
-         eqs <- parseEqs
+         eqs <- choice [parseLatexEquations, parseEqs]
          o <- parseReturnDecl
          tok' TokenRCurl
          return $ Coupling mname ma mb i o vs eqs
+
+
+-- latex parser
+-- Questions:
+--    \vec{X} is treated as X - is this okay?
+--    X_Y is given the name X_Y - is this okay - there might be collisions?
+--    How are other operations represented?
+--    Do we want mixed equations (utf-8 and latex together)
+parseLatexEquations :: Parser [Equation]
+parseLatexEquations =
+    between (try $ tok' TokenLatexBegin) (tok' TokenLatexEnd) parseLEqs
+  where
+    parseLatexExp = parseLatexExp5
+    -- parse atoms
+    parseLatexExp0 =
+      choice [ parseInt
+             , parseIdent
+             , parseFrac
+             , Paran <$> inParens parseLatexExp
+             ]
+
+    -- pow
+    parseLatexExp1 =
+      do  e0 <- parseLatexExp0
+          choice [ try (sym "^") >> (Pow e0 <$> parseLatexExp0)
+                 , pure e0
+                 ]
+
+    -- product
+    parseLatexExp2 =
+      do  e1 <- parseLatexExp1
+          choice [ Times e1 <$> try parseLatexExp
+                 , pure e1
+                 ]
+
+    -- divergence (other stuff?)
+    parseLatexExp3 =
+      choice [ try (kw "\\div") >> (NablaDot <$> parseLatexExp)
+             , parseLatexExp2
+             ]
+
+    -- cross product (other stuff?)
+    parseLatexExp4 =
+      do  e3 <- parseLatexExp3
+          choice [ try (kw "\\times") >> (Times e3 <$> parseLatexExp)
+                 ]
+
+    -- plus/minus
+    parseLatexExp5 =
+      do  e4 <- parseLatexExp4
+          choice [ try (sym "+") >> (Plus e4 <$> parseLatexExp)
+                 , try (sym "-") >> (Minus e4 <$> parseLatexExp)
+                 , pure e4
+                 ]
+
+    parseLEq =
+      Equation <$> parseLatexExp <* sym "=" <*> parseLatexExp
+
+    parseLEqs =
+      sepBy parseLEq (sym "\\\\")
+
+    -- parse an identifier, possibly followed by a subscript
+    parseIdentBase :: Parser String
+    parseIdentBase =
+      do  i <- ident
+          mbSubs <- choice [ Just <$> try (sym "_" >> ident)
+                           , Just <$> (try (sym "_") >> inBraces parseIdentBase)
+                           , pure Nothing
+                           ]
+          case mbSubs of
+            Nothing        -> pure i
+            Just subscript -> pure $ i ++ "_" ++ subscript
+
+    -- TODO: vector notation is ignored - is that correct?
+    parseIdent =
+      Var <$> choice [ try (kw "\\vec") >> inBraces parseIdentBase
+                     , parseIdentBase
+                     ]
+
+
+    parseInt = IntE <$> int
+
+    parseFrac :: Parser Exp
+    parseFrac =
+      do  kw "\\frac"
+          e1 <- inBraces parseLatexExp
+          e2 <- inBraces parseLatexExp
+          pure (Div e1 e2)
+
+    inParens = between (sym "(") (sym ")")
+    inBraces = between (sym "{") (sym "}")
+
+    int :: Parser Integer
+    int = satisfy' (acceptLatex >=> acceptInt)
+
+    ident :: Parser String
+    ident = satisfy' (acceptLatex >=> acceptIdent)
+    kw s = satisfy' (acceptLatex >=> acceptIdent >=> acceptEq s)
+    sym s = satisfy' (acceptLatex >=> acceptSym >=> acceptEq s)
+
+    acceptLatex (Token _ (TokenLatex tl)) = Just tl
+    acceptLatex _ = Nothing
+    acceptSym (TLSymbol s) = Just s
+    acceptSym _ = Nothing
+    acceptIdent (TLSymbol i) = Just i
+    acceptIdent _ = Nothing
+    acceptInt (TLInt i) = Just i
+    acceptInt _ = Nothing
+    acceptEq  s1 s2 | s1 == s2 = Just ()
+                    | otherwise = Nothing
+
