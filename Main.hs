@@ -8,11 +8,7 @@ import Text.Parse.Link ( parseDecl )
 
 import Options.Applicative
 
-import System.Environment ( getArgs )
 import System.Exit
-
-dst :: String
-dst = "test_cases/heat_transfer_rod/LinkPrototype/su2/out.su2"
 
 main :: IO ()
 main = realMain =<< execParser opts

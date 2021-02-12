@@ -16,11 +16,6 @@ designed to be extended with whatever we feel is important.)
 module Data.Physics.Model
   ( Model(..)
   , mkModel
-  , getTechnique
-  , getConsts
-  , getVars
-  , getLib
-  , getEqs
   , VarSolve(..)
   , BoundaryType(..)
   , BoundaryField(..)
@@ -37,7 +32,8 @@ import Data.Units.UnitExp
 import Language.Haskell.TH.Syntax (Name)
 
 -- An ugly function I added. Forgive me.
-mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
+mkIndent :: (Show a, Show b) => a -> b -> String
+mkIndent lhs rhs = "\n\t" ++ show lhs ++ " : " ++ show rhs
 
 data BoundaryType = Neumann | Dirichlet
               deriving (Show)

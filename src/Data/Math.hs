@@ -82,6 +82,7 @@ instance Uniplate Exp where
   uniplate (NablaOuter e)       = plate NablaOuter |* e
   uniplate (NablaExp e)         = plate NablaExp |* e
   uniplate NablaSingle          = plate NablaSingle
+  uniplate (Partial e)          = plate Partial |* e
   uniplate (Paran e)            = plate Paran |* e
   uniplate (Pow e1 e2)          = plate Pow |* e1 |* e2
   uniplate (Negation e)         = plate Negation |* e
