@@ -18,7 +18,7 @@ ProblemDefinition mathProb { -- this needs a home
   MATH_PROBLEM= DIRECT
 }
 
-InputOutput files{ -- this needs a home
+InputOutput files{ -- this needs a home (can be different for each region)
   -- input output here
   SOLUTION_FILENAME= solution_flow.dat;
   SOLUTION_ADJ_FILENAME= solution_adj.dat;
@@ -121,7 +121,7 @@ model FluidModel(Tw) {
   OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
   MARKER_MONITORING= (cylinder_outer1, cylinder_outer2, cylinder_outer3);
   KIND_TURB_MODEL= NONE;
-  SOLVER= INC_NAVIER_STOKES;
+  SOLVER= INC_NAVIER_STOKES; -- turbulence!
   RESTART_SOL= NO;
 
   -- initial values
