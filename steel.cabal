@@ -21,8 +21,8 @@ executable steel
   -- other-modules:
   -- other-extensions:
   build-depends:       base >= 4.11 && < 4.14
+                     , optparse-applicative
                      , steel
-                     , units
   -- hs-source-dirs:
   default-language:    Haskell2010
   build-tools:         happy
@@ -35,6 +35,7 @@ library
                      , containers
                      , mtl
                      , multimap
+                     , optparse-applicative
                      , parsec
                      , template-haskell
                      , uniplate
