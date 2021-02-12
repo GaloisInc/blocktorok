@@ -1,13 +1,13 @@
 module Main(main) where
 
+import Data.Class.Render
 import Language.Check (hasAllCouplings, allVarsDeclared)
+import Language.Compile.SU2 (compile)
 import Text.Parse.Link ( parseDecl )
 import System.Environment ( getArgs )
 import System.Exit
-import Translation.HighToStr (highToStr)
-import Data.List
 
--- destination for file
+dst :: String
 dst = "test_cases/heat_transfer_rod/LinkPrototype/su2/out.su2"
 
 main :: IO ()
@@ -18,15 +18,10 @@ main = do
               [f] -> fmap (parseDecl f) (readFile f)
               _   -> error "expected max. 1 argument"
   case result of
-    Left e -> do
-          print e
-          exitFailure
-    Right e -> if hasAllCouplings e && allVarsDeclared e then let
-                  _ = print e
-                  str = highToStr e
-                  flat = intercalate "\n\n" str
-                 in
-                  writeFile dst flat
-                  --mapM_ putStrLn str
-               else
-                 error "static checks failed"
+    Left e -> print e >> exitFailure
+    Right prog -> if hasAllCouplings prog && allVarsDeclared prog then
+                    case compile prog of
+                      Left e -> print e >> exitFailure
+                      Right su2 -> writeFile dst (render su2)
+                  else
+                    error "static checks failed"
