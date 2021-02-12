@@ -14,7 +14,7 @@ main :: IO ()
 main = realMain =<< execParser opts
   where
     opts = info (parseOpts <**> helper)
-      ( fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
+      (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
 
 -- TODO: Deal with these nested case expressions. ExceptT?
 realMain :: Options -> IO ()
