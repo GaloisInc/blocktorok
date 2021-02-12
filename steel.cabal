@@ -54,6 +54,7 @@ library
                        Data.Units.UnitExp
                        Language.Check
                        Language.Compile.SU2
+                       Options
                        Text.Lexer
                        Text.Parse.Link
                        Text.Parse.Units
