@@ -40,7 +40,7 @@ InputOutput files{ -- this needs to get called (can be different for each region
   GRAD_OBJFUNC_FILENAME= of_grad.dat;
   SURFACE_FILENAME= surface_flow;
   SURFACE_ADJ_FILENAME= surface_adjoint;
-  OUTPUT_FILES= (RESTART, TECPLOT, PARAVIEW, SURFACE_TECPLOT, SURFACE_PARAVIEW);
+  OUTPUT_FILES= (RESTART, PARAVIEW, SURFACE_PARAVIEW);
 }
 
 GridDeformation gridDeform{ -- this needs to get called
