@@ -1,8 +1,9 @@
 import v2_LIB_conduction.steel as P;
 import v2_LIB_fluid.steel as F
 config {
-  step : 2;
-  totalTime : 10 s;
+  timeStep : 5e-3 s;
+  totalTime : 60 s;
+  timePrams : transient; -- I added this, it probably needs to be changed (imported?)
   const Tw = P.InitialSolidTemperature;
   run: coupleModels1 (Tw);
   -- mesh settings
@@ -17,6 +18,13 @@ config {
   }
 
 -------------------------------------------------------------------------------------------
+
+-- unsteady/transient simulation
+TimeDependency transient { -- can we call this in the config block above?
+  TIME_DOMAIN = YES;
+  TIME_MARCHING= DUAL_TIME_STEPPING-2ND_ORDER;
+  INNER_ITER= 50
+}
 
 InputOutput files{ -- this needs to get called (can be different for each region)
   -- input output here
@@ -142,8 +150,10 @@ ConductionDefinition conductionSolid {
 
 model StructureModel (qw) {
   technique : FEM;
+
   boundaryField : (Everywhere,  Neumann, qw); --Needs to be fixed
   MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 )
+
   physics : HeatTransfer{P};
   OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
   OBJECTIVE_WEIGHT= 1.0
