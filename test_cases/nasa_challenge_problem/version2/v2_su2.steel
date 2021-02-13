@@ -10,15 +10,15 @@ config {
   MESH_FORMAT= SU2;
   -- adding marker plotting here (not needed to solve the problem)
   MARKER_PLOTTING= (cylinder_outer1, cylinder_outer2, cylinder_outer3);
+  -- we can hard code this for now (this allows simulations to be continued from a previous run)
+  RESTART_SOL= NO;
+  -- this is applied to both physics domains
+  MATH_PROBLEM= DIRECT;
   }
 
 -------------------------------------------------------------------------------------------
 
-ProblemDefinition mathProb { -- this needs a home
-  MATH_PROBLEM= DIRECT
-}
-
-InputOutput files{ -- this needs a home (can be different for each region)
+InputOutput files{ -- this needs to get called (can be different for each region)
   -- input output here
   SOLUTION_FILENAME= solution_flow.dat;
   SOLUTION_ADJ_FILENAME= solution_adj.dat;
@@ -35,8 +35,8 @@ InputOutput files{ -- this needs a home (can be different for each region)
   OUTPUT_FILES= (RESTART, TECPLOT, PARAVIEW, SURFACE_TECPLOT, SURFACE_PARAVIEW);
 }
 
-GridDeformation gridDeform{ -- this needs a home
-  -- grid deformation parameters
+GridDeformation gridDeform{ -- this needs to get called
+  -- grid deformation Parameters
   DEFORM_LINEAR_SOLVER= FGMRES;
   DEFORM_LINEAR_SOLVER_ITER= 200;
   DEFORM_NONLINEAR_ITER= 1;
@@ -51,23 +51,65 @@ LinearSolver linSolver {
   LINEAR_SOLVER_ITER= 5; -- these values seem to be defaults
 }
 
-NumericalSchemes numScheme {
-  NUM_METHOD_GRAD = GREEN_GAUSS;
+NumericalSchemes numFlowScheme {
+  NUM_METHOD_GRAD= WEIGHTED_LEAST_SQUARES;
+  CFL_NUMBER= 5.0;
+  CFL_ADAPT= NO;
+  CFL_ADAPT_PARAM= ( 0.1, 2.0, 5.0, 1e10 );
+  RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 ); -- these values seem to be defaults
+}
+
+NumericalSchemes numSolidScheme {
+  NUM_METHOD_GRAD= GREEN_GAUSS;
   CFL_NUMBER= 10.0;
   CFL_ADAPT= NO;
   CFL_ADAPT_PARAM= ( 1.5, 0.5, 10.0, 10000.0 );
   RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 ); -- these values seem to be defaults
 }
 
-ConvergenceParam convParam {
+ConvergenceParams convFlowParams {
+  CONV_FIELD= RMS_DENSITY;
+  CONV_RESIDUAL_MINVAL= -14;
+  CONV_STARTITER= 10;
+  CONV_CAUCHY_ELEMS= 100;
+  CONV_CAUCHY_EPS= 1E-6; -- these values seem to be defaults
+}
+
+ConvergenceParams convSolidParams {
   CONV_RESIDUAL_MINVAL= -19;
   CONV_STARTITER= 10;
   CONV_CAUCHY_ELEMS= 100;
   CONV_CAUCHY_EPS= 1E-6; -- these values seem to be defaults
 }
 
+SlopeLimiter slopeParams {
+  VENKAT_LIMITER_COEFF= 0.1;
+  ADJ_SHARP_LIMITER_COEFF= 3.0;
+  REF_SHARP_EDGES= 3.0;
+  SENS_REMOVE_SHARP= NO;
+}
+
+FlowNumericalMethod flowMethod {
+  CONV_NUM_METHOD_FLOW= ROE;
+  MUSCL_FLOW= YES;
+  SLOPE_LIMITER_FLOW= NONE;
+  JST_SENSOR_COEFF= ( 0.5, 0.02 );
+  TIME_DISCRE_FLOW= EULER_IMPLICIT;
+}
+
+TurbulentNumericalMethod turbulentMethod {
+  CONV_NUM_METHOD_TURB= SCALAR_UPWIND;
+  MUSCL_TURB= NO;
+  SLOPE_LIMITER_TURB= VENKATAKRISHNAN;
+  TIME_DISCRE_TURB= EULER_IMPLICIT;
+}
+
+HeatNumericalMethod heatMethod {
+  TIME_DISCRE_HEAT= EULER_IMPLICIT
+}
+
 -------------------------------------------------------------------------------------------
--- physical models, might get moved to its own config file
+-- physical models, these need to get called, might get moved to its own config file
 
 thermalConductivity thermoFluid {
   CONDUCTIVITY_MODEL= CONSTANT_PRANDTL;
@@ -103,26 +145,30 @@ model StructureModel (qw) {
   boundaryField : (Everywhere,  Neumann, qw); --Needs to be fixed
   MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 )
   physics : HeatTransfer{P};
+  OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+  OBJECTIVE_WEIGHT= 1.0
   const rhos = P.SolidDensity;
   const ks = P.SolidThermalConductivity;
   const cps = P.SolidSpecificHeat;
   var Tw;
   rhos*cps*∇Tw- ks*△Tw = qw;
-  solve Tw with {numScheme, linSolver, convParam};
+  solve Tw with {numSolidScheme, linSolver, convSolidParams, heatMethod};
   return Tw;
   }
 
 model FluidModel(Tw) {
   output : qw;
   technique : FVM;
+  SOLVER= RANS;
+  KIND_TURB_MODEL= SA;
+
   boundaryField: (Everywhere, Dirichlet, P.InitialSolidTemperature); --Needs to be fixed
   MARKER_FAR= ( MarkerName.farfield );
+
   physics : FluidFlow {F};
   OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+  OBJECTIVE_WEIGHT= 1.0
   MARKER_MONITORING= (cylinder_outer1, cylinder_outer2, cylinder_outer3);
-  KIND_TURB_MODEL= NONE;
-  SOLVER= INC_NAVIER_STOKES; -- turbulence!
-  RESTART_SOL= NO;
 
   -- initial values
   MACH_NUMBER= 0.8;
@@ -153,12 +199,12 @@ model FluidModel(Tw) {
 
   -- ... removing math for now
 
-  solve u with {numScheme, linSolver, convParam};
-  solve u with {numScheme, linSolver, convParam};
-  solve w with {numScheme, linSolver, convParam};
-  solve e with {numScheme, linSolver, convParam};
-  solve rhof with {numScheme, linSolver, convParam};
-  solve tau with {numScheme, linSolver, convParam};
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve w with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve e with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve rhof with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve tau with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
   -- I think T, k, mu, P are solved directly using the closure equations from the Navier-Stokes variables
   return qw;
   }
