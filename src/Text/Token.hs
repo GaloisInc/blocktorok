@@ -22,14 +22,14 @@ module Text.Token
   , Parser
   ) where
 
-import Control.Monad.Reader
+import Control.Monad.Reader (Reader, void)
 
-import Data.Units.SymbolTable
+import Data.Units.SymbolTable (SymbolTable)
 
 import Language.Haskell.TH.Syntax (Name)
 
 import Text.Lexer (Token(..), AlexPosn(..))
-import Text.TokenClass
+import Text.TokenClass (TokenClass(..))
 
 import Text.Parsec hiding (satisfy)
 
