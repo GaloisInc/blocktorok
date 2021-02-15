@@ -21,7 +21,20 @@ import Control.Monad.State (StateT, execStateT, get, lift, put)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Backends.SU2 -- TODO: Explicit imports
+import Data.Backends.SU2
+  ( IncScheme(..)
+  , GradMethod(..)
+  , LinearSolver(..)
+  , MathProb(..)
+  , MeshFormat(..)
+  , Objective(..)
+  , Preconditioner(..)
+  , SU2Config(..)
+  , SU2RHS(..)
+  , SU2Solver(..)
+  , TabFormat(..)
+  )
+
 import Data.Link.AST (Config(..), Prog(..), RunFn(..))
 import Data.Link.Identifier (Identifier(..))
 import Data.Physics.Model (Model(..), PhysicsType(..), VarSolve(..))
