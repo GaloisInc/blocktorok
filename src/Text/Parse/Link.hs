@@ -14,27 +14,55 @@ module Text.Parse.Link
   ( parseDecl
   ) where
 
-import Control.Monad.Reader
+import Control.Monad.Reader (runReader)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST
-import Data.Link.Identifier
-import Text.Lexer
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..))
+import Data.Link.Identifier (Identifier(..))
+import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
-import Text.Token
-import Text.TokenClass
-import Data.Math
+import Text.Token (Parser, number, tok, tok', variable)
+import Text.TokenClass (TokenClass(..))
+import Data.Math (Equation(..), Exp(..))
 import Data.Physics.Model
-import Data.Solver.Technique
+  ( Boundary(..)
+  , BoundaryField(..)
+  , BoundaryType(..)
+  , Model
+  , PhysicsType(..)
+  , VarSolve(..)
+  , mkModel
+  )
+import Data.Solver.Technique (Technique(..))
 import qualified Data.Units.UnitExp as U
-import Data.Units.SymbolTable
-import Data.Units.SI
-import Data.Units.SI.Prefixes
+import Data.Units.SymbolTable (SymbolTable, mkSymbolTable)
+import Data.Units.SI (siUnits)
+import Data.Units.SI.Prefixes (siPrefixes)
 import Data.Solver.Backend
+  ( BackendConfig(..)
+  , DerivKind(..)
+  , Ddt(..)
+  , NumericalScheme(..)
+  , PlotMarkers(..)
+  , Preconditioner(..)
+  , Solver(..)
+  , SolvingTechnique(..)
+  )
+
 import Language.Haskell.TH.Syntax (Name)
+
 import Text.Parsec
+  ( ParseError
+  , (<|>)
+  , chainl1
+  , choice
+  , many
+  , many1
+  , runParserT
+  , try
+  )
 
 prefixStrs, unitStrs :: [String]
 prefixStrs =
