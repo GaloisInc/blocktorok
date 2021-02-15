@@ -1,4 +1,18 @@
-module Main(main) where
+{-|
+Module      : Main
+Description : The LINK compiler entry point
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : cphifer@galois.com
+Stability   : experimental
+Portability : N/A
+
+The entry point to the LINK compiler. This is likely to be an ever-evolving
+module, as we identify new wants/needs in terms of command-line options,
+functionality, and behavior.
+-}
+
+module Main (main) where
 
 import Data.Class.Render
 import Language.Check (hasAllCouplings, allVarsDeclared)
