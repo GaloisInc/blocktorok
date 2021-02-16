@@ -12,7 +12,7 @@ config {
 model StructureModel (qw) {
   technique : FEM;
 
-  boundaryField : MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 ); --Needs to be fixed
+  boundaryField : MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 ); --NEEDS TO BE FIXED
 
   physics : HeatTransfer{P};
   OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
@@ -32,7 +32,7 @@ model FluidModel(Tw) {
   SOLVER= RANS;
   KIND_TURB_MODEL= SA;
 
-  boundaryField: MARKER_FAR= ( MarkerName.farfield ); --Needs to be fixed;
+  boundaryField: MARKER_FAR= ( MarkerName.farfield ); --NEEDS TO BE FIXED
 
   physics : FluidFlow {F};
   OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
