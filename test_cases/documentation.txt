@@ -28,6 +28,8 @@ model id (id) {
 Su2 { format : FormatType 
       , time : Int -- sets a value for TimeDependent.INNER_ITER
       , plotting : PlottingType -- names of plot markers
+      , MATH_PROBLEM= DIRECT -- I ADDED THIS, THIS NEEDS TO GO SOMEWHERE
+      , RESTART_SOL= NO -- THIS COULD BE HARD CODED AND SKIPPED
      };
 
 ----- FormatType ----- 

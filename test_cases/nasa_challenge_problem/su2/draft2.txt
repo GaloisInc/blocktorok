@@ -90,7 +90,7 @@ couple coupleModels1 (Tin) {
 -- BackendType in config  --
 --------------------------------------------------------------------
 
------ BackendType ----- 
+----- BackendType -----
 Su2 { format : FormatType,
       time : Int, -- sets a value for TimeDependent.INNER_ITER
       plotting : PlottingType -- names of plot markers
@@ -98,8 +98,8 @@ Su2 { format : FormatType,
       RESTART_SOL= NO -- THIS COULD BE HARD CODED AND SKIPPED
      };
 
------ FormatType ----- 
-Only supported by the following built-in keyword LIB_Format1 which will generate 
+----- FormatType -----
+Only supported by the following built-in keyword LIB_Format1 which will generate
 
   InputOutput {
     MESH_FILENAME= mesh_cht_3cyl.su2,
@@ -123,8 +123,8 @@ TimeDependency { -- can we call this in the config block above?
 }
 
 
------ PlottingType ----- 
-Only supported by the following built-in keyword LIB_Plotting1 which will generate 
+----- PlottingType -----
+Only supported by the following built-in keyword LIB_Plotting1 which will generate
 
    Plotting: {
      MARKER_PLOTTING= (cylinder_outer1, cylinder_outer2, cylinder_outer3)
@@ -167,11 +167,11 @@ ConvergenceParams {
   CONV_CAUCHY_ELEMS= 100;
   CONV_CAUCHY_EPS= 1E-6; -- these values seem to be defaults
 }
-   
+
 --------------------------------------------------------------------
 -- NumericalSchemeType in FluidModel --
 --------------------------------------------------------------------
-Only supported by the following built-in keyword LIB_NumericalScheme1 which will generate 
+Only supported by the following built-in keyword LIB_NumericalScheme1 which will generate
 
 NumericalSchemes {
   NUM_METHOD_GRAD= WEIGHTED_LEAST_SQUARES;
