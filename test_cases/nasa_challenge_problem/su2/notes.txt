@@ -1,49 +1,10 @@
--- TODO Add units
-
--- import P = lib.conduction_condition;
--- import V = lib.fluid_flow;
-
-config {
-  step : 2;
-  totalTime : 10;
-  -- Tw = P.InitialSolidTemperature;
-  -- Run: couple (ModelFluid, ModelSolid, Tw);
-  }
-
-model StructureModel {
-  input : qw;
-  output : Tw;
-  -- Convention from the Zhang paper: Tw (YL)
-  -- Convention from the toy problem #3: Ts (YL)
-  technique : FEM;
-  boundary : Neumann(qw);
-  physics : HeatTransfer { 2};
-  -- TODO arg to HeatTransfer should be 'P'
-  -- physics : HeatTransfer {P};
-  rhos = P.SolidDensity;
-  ks = P.SolidThermalConductivity;
-  cps = P.SolidSpecificHeat;
-  var Tw;   -- solid temperature
-  rhos*cps*∇Tw- ks*△Tw = qw;
-
-  }
-
-model FluidModel {
-  input : Tw;
-  output : qw;
-  technique : FVM;
-  boundary: Dirichlet (Tw);
-  -- TODO change input to boundary conditions
-  -- boundary: Dirichlet (P.InitialSolidTemperature);
-  physics : FluidFlow {2};
-  -- Why don't we put this in a library, just to be consistent with HeatTransfer
-  -- TODO Add Fluid constructor
-  -- physics : ModelType : FluidFlow {
+FluidFlow {
   --   solver = compressibleFreeStreamDefinition,
   --   fluidModel = standardAir
   --   ViscosityModel =  sutherland
   --   thermalConductivityModel = constant_prandtl
   -- }
+
 
 
 -- some of these are variables too!
@@ -54,9 +15,8 @@ model FluidModel {
   Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
 
   -- variables we are solving for
-  var u; -- velocity in x direction (U = [u, v, w])
-  var v; --  velocity in y direction (U = [u, v, w])
-  var w; -- velocity in z direction (U = [u, v, w])
+  var u; -- velocities in x,y,z directions
+  var v;
   var e;  -- internal energy
   var rhof; -- fluid density
   var T; -- fluid temperature, depends on e
@@ -80,18 +40,79 @@ model FluidModel {
   e = \frac{P}{\gamma - 1} + \frac{1}{2} \sqrt{u^2 + v^2 + w^2}
   \mu = \mu_0 \frac{T_0 + C}{T + C}(\frac{T}{T_0})^\frac{3}{2}
   k = \frac{\gamma R \mu}{P_r (\gamma - 1)}
+
+
+-- Initiate Model settings for this challenge problem
+
+-- Fluid.solver
+compressibleFreeStreamDefinition = {
+  MachNumber = 5.94 (M∞)
+  AngleOfAttack = 0 degrees
+  SideSlipAngle = 0 degrees
+  InitializingTheSolution = REYNOLDS
+  Free-streamOption = TEMPERATURE_FS TEMPERATURE_FS, DENSITY_FS
+  Free-streamTemperature = 62.7 K (T∞)
+  ReynoldsNumber = 2E6 (Re∞, d)
+  ReynoldsLength = 6 inches (diameter of the cone)
+}
+
+-- Fluid.fluidModel
+standardAir = {
+  ratio_Specific_Heat = 1.4
+  GasConstant =  287.058 J/kg*K
+}
+
+-- Fluid.viscosityModel
+sutherland = {
+  mu_knot = 1.716E-5 --viscosityRef
+  T_knot = 273.15 --temperatureRef (K)
+  S = 110.4 --constant
+}
+
+sutherlands_law temperature = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S)
+
+-- Fluid.thermalConductivityModel
+constant_prandtl = {
+  LaminarPrandtlNumber = 0.72 (air)
+  TurbulentPrandtlNumber = 0.9 (air)
+}
+
+-- Structure.definition
+conduction_condition_definition {
+  InitialSolidTemperature = 300 K ---(from the isothermal wall of 300 K)
+  SolidDensity = 8.67 g/cm3  -- (chromel)
+  SolidThermalConductivity = 17.3 W/(m*K)  -- (at 300 K)
+  SolidSpecificHeat = 426.4 J/(kg*K)
+  -- (depends on the temperature)
+  -- λ = adcp (λ = thermal conductivity,
+  --    a = thermal diffusivity, d = density, cp = specific heat)
+  -- cp = 17.3/(4.68*8.67)*10^3
+  -- cp = 426.4 J/(kg*K)
   }
 
-couple StructureModel FluidModel {
-  input : Tin;
-  output : Tout;
-  var qw; -- heat flux
-  qw = FluidModel(Tin);
-  Tout = ModelSolid (qw);
-  -- TODO add zone interface
-  }
 
--- def couple (m1, m2, Tin):
---  qw = m1 (Tin)
---  Tout = m2 (qw);
---  return Tout
+-- Describes the types for model settings 
+
+-- Only applies in Fluid models
+Fluid.solver
+  = compressibleFreeStreamDefinition
+  | ..
+
+Fluid.fluidModel
+  = standardAir
+  | idealGas
+  | VWGas | PRGas
+  | ConstantDensity
+  | IncIdealGas
+
+Fluid.viscosityModel
+  = sutherland
+  | constant_viscosity
+
+Fluid.thermalConductivityModel
+  = constant_conductivity
+  | constant_prandtls
+
+Structure.definition
+  = conduction_condition_definition
+   | ..
