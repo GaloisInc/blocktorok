@@ -52,9 +52,16 @@ parseLatexExp2 =
 -- laplacian / negate
 parseLatexExp3 :: Parser LS.Exp
 parseLatexExp3 =
-  choice [ try (sym "\\Delta") >> LS.UnOp LS.Laplacian <$> parseLatexExp
+  choice [ partialOp
+         , try (sym "\\Delta") >> LS.UnOp LS.Laplacian <$> parseLatexExp
          , parseLatexExp2
          ]
+  where
+    partialOp =
+      do  try (sym "\\frac" >> inBraces (sym "\\partial"))
+          wrt <- inBraces (sym "\\partial" >> parseIdent)
+          e <- parseLatexExp2
+          pure (LS.PartialDerivative e wrt)
 
 -- there does not appear to be a canonical order of operations for these
 -- i have made the left associative with the same precedence
@@ -117,7 +124,7 @@ parseFrac =
              ]
   where
     parDeriv =
-      do  i1 <- try (inBraces (sym "\\partial" >> many parseIdent))
+      do  i1 <- try (inBraces (sym "\\partial" >> parseLatexExp))
           i2 <- inBraces (sym "\\partial" >> parseIdent)
           pure (LS.PartialDerivative i1 i2)
     fraction =

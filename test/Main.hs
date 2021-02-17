@@ -61,8 +61,8 @@ exps =
   , ("a + b", a `plus` b)
   , ("a - b", a `minus` b)
   , ("\\frac{a}{b}", a `divide` b)
-  , ("\\frac{\\partial a}{\\partial b}",
-     partialDeriv [Latex.Name "a"] (Latex.Name "b"))
+  , ("\\frac{\\partial a}{\\partial b}", partialDeriv a (Latex.Name "b"))
+  , ("\\frac{\\partial}{\\partial b} a", partialDeriv a (Latex.Name "b"))
   ]
   where
     a = name "a"
