@@ -108,6 +108,7 @@ parseIdent = parseIdent1
 parseInt :: Parser LS.Exp
 parseInt = LS.Int <$> try int
 
+-- `try` on this could be a little tighter
 parseFrac :: Token.Parser LS.Exp
 parseFrac =
   do  try $ sym "\\frac"
@@ -116,7 +117,7 @@ parseFrac =
              ]
   where
     parDeriv =
-      do  i1 <- inBraces (try (sym "\\partial") >> many parseIdent)
+      do  i1 <- try (inBraces (sym "\\partial" >> many parseIdent))
           i2 <- inBraces (sym "\\partial" >> parseIdent)
           pure (LS.PartialDerivative i1 i2)
     fraction =
