@@ -1,0 +1,40 @@
+  OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+  OBJECTIVE_WEIGHT= 1.0
+  MARKER_MONITORING= (cylinder_outer1, cylinder_outer2, cylinder_outer3);
+
+  -- initial values
+  MACH_NUMBER= 0.8;
+  AOA= 0;
+  SIDESLIP_ANGLE= 0.0;
+  INIT_OPTION= REYNOLDS;
+  FREESTREAM_OPTION= TEMPERATURE_FS;
+  FREESTREAM_TEMPERATURE= 62.7 K; -- T∞
+  REYNOLDS_NUMBER= 2E6; -- Re∞, d
+  REYNOLDS_LENGTH= 6 inches; -- diameter of the cone
+
+  const gamma = F.standardAir.ratio_Specific_Heat; -- a perfect gas
+  const mu = F.sutherland.viscosityRef; -- dynamic viscosity, depends on temperature!
+  const R =  F.standardAir.GasConstant; -- specific gas constant
+  const Pr = F.constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
+
+  -- variables we are solving for
+  var u; -- velocity in x direction (U = [u, v, w])
+  var v; --  velocity in y direction (U = [u, v, w])
+  var w; -- velocity in z direction (U = [u, v, w])
+  var e;  -- internal energy
+  var rhof; -- fluid density
+  var T; -- fluid temperature, depends on e
+  var k; -- thermal conductivity, depends on mu
+  var mu; -- dynamic viscosity, depends on T
+  var P; -- pressure, depends on T
+  var tau; -- viscous stress tensor
+
+  -- ... removing math for now
+
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve w with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve e with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve rhof with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve tau with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  -- I think T, k, mu, P are solved directly using the closure equations from the Navier-Stokes variables

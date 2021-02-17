@@ -90,29 +90,6 @@ couple coupleModels1 (Tin) {
 -- BackendType in config  --
 --------------------------------------------------------------------
 
------ BackendType -----
-Su2 { format : FormatType,
-      time : Int, -- sets a value for TimeDependent.INNER_ITER
-      plotting : PlottingType -- names of plot markers
-      MATH_PROBLEM= DIRECT -- I ADDED THIS, THIS NEEDS TO GO SOMEWHERE
-      RESTART_SOL= NO -- THIS COULD BE HARD CODED AND SKIPPED
-     };
-
------ FormatType -----
-Only supported by the following built-in keyword LIB_Format1 which will generate
-
-  InputOutput {
-    MESH_FILENAME= mesh_cht_3cyl.su2,
-    MESH_FORMAT= SU2,
-    OUTPUT_FILES= (PARAVIEW, SURFACE_PARAVIEW),
-    CONV_FILENAME= history,
-    VOLUME_FILENAME= flow,
-    VOLUME_ADJ_FILENAME= adjoint,
-    GRAD_OBJFUNC_FILENAME= of_grad.dat,
-    VALUE_OBJFUNC_FILENAME= of_eval.dat,
-    SURFACE_FILENAME= surface_flow,
-    SURFACE_ADJ_FILENAME= surface_adjoint
-  }
 
 -- unsteady/transient simulation
 TimeDependency { -- can we call this in the config block above?
@@ -121,14 +98,6 @@ TimeDependency { -- can we call this in the config block above?
   INNER_ITER= 50;
   OUTER_ITER = 1000;
 }
-
-
------ PlottingType -----
-Only supported by the following built-in keyword LIB_Plotting1 which will generate
-
-   Plotting: {
-     MARKER_PLOTTING= (cylinder_outer1, cylinder_outer2, cylinder_outer3)
-   }
 
 
 --------------------------------------------------------------------

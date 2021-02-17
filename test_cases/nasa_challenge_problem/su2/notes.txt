@@ -1,118 +1,31 @@
-FluidFlow {
-  --   solver = compressibleFreeStreamDefinition,
-  --   fluidModel = standardAir
-  --   ViscosityModel =  sutherland
-  --   thermalConductivityModel = constant_prandtl
-  -- }
+--------------------------------------------------------------------
+--Things that are not yet supported in LINK but needed for codegen --
+--------------------------------------------------------------------
+
+Note. Yerim wants to add the following attributes to the Su2 command for the challenge problem:
+	MATH_PROBLEM= DIRECT -- I ADDED THIS, THIS NEEDS TO GO SOMEWHERE
+	RESTART_SOL= NO -- THIS COULD BE HARD CODED AND SKIPPED
 
 
 
--- some of these are variables too!
--- listed here are the initial values that will get updated with time (mu)
-  gamma = standardAir.ratio_Specific_Heat; -- a perfect gas
-  mu = sutherland.viscosityRef; -- dynamic viscosity, depends on temperature!
-  R =  standardAir.GasConstant; -- specific gas constant
-  Pr = constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
-
-  -- variables we are solving for
-  var u; -- velocities in x,y,z directions
-  var v;
-  var e;  -- internal energy
-  var rhof; -- fluid density
-  var T; -- fluid temperature, depends on e
-  var k; -- thermal conductivity, depends on mu
-  var mu; -- dynamic viscosity, depends on T
-  var P; -- pressure, depends on T
-  var tau; -- viscous stress tensor
-
-  -- Navier-Stokes and closure equations
-  \frac{\partial \rho}{\partial t} + \div \rho \vec{U} = 0
-  \frac{\partial \rho \vec{U}}{\partial t} + \div \rho \vec{U} \times \vec{U} + \div( \tau - PI) = 0
-  \frac{\partial \rho e}{\partial t} + \div(\rho e + P)\vec{U} - \div \tau \vec{U} - \div k \grad T = 0
-  \tau_{xy} = \tau_{yx} = \mu (\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x})
-  \tau_{xz} = \tau_{zx} = \mu (\frac{\partial u}{\partial z} + \frac{\partial w}{\partial x})
-  \tau_{yz} = \tau_{yz} = \mu (\frac{\partial v}{\partial z} + \frac{\partial w}{\partial y})
-  \tau_{xx} = \frac{2}{3} \mu (2\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
-  \tau_{yy} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} + 2\frac{\partial v}{\partial y} - \frac{\partial w}{\partial z})
-  \tau_{zz} = \frac{2}{3} \mu (-\frac{\partial u}{\partial x} - \frac{\partial v}{\partial y} + 2\frac{\partial w}{\partial z})
-  P = \rho R T
-  e = \frac{R}{\gamma - 1}T
-  e = \frac{P}{\gamma - 1} + \frac{1}{2} \sqrt{u^2 + v^2 + w^2}
-  \mu = \mu_0 \frac{T_0 + C}{T + C}(\frac{T}{T_0})^\frac{3}{2}
-  k = \frac{\gamma R \mu}{P_r (\gamma - 1)}
 
 
--- Initiate Model settings for this challenge problem
-
--- Fluid.solver
-compressibleFreeStreamDefinition = {
-  MachNumber = 5.94 (M∞)
-  AngleOfAttack = 0 degrees
-  SideSlipAngle = 0 degrees
-  InitializingTheSolution = REYNOLDS
-  Free-streamOption = TEMPERATURE_FS TEMPERATURE_FS, DENSITY_FS
-  Free-streamTemperature = 62.7 K (T∞)
-  ReynoldsNumber = 2E6 (Re∞, d)
-  ReynoldsLength = 6 inches (diameter of the cone)
+-- unsteady/transient simulation
+TimeDependency { 
+  TIME_DOMAIN = YES;
+  TIME_MARCHING= DUAL_TIME_STEPPING-2ND_ORDER;
+  INNER_ITER= 50;
+  OUTER_ITER = 1000;
 }
 
--- Fluid.fluidModel
-standardAir = {
-  ratio_Specific_Heat = 1.4
-  GasConstant =  287.058 J/kg*K
+
+Only supported by the following built-in keyword GridDeformation which will generate
+Fixing grid deformations
+
+GridDeformation {
+  DEFORM_LINEAR_SOLVER= FGMRES;
+  DEFORM_LINEAR_SOLVER_ITER= 200;
+  DEFORM_NONLINEAR_ITER= 1;
+  DEFORM_CONSOLE_OUTPUT= YES;
+  DEFORM_STIFFNESS_TYPE= INVERSE_VOLUME;
 }
-
--- Fluid.viscosityModel
-sutherland = {
-  mu_knot = 1.716E-5 --viscosityRef
-  T_knot = 273.15 --temperatureRef (K)
-  S = 110.4 --constant
-}
-
-sutherlands_law temperature = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S)
-
--- Fluid.thermalConductivityModel
-constant_prandtl = {
-  LaminarPrandtlNumber = 0.72 (air)
-  TurbulentPrandtlNumber = 0.9 (air)
-}
-
--- Structure.definition
-conduction_condition_definition {
-  InitialSolidTemperature = 300 K ---(from the isothermal wall of 300 K)
-  SolidDensity = 8.67 g/cm3  -- (chromel)
-  SolidThermalConductivity = 17.3 W/(m*K)  -- (at 300 K)
-  SolidSpecificHeat = 426.4 J/(kg*K)
-  -- (depends on the temperature)
-  -- λ = adcp (λ = thermal conductivity,
-  --    a = thermal diffusivity, d = density, cp = specific heat)
-  -- cp = 17.3/(4.68*8.67)*10^3
-  -- cp = 426.4 J/(kg*K)
-  }
-
-
--- Describes the types for model settings 
-
--- Only applies in Fluid models
-Fluid.solver
-  = compressibleFreeStreamDefinition
-  | ..
-
-Fluid.fluidModel
-  = standardAir
-  | idealGas
-  | VWGas | PRGas
-  | ConstantDensity
-  | IncIdealGas
-
-Fluid.viscosityModel
-  = sutherland
-  | constant_viscosity
-
-Fluid.thermalConductivityModel
-  = constant_conductivity
-  | constant_prandtls
-
-Structure.definition
-  = conduction_condition_definition
-   | ..

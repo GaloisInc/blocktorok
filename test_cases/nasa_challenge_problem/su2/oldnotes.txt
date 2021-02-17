@@ -1,0 +1,50 @@
+
+
+-- Initiate Model settings for this challenge problem
+
+-- Fluid.solver
+compressibleFreeStreamDefinition = {
+  MachNumber = 5.94 (M∞)
+  AngleOfAttack = 0 degrees
+  SideSlipAngle = 0 degrees
+  InitializingTheSolution = REYNOLDS
+  Free-streamOption = TEMPERATURE_FS TEMPERATURE_FS, DENSITY_FS
+  Free-streamTemperature = 62.7 K (T∞)
+  ReynoldsNumber = 2E6 (Re∞, d)
+  ReynoldsLength = 6 inches (diameter of the cone)
+}
+
+-- Fluid.fluidModel
+standardAir = {
+  ratio_Specific_Heat = 1.4
+  GasConstant =  287.058 J/kg*K
+}
+
+-- Fluid.viscosityModel
+sutherland = {
+  mu_knot = 1.716E-5 --viscosityRef
+  T_knot = 273.15 --temperatureRef (K)
+  S = 110.4 --constant
+}
+
+sutherlands_law temperature = mu_knot * pow(temperature / T_knot, 3.0 / 2.0) * (T_knot + S) / (temperature + S)
+
+-- Fluid.thermalConductivityModel
+constant_prandtl = {
+  LaminarPrandtlNumber = 0.72 (air)
+  TurbulentPrandtlNumber = 0.9 (air)
+}
+
+-- Structure.definition
+conduction_condition_definition {
+  InitialSolidTemperature = 300 K ---(from the isothermal wall of 300 K)
+  SolidDensity = 8.67 g/cm3  -- (chromel)
+  SolidThermalConductivity = 17.3 W/(m*K)  -- (at 300 K)
+  SolidSpecificHeat = 426.4 J/(kg*K)
+  -- (depends on the temperature)
+  -- λ = adcp (λ = thermal conductivity,
+  --    a = thermal diffusivity, d = density, cp = specific heat)
+  -- cp = 17.3/(4.68*8.67)*10^3
+  -- cp = 426.4 J/(kg*K)
+  }
+
