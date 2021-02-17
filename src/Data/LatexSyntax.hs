@@ -45,7 +45,7 @@ instance Pretty.Pretty Identifier where
   pretty i =
     case i of
       Name s -> pretty s
-      Vect s -> "\\vec" <> Pretty.brackets (pretty s)
+      Vect s -> "\\vec" <> Pretty.braces (pretty s)
       Subscript i1 i2 -> pretty i1 <> "_" <> pretty i2
 
 -- TODO: precedence might need some work
@@ -122,6 +122,34 @@ instance Pretty.Pretty Exp where
               OuterProduct -> 4
               CrossProduct -> 4
               Divide -> 0
+
+latexShowExpTree :: Exp -> Pretty.Doc ann
+latexShowExpTree e =
+  case e of
+    Var a -> "Var" <+> pretty a
+    Int i -> "Int" <+> pretty i
+    PartialDerivative dx dt ->
+      Pretty.vcat [ "PartialDerivative"
+                  , Pretty.indent 2 (latexShowExpTree dx)
+                  , Pretty.indent 2 (pretty dt)
+                  ]
+    UnOp op e1 ->
+      Pretty.vcat [ pretty (show op)
+                  , Pretty.indent 2 (latexShowExpTree e1)
+                  ]
+
+    BinOp op e1 e2 ->
+      Pretty.vcat [ pretty (show op)
+                  , Pretty.indent 2 (latexShowExpTree e1)
+                  , Pretty.indent 2 (latexShowExpTree e2)
+                  ]
+
+latexShowEquationTree :: Equation -> Pretty.Doc ann
+latexShowEquationTree (Equation e1 e2) =
+  Pretty.vcat ["="
+              , Pretty.indent 2 $ latexShowExpTree e1
+              , Pretty.indent 2 $ latexShowExpTree e2
+              ]
 
 
 

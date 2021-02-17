@@ -4,7 +4,7 @@ import Test.Tasty(TestTree(..), defaultMain)
 import qualified Test.Tasty as Tasty
 import qualified Test.Tasty.HUnit as HUnit
 import Test.Tasty.HUnit((@=?))
-import Prettyprinter(Pretty(..), pretty)
+import Prettyprinter(Pretty(..), pretty, vcat)
 
 import Text.Token(Parser(..))
 import qualified Text.Parse.Link as LinkParse
@@ -84,20 +84,6 @@ exps =
     divide = Latex.BinOp Latex.Divide
     partialDeriv = Latex.PartialDerivative
 
-
-
-
--- latexExpRoundTripTests :: TestTree
--- latexExpRoundTripTests =
---   Tasty.testGroup "Latex round trip tests" $
---     tc <$> [ "a = 0"
---            , "b = 0"
---            , "c = a + b"
---            ]
---   where
---     tc name s =
---       HUnit.testCase ("Roundtrip: " ++ name) (assertRoundTrip s LatexParse.parseLatexExp)
-
 runParser :: Parser a -> String -> IO a
 runParser p s =
   case LinkParse.parseNamedText p "<unit test>" s of
@@ -115,15 +101,12 @@ asEqnBlock eqns =
     punct _ [a] = [a]
     punct s (e:r) = (e ++ s):punct s r
 
-assertRoundTrip parse s0 =
-  do  a1 <- parse s0
-      let s1 = pretty a1
-
-      a2 <- parse (show s1)
-      let s2 = pretty a2
-
-      HUnit.assertEqual "round trip" (show s1) (show s2)
-
 debugParseEqns :: [String] -> IO [Latex.Equation]
 debugParseEqns s =
   runParser LatexParse.parseLatexEquations (asEqnBlock s)
+
+displayLatexEqTree :: String -> IO ()
+displayLatexEqTree s =
+  do  eqns <- runParser LatexParse.parseLatexEquations s
+      let doc = vcat (Latex.latexShowEquationTree <$> eqns)
+      print doc
