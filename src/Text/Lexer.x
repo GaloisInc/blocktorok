@@ -99,13 +99,16 @@ tokens :-
 <0>  \{                                    { lex' TokenLCurl           }
 <0>  \}                                    { lex' TokenRCurl           }
 
-<0>      "\\begin{equations}"              { begin latex >> lex' TokenLatexBegin }
-<latex>  "\\end{equations}"                { begin 0     >> lex' TokenLatexEnd   }
+<0>      "\begin{equations}"               { lex' TokenLatexBegin `andBegin` latex }
+<latex>  "\end{equations}"                 { lex' TokenLatexEnd `andBegin` 0  }
 
-<latex>  [0-9]+                            { lex (TokenLatex . TLInt . read) }
-<latex>  "\\"? [A-Za-z]+                   { lex (TokenLatex . TLIdent) }
-<latex>  [\{ \} \_ \^ \+ \- \= \( \)]      { lex (TokenLatex . TLSymbol) }
-<latex>  \\\\                              { lex (TokenLatex . TLSymbol)}
+<latex>  [0-9]+                             { lex (TokenLatex . TLInt . read) }
+<latex>  \\ \\                              { lex (TokenLatex . TLSymbol)}
+<latex>  "\times"|"\otimes"|"\div"|"\Delta"|
+         "\frac"|"\partial"|"\vec"|"\curl"|
+         "\grad"|"\sqrt"|"\dot"             { lex (TokenLatex . TLSymbol) }
+<latex>  [\{ \} \_ \^ \+ \- \= \( \)]       { lex (TokenLatex . TLSymbol) }
+<latex>  \\? [A-Za-z]+                      { lex (TokenLatex . TLIdent) }
 
 
 {
@@ -144,12 +147,14 @@ lex' = lex . const
 -- LINK lexer
 llex :: String -> Either String [Token]
 llex str = runAlex str loop
-  where loop = do t@(Token _ tok) <- alexMonadScan'
-                  if tok == TokenEOF then
-                    return [t]
-                  else
-                    do toks <- loop
-                       return $ t:toks
+  where
+    loop =
+      do  t@(Token _ tok) <- alexMonadScan'
+          if tok == TokenEOF then
+            return [t]
+          else
+            do toks <- loop
+               return $ t:toks
 
 -- We rewrite alexMonadScan' to delegate to alexError' when lexing fails
 -- (the default implementation just returns an error message).

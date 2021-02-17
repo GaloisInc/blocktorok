@@ -36,6 +36,7 @@ import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
 import Language.Haskell.TH.Syntax (Name)
+import qualified Data.Equation as Eqn
 
 -- An ugly function I added. Forgive me.
 mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
@@ -71,7 +72,7 @@ data Model =
         , getConsts :: Map Identifier (Integer, UnitExp Name Name)
         , getLib :: Map Identifier (Identifier, Identifier)
         , getVars :: Map Identifier (UnitExp Name Name)
-        , getEqs :: [Equation] -- ^ The equations governing the model
+        , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
         , getSolve :: VarSolve
         }
 instance Show Model where
@@ -93,7 +94,7 @@ mkModel :: Identifier -> Identifier
       ->  Map Identifier (Integer, UnitExp Name Name)
       ->  Map Identifier (Identifier, Identifier)
       ->  Map Identifier (UnitExp Name Name)
-      -> [Equation]
+      -> [Eqn.Equation]
       -> VarSolve
       -> Model
 mkModel = Model

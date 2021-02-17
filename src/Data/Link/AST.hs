@@ -14,11 +14,11 @@ is the target of the parser defined in @Parser.y@.
 module Data.Link.AST where
 
 import Data.Map.Strict (Map)
-import Data.Math
 import Data.Link.Identifier
 import Data.Physics.Model
 import Data.Units.UnitExp
 import Data.Solver.Backend
+import qualified Data.Equation as Eqn
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -73,5 +73,5 @@ data Coupling = Coupling {
   , input::Identifier
   , output::Identifier
   , getVars:: Map Identifier (UnitExp Name Name)
-  , getEqs :: [Equation] -- ^ The equations governing the model
+  , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
   } deriving (Show)
