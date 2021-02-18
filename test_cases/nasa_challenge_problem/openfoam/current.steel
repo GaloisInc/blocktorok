@@ -1,8 +1,8 @@
 import v2_LIB_conduction.steel as P;
 import v2_LIB_fluid.steel as F
 config {
-  step : 2;
-  totalTime : 10 s;
+  step : 1;
+  totalTime : 2000 s;
   const Tw = P.InitialSolidTemperature;
   run: coupleModels1 (Tw);
   }
@@ -25,20 +25,20 @@ config {
 
 SolvingTechnique pressureFluid {
     {
-        solver           GAMG;
-        tolerance        1e-7;
-        relTol           0.01;
-        smoother         DIC;
-        maxIter          100;
+        solver : GAMG;
+        tolerance : 1e-7;
+        relTol : 0.01;
+        smoother : DIC;
+        maxIter : 100;
     }
 }
 
 SolvingTechnique restFluid {
     {
-        solver           PBiCGStab;
-        preconditioner   DILU;
-        tolerance        1e-6;
-        relTol           0.1;
+        solver : PBiCGStab;
+        preconditioner : DILU;
+        tolerance : 1e-6;
+        relTol : 0.1;
     }
 }
 
@@ -50,16 +50,16 @@ relaxationFactors -- not sure where to put this
 {
     fields
     {
-        rho         1;
-        p_rgh       0.7;
+        rho : 1;
+        p_rgh : 0.7;
     }
 
     equations
     {
-        U           0.3;
-        "(h|e)"     0.3;
-        k           0.3;
-        epsilon     0.3;
+        U : 0.3;
+        "(h|e)" : 0.3;
+        k : 0.3;
+        epsilon : 0.3;
     }
 }
 
@@ -77,9 +77,100 @@ NumericalScheme nFluid {
     div(phi,epsilon) : bounded Gauss upwind;
     div(((rho*nuEff)*dev2(T(grad(U))))) : Gauss linear;
     laplacian : Gauss linear limited corrected 0.33;
-    interpolation : Linear;
+    interpolation : linear;
     snGrad : limited corrected 0.33;
 }
+
+SolvingTechnique eSolid {
+    solver : GAMG;
+    smoother : symGaussSeidel;
+    tolerance : 1e-6;
+    relTol : 0.1;
+}
+
+SolvingTechnique eFinalSolid {
+    {
+        $e;
+        relTol : 0;
+    }
+}
+
+NumericalScheme nSolid {
+    ddt : Euler;
+    grad : Gauss linear;
+    div : none;
+    laplacian(alpha,e) Gauss linear corrected;
+    interpolation : linear;
+    snGradSchemes : corrected;
+}
+
+-------------------------------------------------------------------------------------------
+-- physical models, might get moved to its own config file
+thermoType
+{
+    type            heSolidThermo;
+    mixture         pureMixture;
+    transport       constIso;
+    thermo          hConst;
+    equationOfState rhoConst;
+    specie          specie;
+    energy          sensibleInternalEnergy;
+}
+
+mixture
+{
+    // Chromium
+
+    specie
+    {
+        molWeight       166.53;
+    }
+    equationOfState
+    {
+        rho             8670;
+    }
+    transport
+    {
+        kappa           17.3;
+    }
+    thermodynamics
+    {
+        Hf              0;
+        Cp              426.4;
+    }
+}
+
+-- fluid
+thermoType
+{
+    type            hePsiThermo;
+    mixture         pureMixture;
+    transport       sutherland;
+    thermo          hConst;
+    equationOfState perfectGas;
+    specie          specie;
+    energy          sensibleInternalEnergy;
+}
+
+mixture
+{
+    specie
+    {
+        nMoles          1;
+        molWeight       28.9596;
+    }
+    thermodynamics
+    {
+        Cp            	1004.5;
+        Hf           	0;
+    }
+    transport
+    {
+        As              1.458e-06;
+        Ts              110.4;
+    }
+}
+
 
 -------------------------------------------------------------------------------------------
 
@@ -92,7 +183,7 @@ model StructureModel (qw) {
   const cps = P.SolidSpecificHeat;
   var Tw;
   rhos*cps*∇Tw- ks*△Tw = qw;
-  solve Tw with {?, ?};
+  solve Tw with {eSolid, eFinalSolid, nSolid};
   return Tw;
   }
 
