@@ -9,6 +9,11 @@ import Text.TokenClass(TokenLatex(..), TokenClass(..))
 import Text.Lexer(Token(..))
 import qualified Data.LatexSyntax as LS
 
+--
+-- NOTE: this document was used to derive a concrete syntax:
+--     http://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf
+--
+
 parseLatexEquations :: Token.Parser [LS.Equation]
 parseLatexEquations =
     between (try $ tok' TokenLatexBegin) (tok' TokenLatexEnd) parseLEqs
@@ -27,6 +32,7 @@ parseLatexExp0 =
          , braceOp "\\div" LS.Divergence
          , braceOp "\\grad" LS.Gradient
          , braceOp "\\sqrt" LS.Sqrt
+         , braceOp "\\laplacian" LS.Laplacian
          , inParens parseLatexExp
          ]
   where
@@ -49,11 +55,9 @@ parseLatexExp2 =
              , pure e1
              ]
 
--- laplacian / negate
 parseLatexExp3 :: Parser LS.Exp
 parseLatexExp3 =
   choice [ partialOp
-         , try (sym "\\Delta") >> LS.UnOp LS.Laplacian <$> parseLatexExp
          , parseLatexExp2
          ]
   where

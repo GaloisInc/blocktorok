@@ -104,9 +104,10 @@ tokens :-
 
 <latex>  [0-9]+                             { lex (TokenLatex . TLInt . read) }
 <latex>  \\ \\                              { lex (TokenLatex . TLSymbol)}
-<latex>  "\times"|"\otimes"|"\div"|"\Delta"|
+<latex>  "\times"|"\otimes"|"\div"|
          "\frac"|"\partial"|"\vec"|"\curl"|
-         "\grad"|"\sqrt"|"\dot"             { lex (TokenLatex . TLSymbol) }
+         "\grad"|"\sqrt"|"\dot"|
+         "\laplacian"                       { lex (TokenLatex . TLSymbol) }
 <latex>  [\{ \} \_ \^ \+ \- \= \( \)]       { lex (TokenLatex . TLSymbol) }
 <latex>  \\? [A-Za-z]+                      { lex (TokenLatex . TLIdent) }
 
