@@ -36,7 +36,8 @@ model FluidModel(Tw) {
 
 couple coupleModels1 (Tin) {
   var qw; -- heat flux
-  qw = FluidModel(Tin);
-  Tout = ModelSolid (qw);
+  coupledSurface = CoupledSurfaces(cylinder_outer1, cylinder_inner1);
+  qw = FluidModel(Tin, coupledSurface);
+  Tout = ModelSolid (qw, coupledSurface);
   return Tout;
   }
