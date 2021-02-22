@@ -18,10 +18,19 @@ a single model with all of the equations, variables, etc.
 -}
 
 module Language.Link
-  (
+  ( link
   ) where
 
-import Data.Link.AST (Prog)
+import Control.Monad.Except (throwError)
+
+import Data.Link.AST (Config(..), Prog(..))
+import Data.Physics.Model (Model)
+import Data.Units.UnitExp (UnitExp)
+
+import Data.List (find)
+import Data.Maybe (fromJust)
+
+import Language.Haskell.TH.Syntax (Name)
 
 -- | Given a list of LINK programs, synthesize a single LINK program built by
 -- taking a 'union' over everything in the list. This union is intelligent in
@@ -29,4 +38,24 @@ import Data.Link.AST (Prog)
 -- model variables declaed with different units. The behavior of this function
 -- will likely change as LINK evolves.
 link :: [Prog] -> Either String Prog
-link ps = Left "Not yet implemented"
+link []     = throwError "No programs provided. This is probably an internal error!"
+link (p:ps) =
+  do -- Destructure the first program to support the various checks
+     let Prog { getConfig = Config { getGlobalStep = gs
+                                   , getDuration = dur
+                                   , getConsts = consts
+                                   , getRunFn = rfn
+                                   , getBackendConfig = bcConfig }
+              , getModels = models
+              , getCouplings = couplings } = p
+
+     -- Check that all global steps are the same, throwing an error otherwise
+     case find (/= gs) gSteps of
+       Just gs' -> throwError $ "Expected a global step of " ++ show gs ++ "but found a conflict: " ++ show gs'
+       Nothing -> return p
+  where
+    gSteps :: [(Integer, UnitExp Name Name)]
+    gSteps = (\Prog { getConfig = Config { getGlobalStep = gs } } -> gs) <$> ps
+
+    linkModels :: [Model] -> Either String Model
+    linkModels _ = throwError "Not yet implemented"

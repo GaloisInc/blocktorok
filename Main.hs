@@ -19,6 +19,7 @@ import Control.Monad (zipWithM)
 import Data.Class.Render
 import Language.Check (hasAllCouplings, allVarsDeclared)
 import Language.Compile.SU2 (compile)
+import Language.Link (link)
 import Options
 import Text.Parse.Link (parseDecl)
 
@@ -39,10 +40,12 @@ realMain Options { sources = inputs, target = output } =
      let parseResult = zipWithM parseDecl inputs inputContents
      case parseResult of
        Left e -> print e >> exitFailure
-       Right progs -> -- TODO: Link all of the parsed LINK code into one large instance of the AST
+       Right progs ->
          if all hasAllCouplings progs && all allVarsDeclared progs then
-           case compile (head progs) of
+           case link progs of
              Left e -> print e >> exitFailure
-             Right su2 -> writeFile output (render su2)
+             Right prog -> case compile prog of
+                             Left e -> print e >> exitFailure
+                             Right su2 -> writeFile output (render su2)
          else
            error "Basic static analysis failed (do you have all couplings and are all variables declared before use?)"
