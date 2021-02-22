@@ -32,8 +32,8 @@ main = realMain =<< execParser opts
 
 -- TODO: Deal with these nested case expressions. ExceptT?
 realMain :: Options -> IO ()
-realMain (Options input output) =
-  do parseRes <- parseDecl input <$> readFile input
+realMain (Options inputs output) =
+  do parseRes <- parseDecl (head inputs) <$> readFile (head inputs)
      case parseRes of
        Left e -> print e >> exitFailure
        Right prog ->

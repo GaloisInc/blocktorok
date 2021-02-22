@@ -17,14 +17,14 @@ module Options
   , parseOpts
   ) where
 
-import Options.Applicative (Parser, help, metavar, long, short, strOption)
+import Options.Applicative (Parser, argument, help, metavar, long, short, some, str, strOption)
 
 data Options =
-  Options { source :: String
+  Options { source :: [String]
           , target :: String
           }
 
 parseOpts :: Parser Options
 parseOpts =
-  Options <$> strOption (long "input" <> short 'i' <> metavar "FILE" <> help "The LINK source to be compiled")
+  Options <$> some (argument str (metavar "FILES..." <> help "The LINK sources to be compiled"))
           <*> strOption (long "output" <> short 'o' <> metavar "FILE" <> help "The file to output to")
