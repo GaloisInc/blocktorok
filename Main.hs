@@ -14,6 +14,8 @@ functionality, and behavior.
 
 module Main (main) where
 
+import Control.Monad (zipWithM)
+
 import Data.Class.Render
 import Language.Check (hasAllCouplings, allVarsDeclared)
 import Language.Compile.SU2 (compile)
@@ -33,12 +35,13 @@ main = realMain =<< execParser opts
 -- TODO: Deal with these nested case expressions. ExceptT?
 realMain :: Options -> IO ()
 realMain Options { sources = inputs, target = output } =
-  do parseRes <- parseDecl (head inputs) <$> readFile (head inputs)
-     case parseRes of
+  do inputContents <- mapM readFile inputs
+     let parseResult = zipWithM parseDecl inputs inputContents
+     case parseResult of
        Left e -> print e >> exitFailure
-       Right prog ->
-         if hasAllCouplings prog && allVarsDeclared prog then
-           case compile prog of
+       Right progs -> -- TODO: Link all of the parsed LINK code into one large instance of the AST
+         if all hasAllCouplings progs && all allVarsDeclared progs then
+           case compile (head progs) of
              Left e -> print e >> exitFailure
              Right su2 -> writeFile output (render su2)
          else
