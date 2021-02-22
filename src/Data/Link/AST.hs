@@ -73,12 +73,12 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-data Coupling = Coupling {
-  name:: Identifier
-  , model1::Identifier
-  , model2::Identifier
-  , input::Identifier
-  , output::Identifier
-  , getVars:: Map Identifier (UnitExp Name Name)
-  , getEqs :: [Equation] -- ^ The equations governing the model
-  } deriving (Show)
+data Coupling =
+  Coupling { name :: Identifier
+           , model1 :: Identifier
+           , model2 :: Identifier
+           , input :: Identifier
+           , output :: Identifier
+           , getVars :: Map Identifier (UnitExp Name Name)
+           , getEqs :: [Equation] -- ^ The equations governing the model
+           } deriving (Show)
