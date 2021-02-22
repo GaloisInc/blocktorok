@@ -1,5 +1,4 @@
-{-# LANGUAGE LambdaCase, NoMonomorphismRestriction, FlexibleContexts, RankNTypes,
-             DeriveGeneric, DeriveDataTypeable, CPP, StandaloneDeriving #-}
+{-# LANGUAGE NoMonomorphismRestriction, FlexibleContexts, RankNTypes, CPP #-}
 {-# OPTIONS_HADDOCK prune #-}
 
 -----------------------------------------------------------------------------
@@ -41,16 +40,16 @@ module Text.Parse.Units (
 
 import Prelude hiding ( lex, div )
 
-import Text.Parsec         hiding ( tab )
+import Text.Parsec hiding ( tab )
 import qualified Data.Map.Strict as Map
-import Control.Monad.Reader
-import Data.Maybe
+import Control.Monad.Reader (Reader, ask, asks, liftM, runReader, void)
+import Data.Maybe (catMaybes)
 
-import Data.Units.UnitExp
-import Data.Units.SymbolTable
+import Data.Units.UnitExp (UnitExp(..))
+import Data.Units.SymbolTable (SymbolTable(..))
 import Text.Lexer (Token(..))
-import Text.Token
-import Text.TokenClass
+import Text.Token (number, satisfy', tok', variable)
+import Text.TokenClass (TokenClass(..))
 
 #if __GLASGOW_HASKELL__ < 709
 import Data.Typeable ( Typeable )

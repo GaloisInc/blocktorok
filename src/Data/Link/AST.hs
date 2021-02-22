@@ -11,14 +11,20 @@ This module exports the abstract representation of the LINK concrete syntax. It
 is the target of the parser defined in @Parser.y@.
 -}
 
-module Data.Link.AST where
+module Data.Link.AST
+  ( Config(..)
+  , Coupling(..)
+  , Duration(..)
+  , Prog(..)
+  , RunFn(..)
+  ) where
 
 import Data.Map.Strict (Map)
-import Data.Math
-import Data.Link.Identifier
-import Data.Physics.Model
-import Data.Units.UnitExp
-import Data.Solver.Backend
+import Data.Math (Equation)
+import Data.Link.Identifier (Identifier)
+import Data.Physics.Model (Model)
+import Data.Units.UnitExp (UnitExp)
+import Data.Solver.Backend (BackendConfig)
 
 import Language.Haskell.TH.Syntax (Name)
 

@@ -1,32 +1,45 @@
-module Main(main) where
+{-|
+Module      : Main
+Description : The LINK compiler entry point
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : cphifer@galois.com
+Stability   : experimental
+Portability : N/A
 
+The entry point to the LINK compiler. This is likely to be an ever-evolving
+module, as we identify new wants/needs in terms of command-line options,
+functionality, and behavior.
+-}
+
+module Main (main) where
+
+import Data.Class.Render
 import Language.Check (hasAllCouplings, allVarsDeclared)
-import Text.Parse.Link ( parseDecl )
-import System.Environment ( getArgs )
-import System.Exit
-import Translation.HighToStr (highToStr)
-import Data.List
+import Language.Compile.SU2 (compile)
+import Options
+import Text.Parse.Link (parseDecl)
 
--- destination for file
-dst = "test_cases/heat_transfer_rod/su2/out.su2"
+import Options.Applicative
+
+import System.Exit
 
 main :: IO ()
-main = do
-  args <- getArgs
-  result <- case args of
-              []  -> fmap (parseDecl "<stdin>") getContents
-              [f] -> fmap (parseDecl f) (readFile f)
-              _   -> error "expected max. 1 argument"
-  case result of
-    Left e -> do
-          print e
-          exitFailure
-    Right e -> if hasAllCouplings e && allVarsDeclared e then let
-                  _ = print e
-                  str = highToStr e
-                  flat = intercalate "\n\n" str
-                 in
-                  writeFile dst flat
-                  --mapM_ putStrLn str
-               else
-                 error "static checks failed"
+main = realMain =<< execParser opts
+  where
+    opts = info (parseOpts <**> helper)
+      (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
+
+-- TODO: Deal with these nested case expressions. ExceptT?
+realMain :: Options -> IO ()
+realMain (Options input output) =
+  do parseRes <- parseDecl input <$> readFile input
+     case parseRes of
+       Left e -> print e >> exitFailure
+       Right prog ->
+         if hasAllCouplings prog && allVarsDeclared prog then
+           case compile prog of
+             Left e -> print e >> exitFailure
+             Right su2 -> writeFile output (render su2)
+         else
+           error "Basic static analysis failed (do you have all couplings and are all variables declared before use?)"

@@ -22,14 +22,14 @@ module Text.Token
   , Parser
   ) where
 
-import Control.Monad.Reader
+import Control.Monad.Reader (Reader, void)
 
-import Data.Units.SymbolTable
+import Data.Units.SymbolTable (SymbolTable)
 
 import Language.Haskell.TH.Syntax (Name)
 
 import Text.Lexer (Token(..), AlexPosn(..))
-import Text.TokenClass
+import Text.TokenClass (TokenClass(..))
 
 import Text.Parsec hiding (satisfy)
 
@@ -42,6 +42,7 @@ satisfy f = tokenPrim show nextPos tokeq
     tokeq :: Token -> Maybe TokenClass
     tokeq t@(Token _ tc) = if f t then Just tc else Nothing
 
+-- | Parse a token based on a predicate returning a 'Maybe' value.
 satisfy' :: (Stream [Token] m Token) => (Token -> Maybe a) -> ParsecT [Token] u m a
 satisfy' = tokenPrim show nextPos
 
