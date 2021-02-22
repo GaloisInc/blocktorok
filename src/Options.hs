@@ -20,7 +20,7 @@ module Options
 import Options.Applicative (Parser, argument, help, metavar, long, short, some, str, strOption)
 
 data Options =
-  Options { source :: [String]
+  Options { sources :: [String]
           , target :: String
           }
 
