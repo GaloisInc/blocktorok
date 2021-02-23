@@ -54,7 +54,7 @@ instance Show Prog where
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
 data Duration = Iterations Integer (UnitExp Name Name) -- ^ The number of steps to take
               | TotalTime Integer  (UnitExp Name Name) -- ^ The amount of time to simulate
-              deriving (Show)
+              deriving (Eq, Show)
 
 data RunFn = RFn Identifier Identifier
               deriving (Show)

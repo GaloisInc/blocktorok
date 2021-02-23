@@ -19,6 +19,7 @@ module Language.Error
   ) where
 
 import Data.Class.Render (Render, render)
+import Data.Link.AST (Duration)
 import Data.Physics.Model (PhysicsType)
 import Data.Units.UnitExp (UnitExp)
 
@@ -31,6 +32,7 @@ data LinkError
   | NoPrograms
   | NoModelWithName String
   | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
+  | MismatchedDur Duration Duration
   | UnknownFormat String
   | UnknownPhysParams String
   | UnknownSolvingTech String
@@ -43,6 +45,7 @@ instance Render LinkError where
   render NoPrograms = "No programs provided. This is probably an internal error!"
   render (NoModelWithName m) = "Could not find model with name \"" ++ m ++ "\""
   render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ "but found a conflict: " ++ show gs'
+  render (MismatchedDur dur dur') = "Expected a duration of " ++ show dur ++ "but found a conflict: " ++ show dur'
   render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
   render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
   render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st

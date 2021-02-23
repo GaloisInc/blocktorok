@@ -23,13 +23,12 @@ module Language.Link
 
 import Control.Monad.Except (Except, throwError)
 
-import Data.Link.AST (Config(..), Prog(..))
+import Data.Link.AST (Config(..), Duration, Prog(..))
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)
 import Language.Error (LinkError(..))
 
 import Data.List (find)
-import Data.Maybe (fromJust)
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -51,12 +50,27 @@ link (p:ps) =
               , getCouplings = couplings } = p
 
      -- Check that all global steps are the same, throwing an error otherwise
-     case find (/= gs) gSteps of
-       Just gs' -> throwError $ MismatchedGSs gs gs'
-       Nothing -> return p
+     checkGSteps gs
+     checkDurs dur
+     return p
   where
     gSteps :: [(Integer, UnitExp Name Name)]
     gSteps = (\Prog { getConfig = Config { getGlobalStep = gs } } -> gs) <$> ps
+
+    durs :: [Duration]
+    durs = (\Prog { getConfig = Config { getDuration = dur } } -> dur) <$> ps
+
+    checkGSteps :: (Integer, UnitExp Name Name) -> Except LinkError ()
+    checkGSteps gs =
+      do case find (/= gs) gSteps of
+           Just gs' -> throwError $ MismatchedGSs gs gs'
+           Nothing -> return ()
+
+    checkDurs :: Duration -> Except LinkError ()
+    checkDurs dur =
+      do case find (/= dur) durs of
+           Just dur' -> throwError $ MismatchedDur dur dur'
+           Nothing -> return ()
 
     linkModels :: [Model] -> Except LinkError Model
     linkModels _ = throwError NYI
