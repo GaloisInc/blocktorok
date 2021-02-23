@@ -14,7 +14,9 @@ module Text.Parse.Link
   ( parseDecl
   ) where
 
+import Control.Monad.Except (Except, withExcept)
 import Control.Monad.Reader (runReader)
+import Control.Monad.Trans.Except (except)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -50,6 +52,7 @@ import Data.Solver.Backend
   , Solver(..)
   , SolvingTechnique(..)
   )
+import Language.Error (LinkError(..))
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -131,8 +134,8 @@ table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
           Left e -> error e
           Right st -> st
 
-parseNamedText :: Parser a -> String -> String -> Either ParseError a
-parseNamedText p n s =
+parseNamedText :: Parser a -> String -> String -> Except LinkError a
+parseNamedText p n s = withExcept ParseError $ except $
   case llex s of
     Left e -> flip runReader table $ runParserT (reportLexError e) () n []
     Right xs -> flip runReader table $ runParserT p () n xs
@@ -141,7 +144,7 @@ reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
 
 -- | Parse an entire LINK script.
-parseDecl :: FilePath -> String -> Either ParseError Prog
+parseDecl :: FilePath -> String -> Except LinkError Prog
 parseDecl = parseNamedText parseProg
 
 parseSolver:: Parser Solver

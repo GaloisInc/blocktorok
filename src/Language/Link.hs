@@ -21,11 +21,12 @@ module Language.Link
   ( link
   ) where
 
-import Control.Monad.Except (throwError)
+import Control.Monad.Except (Except, throwError)
 
 import Data.Link.AST (Config(..), Prog(..))
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)
+import Language.Error (LinkError(..))
 
 import Data.List (find)
 import Data.Maybe (fromJust)
@@ -37,8 +38,8 @@ import Language.Haskell.TH.Syntax (Name)
 -- that it checks for certain kinds of compatibility problems, such as
 -- model variables declaed with different units. The behavior of this function
 -- will likely change as LINK evolves.
-link :: [Prog] -> Either String Prog
-link []     = throwError "No programs provided. This is probably an internal error!"
+link :: [Prog] -> Except LinkError Prog
+link []     = throwError NoPrograms
 link (p:ps) =
   do -- Destructure the first program to support the various checks
      let Prog { getConfig = Config { getGlobalStep = gs
@@ -51,11 +52,11 @@ link (p:ps) =
 
      -- Check that all global steps are the same, throwing an error otherwise
      case find (/= gs) gSteps of
-       Just gs' -> throwError $ "Expected a global step of " ++ show gs ++ "but found a conflict: " ++ show gs'
+       Just gs' -> throwError $ MismatchedGSs gs gs'
        Nothing -> return p
   where
     gSteps :: [(Integer, UnitExp Name Name)]
     gSteps = (\Prog { getConfig = Config { getGlobalStep = gs } } -> gs) <$> ps
 
-    linkModels :: [Model] -> Either String Model
-    linkModels _ = throwError "Not yet implemented"
+    linkModels :: [Model] -> Except LinkError Model
+    linkModels _ = throwError NYI

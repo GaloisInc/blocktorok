@@ -19,11 +19,33 @@ module Language.Error
   ) where
 
 import Data.Class.Render (Render, render)
+import Data.Physics.Model (PhysicsType)
+import Data.Units.UnitExp (UnitExp)
+
+import Language.Haskell.TH.Syntax (Name)
+
+import Text.Parsec (ParseError)
 
 data LinkError
-  = Foo
-  | Bar
+  = ParseError ParseError
+  | NoPrograms
+  | NoModelWithName String
+  | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
+  | UnknownFormat String
+  | UnknownPhysParams String
+  | UnknownSolvingTech String
+  | UnknownNumScheme String
+  | UnsupportedPhys PhysicsType
+  | NYI -- Placeholder for anything we have TODO
 
 instance Render LinkError where
-  render Foo = "foo"
-  render Bar = "bar"
+  render (ParseError pe) = "A parsing error occurred: " ++ show pe
+  render NoPrograms = "No programs provided. This is probably an internal error!"
+  render (NoModelWithName m) = "Could not find model with name \"" ++ m ++ "\""
+  render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ "but found a conflict: " ++ show gs'
+  render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
+  render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
+  render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st
+  render (UnknownNumScheme ns) = "Unknown numerical scheme: " ++ ns
+  render (UnsupportedPhys pType) = "Unsupported physics type: " ++ show pType
+  render NYI = "Not yet implemented"
