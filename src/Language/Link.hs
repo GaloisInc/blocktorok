@@ -50,8 +50,8 @@ link (p:ps) =
               , getCouplings = couplings } = p
 
      -- Check that all global steps are the same, throwing an error otherwise
-     checkGSteps gs
-     checkDurs dur
+     checkMatch gs gSteps MismatchedGSs
+     checkMatch dur durs MismatchedDur
      return p
   where
     gSteps :: [(Integer, UnitExp Name Name)]
@@ -60,16 +60,10 @@ link (p:ps) =
     durs :: [Duration]
     durs = (\Prog { getConfig = Config { getDuration = dur } } -> dur) <$> ps
 
-    checkGSteps :: (Integer, UnitExp Name Name) -> Except LinkError ()
-    checkGSteps gs =
-      do case find (/= gs) gSteps of
-           Just gs' -> throwError $ MismatchedGSs gs gs'
-           Nothing -> return ()
-
-    checkDurs :: Duration -> Except LinkError ()
-    checkDurs dur =
-      do case find (/= dur) durs of
-           Just dur' -> throwError $ MismatchedDur dur dur'
+    checkMatch :: Eq a => a -> [a] -> (a -> a -> LinkError) -> Except LinkError ()
+    checkMatch a as aErr =
+      do case find (/= a) as of
+           Just a' -> throwError $ aErr a a'
            Nothing -> return ()
 
     linkModels :: [Model] -> Except LinkError Model
