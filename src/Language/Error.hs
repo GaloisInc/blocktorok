@@ -50,9 +50,9 @@ instance Render LinkError where
   render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ " but found a conflict: " ++ show gs'
   render (MismatchedDur dur dur') = "Expected a duration of " ++ show dur ++ " but found a conflict: " ++ show dur'
   render (MismatchedConstVal (Identifier ident) v v') =
-    "Expected constant " ++ ident ++ " to have value " ++ show v ++ " but it has value " ++ show v' ++ " in some source"
+    "Constant " ++ ident ++ " defined to have two different values: " ++ show v ++ " and " ++ show v'
   render (MismatchedConstUnit (Identifier ident) u u') =
-    "Expected constant " ++ ident ++ " to have units of " ++ show u ++ " but it has units of " ++ show u' ++ " in some source"
+    "Constant " ++ ident ++ " defined with two different units: " ++ show u ++ " and " ++ show u'
   render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
   render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
   render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st
