@@ -21,6 +21,7 @@ module Language.Link
   ( link
   ) where
 
+import Control.Monad (when)
 import Control.Monad.Except (Except, throwError)
 
 import Data.Link.AST (Config(..), Duration, Prog(..))
@@ -50,7 +51,8 @@ link (p:ps) =
                                    , getDuration = dur
                                    , getConsts = consts
                                    , getRunFn = rfn
-                                   , getBackendConfig = bcConfig }
+                                   , getBackendConfig = bcConfig
+                                   }
               , getModels = models
               , getCouplings = couplings } = p
 
@@ -60,7 +62,15 @@ link (p:ps) =
 
      -- Unify config constants
      allConsts <- linkCfgConsts consts constss
-     return p
+     return Prog { getConfig = Config { getGlobalStep = gs
+                                      , getDuration = dur
+                                      , getConsts = allConsts
+                                      , getRunFn = rfn
+                                      , getBackendConfig = bcConfig
+                                      }
+                 , getModels = models
+                 , getCouplings = couplings
+                 }
   where
     checkMatch :: Eq a => a -> [a] -> (a -> a -> LinkError) -> Except LinkError ()
     checkMatch a as aErr =
@@ -81,14 +91,28 @@ link (p:ps) =
       :: Map Identifier (Integer, UnitExp Name Name)
       -> [Map Identifier (Integer, UnitExp Name Name)]
       -> Except LinkError (Map Identifier (Integer, UnitExp Name Name))
-    linkCfgConsts consts constss =
-      do let constKeys = Map.keysSet consts
-             restKeys = Map.keysSet <$> constss
-             commonIdents = foldr Set.intersection constKeys restKeys
+    linkCfgConsts pConsts psConsts =
+      do let constKeys = Map.keysSet pConsts
+             restKeys = Map.keysSet <$> psConsts
+             commonIdents = Set.toList $ foldr Set.intersection constKeys restKeys
          if null commonIdents then
-           return $ foldr Map.union consts constss
+           return $ foldr Map.union pConsts psConsts
          else
-           undefined
+           do sequence_ $ checkConst <$> Map.toList pConsts <*> psConsts
+              return $ foldr Map.union pConsts psConsts
+      where
+        checkConst
+          :: (Identifier, (Integer, UnitExp Name Name))
+          -> Map Identifier (Integer, UnitExp Name Name)
+          -> Except LinkError ()
+        checkConst (ident, (expectedVal, expectedUnit)) consts =
+          do case Map.lookup ident consts of
+               Nothing -> return ()
+               Just (val, unit) ->
+                 if expectedVal /= val then
+                   throwError $ MismatchedConstVal ident expectedVal val
+                 else when (expectedUnit /= unit) (throwError $ MismatchedConstUnit ident expectedUnit unit)
+
 
     linkModels :: [Model] -> Except LinkError Model
     linkModels _ = throwError NYI
