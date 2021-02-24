@@ -24,11 +24,15 @@ module Language.Link
 import Control.Monad.Except (Except, throwError)
 
 import Data.Link.AST (Config(..), Duration, Prog(..))
+import Data.Link.Identifier (Identifier)
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)
 import Language.Error (LinkError(..))
 
 import Data.List (find)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -39,6 +43,7 @@ import Language.Haskell.TH.Syntax (Name)
 -- will likely change as LINK evolves.
 link :: [Prog] -> Except LinkError Prog
 link []     = throwError NoPrograms
+link [p]    = return p
 link (p:ps) =
   do -- Destructure the first program to support the various checks
      let Prog { getConfig = Config { getGlobalStep = gs
@@ -52,19 +57,38 @@ link (p:ps) =
      -- Check that all global steps are the same, throwing an error otherwise
      checkMatch gs gSteps MismatchedGSs
      checkMatch dur durs MismatchedDur
+
+     -- Unify config constants
+     allConsts <- linkCfgConsts consts constss
      return p
   where
+    checkMatch :: Eq a => a -> [a] -> (a -> a -> LinkError) -> Except LinkError ()
+    checkMatch a as aErr =
+      do case find (/= a) as of
+           Just a' -> throwError $ aErr a a'
+           Nothing -> return ()
+
     gSteps :: [(Integer, UnitExp Name Name)]
     gSteps = (\Prog { getConfig = Config { getGlobalStep = gs } } -> gs) <$> ps
 
     durs :: [Duration]
     durs = (\Prog { getConfig = Config { getDuration = dur } } -> dur) <$> ps
 
-    checkMatch :: Eq a => a -> [a] -> (a -> a -> LinkError) -> Except LinkError ()
-    checkMatch a as aErr =
-      do case find (/= a) as of
-           Just a' -> throwError $ aErr a a'
-           Nothing -> return ()
+    constss :: [Map Identifier (Integer, UnitExp Name Name)]
+    constss = (\Prog { getConfig = Config { getConsts = consts } } -> consts) <$> ps
+
+    linkCfgConsts
+      :: Map Identifier (Integer, UnitExp Name Name)
+      -> [Map Identifier (Integer, UnitExp Name Name)]
+      -> Except LinkError (Map Identifier (Integer, UnitExp Name Name))
+    linkCfgConsts consts constss =
+      do let constKeys = Map.keysSet consts
+             restKeys = Map.keysSet <$> constss
+             commonIdents = foldr Set.intersection constKeys restKeys
+         if null commonIdents then
+           return $ foldr Map.union consts constss
+         else
+           undefined
 
     linkModels :: [Model] -> Except LinkError Model
     linkModels _ = throwError NYI
