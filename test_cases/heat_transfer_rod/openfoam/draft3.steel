@@ -1,10 +1,9 @@
-
 config {
     timeStep : 5 ms ;
     totalTime: 3 s;
     const Temp = 273 K;
     run: m1(Temp);
-    -- backend : OpenFoam;
+    backend : OpenFoam;
 }
 
 SolvingTechnique sTemp {
@@ -17,7 +16,7 @@ SolvingTechnique sTemp {
 NumericalScheme nTemp {
     ddt : Euler;
     grad : Gauss Linear;
-    laplacian(DT, T) : Gauss Linear Orthogonal;
+    laplacian : Gauss Linear Orthogonal;
     interpolation : Linear;
     snGrad : Orthogonal;
 }

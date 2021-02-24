@@ -11,13 +11,20 @@ This module exports the abstract representation of the LINK concrete syntax. It
 is the target of the parser defined in @Parser.y@.
 -}
 
-module Data.Link.AST where
+module Data.Link.AST
+  ( Config(..)
+  , Coupling(..)
+  , Duration(..)
+  , Prog(..)
+  , RunFn(..)
+  ) where
 
 import Data.Map.Strict (Map)
-import Data.Link.Identifier
-import Data.Physics.Model
-import Data.Units.UnitExp
-import Data.Solver.Backend
+import Data.Math (Equation)
+import Data.Link.Identifier (Identifier)
+import Data.Physics.Model (Model)
+import Data.Units.UnitExp (UnitExp)
+import Data.Solver.Backend (BackendConfig)
 import qualified Data.Equation as Eqn
 
 import Language.Haskell.TH.Syntax (Name)
@@ -30,17 +37,17 @@ import Language.Haskell.TH.Syntax (Name)
 --   @length couplings = (length models * (length models - 1)) / 2@
 data Prog =
   Prog { getConfig :: Config -- ^ The global configuration
-       , getSolvingTechnique :: SolvingTechnique
-       , getNumericalScheme :: NumericalScheme
+       --, getSolvingTechnique :: SolvingTechnique
+       --, getNumericalScheme :: NumericalScheme
        , getModels :: Map Identifier Model -- ^ The specified models
        , getCouplings :: [Coupling] -- ^ The model couplings
        }
 instance Show Prog where
-     show (Prog s n c1 m c2 ) = "\n\n\t" ++ show c1
+     show (Prog c1 m c2 ) = "\n\n\t" ++ show c1
       ++ "\n\n\t" ++ show m
       ++ "\n\n\t" ++ show c2
-      ++ "\n\n\t" ++ show s
-      ++ "\n\n\t" ++ show n
+      -- ++ "\n\n\t" ++ show s
+      -- ++ "\n\n\t" ++ show n
 
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
@@ -59,7 +66,8 @@ data Config =
   Config { getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
          , getConsts :: Map Identifier (Integer, UnitExp Name Name)
-         , getRun :: RunFn
+         , getRunFn :: RunFn
+         , getBackendConfig ::BackendConfig
          } deriving (Show)
 
 -- TODO: A coupling relates two models via boundary equations and knowledge of

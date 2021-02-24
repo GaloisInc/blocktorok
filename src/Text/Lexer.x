@@ -1,5 +1,19 @@
 {
 {-# OPTIONS -w  #-}
+
+{-|
+Module      : Text.Lexer
+Description : LINK language lexical analysis
+Copyright   : (c) Galois, Inc. 2020
+License     : N/A
+Maintainer  : chiw@galois.com
+Stability   : experimental
+Portability : N/A
+
+This module defines a lexical analyzer for the LINK language using the Alex
+generator.
+-}
+
 module Text.Lexer
   ( Token(..)
   , AlexPosn(..)
@@ -13,7 +27,7 @@ module Text.Lexer
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
 
-import Text.TokenClass
+import Text.TokenClass (TokenClass(..))
 }
 
 %wrapper "monadUserState"
@@ -22,8 +36,8 @@ $digit = 0-9
 $alpha = [A-Za-z]
 
 tokens :-
-  $white+                                  ;
-  "--".*                                   ;
+  $white+                               ;
+  "--".*                                ;
 <0>  $digit+                               { lex (TokenInt . read)     }
 <0>  config                                { lex' TokenConfig          }
 <0>  run                                   { lex' TokenRun             }
@@ -68,8 +82,12 @@ tokens :-
 <0>  snGrad                                { lex' TokenNsnGrad         }
 <0>  NumericalScheme                       { lex' TokenNumericalScheme }
 <0>  SolvingTechnique                      { lex' TokenSolvingTechnique }
-<0>  Backend                               { lex' TokenBackend         }
+<0>  backend                               { lex' TokenBackend         }
 <0>  OpenFoam                              { lex' TokenOpenFoam        }
+<0>  Su2                                   { lex' TokenSu2             }
+<0>  format                                { lex' TokenFormat          }
+<0>  time                                  { lex' TokenTime            }
+<0>  plotting                              { lex' TokenPlotting        }
 <0>  with                                  { lex' TokenWith            }
 <0>  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
 <0>  \^                                    { lex' TokenPow             }
@@ -111,7 +129,6 @@ tokens :-
 <latex>  [\{ \} \_ \^ \+ \- \= \( \)]       { lex (TokenLatex . TLSymbol) }
 <latex>  \\? [A-Za-z]+                      { lex (TokenLatex . TLIdent) }
 
-
 {
 -- To improve error messages, We keep the path of the file we are
 -- lexing in our own state.
@@ -126,7 +143,7 @@ getFilePath = liftM filePath alexGetUserState
 setFilePath :: FilePath -> Alex ()
 setFilePath = alexSetUserState . AlexUserState
 
--- The token type, consisting of the source code position and a token class.
+-- | The token type, consisting of the source code position and a token class.
 data Token = Token AlexPosn TokenClass
   deriving ( Show )
 
@@ -145,7 +162,7 @@ lex f = \(p,_,_,s) i -> return $ Token p (f (take i s))
 lex' :: TokenClass -> AlexAction Token
 lex' = lex . const
 
--- LINK lexer
+-- | The top-level LINK lexer
 llex :: String -> Either String [Token]
 llex str = runAlex str loop
   where
@@ -157,8 +174,8 @@ llex str = runAlex str loop
             do toks <- loop
                return $ t:toks
 
--- We rewrite alexMonadScan' to delegate to alexError' when lexing fails
--- (the default implementation just returns an error message).
+-- | We rewrite alexMonadScan' to delegate to alexError' when lexing fails
+--   (the default implementation just returns an error message).
 alexMonadScan' :: Alex Token
 alexMonadScan' = do
   inp <- alexGetInput
@@ -174,13 +191,13 @@ alexMonadScan' = do
         alexSetInput inp'
         action (ignorePendingBytes inp) len
 
--- Signal an error, including a commonly accepted source code position.
+-- | Signal an error, including a commonly accepted source code position.
 alexError' :: AlexPosn -> String -> Alex a
 alexError' (AlexPn _ l c) msg = do
   fp <- getFilePath
   alexError (fp ++ ":" ++ show l ++ ":" ++ show c ++ ": " ++ msg)
 
--- A variant of runAlex, keeping track of the path of the file we are lexing.
+-- | A variant of runAlex, keeping track of the path of the file we are lexing.
 runAlex' :: Alex a -> FilePath -> String -> Either String a
 runAlex' a fp input = runAlex input (setFilePath fp >> a)
 }

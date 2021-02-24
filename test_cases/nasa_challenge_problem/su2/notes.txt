@@ -1,0 +1,31 @@
+--------------------------------------------------------------------
+--Things that are not yet supported in LINK but needed for codegen --
+--------------------------------------------------------------------
+
+Note. Yerim wants to add the following attributes to the Su2 command for the challenge problem:
+	MATH_PROBLEM= DIRECT -- I ADDED THIS, THIS NEEDS TO GO SOMEWHERE
+	RESTART_SOL= NO -- THIS COULD BE HARD CODED AND SKIPPED
+
+
+
+
+
+-- unsteady/transient simulation
+TimeDependency { 
+  TIME_DOMAIN = YES;
+  TIME_MARCHING= DUAL_TIME_STEPPING-2ND_ORDER;
+  INNER_ITER= 50;
+  OUTER_ITER = 1000;
+}
+
+
+Only supported by the following built-in keyword GridDeformation which will generate
+Fixing grid deformations
+
+GridDeformation {
+  DEFORM_LINEAR_SOLVER= FGMRES;
+  DEFORM_LINEAR_SOLVER_ITER= 200;
+  DEFORM_NONLINEAR_ITER= 1;
+  DEFORM_CONSOLE_OUTPUT= YES;
+  DEFORM_STIFFNESS_TYPE= INVERSE_VOLUME;
+}

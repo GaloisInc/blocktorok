@@ -14,22 +14,16 @@ designed to be extended with whatever we feel is important.)
 -}
 
 module Data.Physics.Model
-  ( Model
-  , mkModel
-  , getTechnique
-  , getConsts
-  , getVars
-  , getLib
-  , getEqs
-  , VarSolve(..)
-  , BoundaryType(..)
+  ( Boundary(..)
   , BoundaryField(..)
-  , Boundary(..)
+  , BoundaryType(..)
+  , Model(..)
   , PhysicsType(..)
+  , VarSolve(..)
+  , mkModel
   ) where
 
 import Data.Map.Strict (Map)
-import Data.Set (Set)
 
 import Data.Link.Identifier
 import Data.Math
@@ -39,7 +33,8 @@ import Language.Haskell.TH.Syntax (Name)
 import qualified Data.Equation as Eqn
 
 -- An ugly function I added. Forgive me.
-mkIndent lhs rhs = "\n\t"++show(lhs)++" : "++show(rhs)
+mkIndent :: (Show a, Show b) => a -> b -> String
+mkIndent lhs rhs = "\n\t" ++ show lhs ++ " : " ++ show rhs
 
 data BoundaryType = Neumann | Dirichlet
               deriving (Show)
@@ -50,51 +45,50 @@ data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
 data Boundary =  T BoundaryType Identifier | F [BoundaryField]
               deriving (Show)
 
-data PhysicsType =  HeatTransfer Identifier
+data PhysicsType = HeatTransfer Identifier
                  | FluidFlow Identifier
                  | HeatConduction Identifier
                 deriving (Show)
 data VarSolve = VarSolve
-  Identifier   --  ^ Variable we are solving for
-  Identifier    -- , solving technique
-  Identifier   ---, and numerical scheme
+  Identifier   -- ^ Variable we are solving for
+  Identifier   -- ^ Solving technique
+  Identifier   -- ^ Numerical scheme
   deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
-  Model {
-        getInput :: Identifier
+  Model { getInput :: Identifier
         , getOutput :: Identifier
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier (Integer, UnitExp Name Name)
-        , getLib :: Map Identifier (Identifier, Identifier)
-        , getVars :: Map Identifier (UnitExp Name Name)
+        , getConsts :: Map Identifier (Integer, UnitExp Name Name) -- ^ The named constants used in this model
+        , getLib :: Map Identifier (Identifier, Identifier) -- ^ Named library imports to support model expression/simulation
+        , getVars :: Map Identifier (UnitExp Name Name) -- ^ The variables appearing in the model equations
         , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
         , getSolve :: VarSolve
         }
 instance Show Model where
       show (Model i o t b p c l v e s) =
-        (mkIndent "input" i)
-        ++ (mkIndent "output" o)
-        ++ (mkIndent "Technique" t)
-        ++ (mkIndent "Boundary" b)
-        ++ (mkIndent "PhysicsType" p)
-        ++ (mkIndent "constants" c)
-        ++ (mkIndent "libraries" l)
-        ++ (mkIndent "variables" v)
-        ++ (mkIndent "equations" e)
-        ++ (mkIndent "solvingvariables" s)
+           mkIndent "input" i
+        ++ mkIndent "output" o
+        ++ mkIndent "Technique" t
+        ++ mkIndent "Boundary" b
+        ++ mkIndent "PhysicsType" p
+        ++ mkIndent "constants" c
+        ++ mkIndent "libraries" l
+        ++ mkIndent "variables" v
+        ++ mkIndent "equations" e
+        ++ mkIndent "solvingvariables" s
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
-      -> Technique -> Boundary -> PhysicsType
-      ->  Map Identifier (Integer, UnitExp Name Name)
-      ->  Map Identifier (Identifier, Identifier)
-      ->  Map Identifier (UnitExp Name Name)
-      -> [Eqn.Equation]
-      -> VarSolve
-      -> Model
+        -> Technique -> Boundary -> PhysicsType
+        -> Map Identifier (Integer, UnitExp Name Name)
+        -> Map Identifier (Identifier, Identifier)
+        -> Map Identifier (UnitExp Name Name)
+        -> [Eqn.Equation]
+        -> VarSolve
+        -> Model
 mkModel = Model

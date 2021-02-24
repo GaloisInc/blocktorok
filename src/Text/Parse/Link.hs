@@ -16,29 +16,60 @@ module Text.Parse.Link
   , table
   ) where
 
-import Control.Monad.Reader
+import Control.Monad.Reader (runReader)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST
-import Data.Link.Identifier
-import Text.Lexer
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..))
+import Data.Link.Identifier (Identifier(..))
+import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
 import Text.Token ( Parser, tok, tok', number, variable )
 import Text.TokenClass
 import Data.Math
 import Data.Physics.Model
-import Data.Solver.Technique
+  ( Boundary(..)
+  , BoundaryField(..)
+  , BoundaryType(..)
+  , Model
+  , PhysicsType(..)
+  , VarSolve(..)
+  , mkModel
+  )
+import Data.Solver.Technique (Technique(..))
 import qualified Data.Units.UnitExp as U
-import Data.Units.SymbolTable
-import Data.Units.SI
-import Data.Units.SI.Prefixes
+import Data.Units.SymbolTable (SymbolTable, mkSymbolTable)
+import Data.Units.SI (siUnits)
+import Data.Units.SI.Prefixes (siPrefixes)
 import Data.Solver.Backend
+  ( BackendConfig(..)
+  , DerivKind(..)
+  , Ddt(..)
+  , NumericalScheme(..)
+  , PlotMarkers(..)
+  , Preconditioner(..)
+  , Solver(..)
+  , SolvingTechnique(..)
+  )
+
 import Language.Haskell.TH.Syntax (Name)
+
 import Text.Parsec
+<<<<<<< HEAD
 import qualified Data.Equation as Eqn
 import Text.Parse.Latex(parseLatexEquations)
+=======
+  ( ParseError
+  , (<|>)
+  , chainl1
+  , choice
+  , many
+  , many1
+  , runParserT
+  , try
+  )
+>>>>>>> master
 
 prefixStrs, unitStrs :: [String]
 prefixStrs =
@@ -116,6 +147,7 @@ parseNamedText p n s =
 reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
 
+-- | Parse an entire LINK script.
 parseDecl :: FilePath -> String -> Either ParseError Prog
 parseDecl = parseNamedText parseProg
 
@@ -245,10 +277,11 @@ parseNumericalScheme =
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
-     solvingTechnique <- parseSolvingTechnique
-     numericalScheme <- parseNumericalScheme
+     --solvingTechnique <- parseSolvingTechnique
+     --numericalScheme <- parseNumericalScheme
      models <- parseModels
-     Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+     --Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+     Prog cfg models  <$> parseCouplings
 
 parseRunFn :: Parser RunFn
 parseRunFn =
@@ -261,6 +294,55 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
+parsePlotting :: Parser PlotMarkers
+parsePlotting =
+  do
+    tok' TokenLParen
+    m1 <- parseIdentifier
+    tok' TokenComma
+    m2 <- parseIdentifier
+    tok' TokenComma
+    m3 <- parseIdentifier
+    tok' TokenComma
+    m4 <- parseIdentifier
+    tok' TokenRParen
+    return $ PlotMarkers [m1, m2, m3, m4]
+
+parseBackendSu2 :: Parser BackendConfig
+parseBackendSu2 =
+  do
+     tok' TokenSu2
+     tok' TokenLCurl
+     tok' TokenFormat
+     tok' TokenColon
+     f <- parseIdentifier
+     tok' TokenComma
+     tok' TokenTime
+     tok' TokenColon
+     n <- number
+     tok' TokenComma
+     tok' TokenPlotting
+     tok' TokenColon
+     p <- parsePlotting
+     tok' TokenRCurl
+     tok' TokenSemi
+     return $ Su2 f n p
+
+parseBackendOpenFoam :: Parser BackendConfig
+parseBackendOpenFoam =
+   do
+      tok' TokenOpenFoam
+      tok' TokenSemi
+      return $ OpenFoam
+
+parseBackend :: Parser BackendConfig
+parseBackend =
+  do
+    tok' TokenBackend
+    tok' TokenColon
+    parseBackendOpenFoam <|> parseBackendSu2
+
+
 parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
@@ -269,8 +351,9 @@ parseConfig =
      duration <- parseDurationConfig
      consts <- parseConstDecls
      runfn <- parseRunFn
+     backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeStep duration consts runfn
+     return $ Config timeStep duration consts runfn backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep

@@ -22,8 +22,8 @@ import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Data.Link.AST
-import Data.Link.Identifier
+import Data.Link.AST (Coupling(..), Prog(..))
+import Data.Link.Identifier (Identifier)
 -- import Math
 -- import Physics.Model
 

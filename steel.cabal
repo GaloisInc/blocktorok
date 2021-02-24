@@ -21,8 +21,8 @@ executable steel
   -- other-modules:
   -- other-extensions:
   build-depends:       base >= 4.11 && < 4.14
+                     , optparse-applicative
                      , steel
-                     , units
   -- hs-source-dirs:
   default-language:    Haskell2010
   build-tools:         happy
@@ -35,6 +35,7 @@ library
                      , containers
                      , mtl
                      , multimap
+                     , optparse-applicative
                      , parsec
                      , template-haskell
                      , uniplate
@@ -43,24 +44,27 @@ library
                      , prettyprinter
   hs-source-dirs:      src
   default-language:    Haskell2010
-  exposed-modules:     Data.Link.AST
-                       Language.Check
+  exposed-modules:     Data.Backends.SU2
+                       Data.Class.Render
+                       Data.Link.AST
                        Data.Link.Identifier
+                       Data.Math
+                       Data.Equation
+                       Data.LatexSyntax
+                       Data.Physics.Model
+                       Data.Solver.Backend
+                       Data.Solver.Technique
+                       Data.Units.SymbolTable
+                       Data.Units.UnitExp
+                       Language.Check
+                       Language.Compile.SU2
+                       Options
                        Text.Lexer
                        Text.Parse.Link
                        Text.Parse.Units
                        Text.Parse.Latex
                        Text.Token
                        Text.TokenClass
-                       Data.Solver.Technique
-                       Data.Solver.Backend
-       
-                       Data.Math
-                       Data.Equation
-                       Data.LatexSyntax
-                       Data.Physics.Model
-                       Data.Units.SymbolTable
-                       Data.Units.UnitExp
   ghc-options: -Wall
   build-tools: alex
 

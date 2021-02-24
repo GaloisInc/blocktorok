@@ -1,0 +1,243 @@
+--------------------------------------------------------------------
+-- LINK code Documentation --
+--------------------------------------------------------------------
+config {
+	timeStep : 5e-3 s -- size of the time step
+	iterations : 200 -- total number of time steps
+	const Tw = LIB_PhysicsParameters2.SOLID_TEMPERATURE_INIT; -- constant variables
+	run: coupleModels1 (Tw)
+	Backend : SU2
+}
+
+model StructureModel (qw) {
+  technique : FEM;
+
+  boundaryField : MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 ); --NEEDS TO BE FIXED
+
+  physics : HeatTransfer{P};
+  OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+  OBJECTIVE_WEIGHT= 1.0
+  const rhos = P.SolidDensity;
+  const ks = P.SolidThermalConductivity;
+  const cps = P.SolidSpecificHeat;
+  var Tw;
+  rhos*cps*∇Tw- ks*△Tw = qw;
+  solve Tw with {numSolidScheme, linSolver, convSolidParams, heatMethod};
+  return Tw;
+  }
+
+model FluidModel(Tw) {
+  output : qw;
+  technique : FVM;
+  SOLVER= RANS;
+  KIND_TURB_MODEL= SA;
+
+  boundaryField: MARKER_FAR= ( MarkerName.farfield ); --NEEDS TO BE FIXED
+
+  physics : FluidFlow {F};
+  OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+  OBJECTIVE_WEIGHT= 1.0
+  MARKER_MONITORING= (cylinder_outer1, cylinder_outer2, cylinder_outer3);
+
+  -- initial values
+  MACH_NUMBER= 0.8;
+  AOA= 0;
+  SIDESLIP_ANGLE= 0.0;
+  INIT_OPTION= REYNOLDS;
+  FREESTREAM_OPTION= TEMPERATURE_FS;
+  FREESTREAM_TEMPERATURE= 62.7 K; -- T∞
+  REYNOLDS_NUMBER= 2E6; -- Re∞, d
+  REYNOLDS_LENGTH= 6 inches; -- diameter of the cone
+
+  const gamma = F.standardAir.ratio_Specific_Heat; -- a perfect gas
+  const mu = F.sutherland.viscosityRef; -- dynamic viscosity, depends on temperature!
+  const R =  F.standardAir.GasConstant; -- specific gas constant
+  const Pr = F.constant_prandtl.LaminarPrandtlNumber; -- Prandtl number
+
+  -- variables we are solving for
+  var u; -- velocity in x direction (U = [u, v, w])
+  var v; --  velocity in y direction (U = [u, v, w])
+  var w; -- velocity in z direction (U = [u, v, w])
+  var e;  -- internal energy
+  var rhof; -- fluid density
+  var T; -- fluid temperature, depends on e
+  var k; -- thermal conductivity, depends on mu
+  var mu; -- dynamic viscosity, depends on T
+  var P; -- pressure, depends on T
+  var tau; -- viscous stress tensor
+
+  -- ... removing math for now
+
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve u with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve w with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve e with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve rhof with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  solve tau with {numFlowScheme, linSolver, convFlowParams, slopeParams, flowMethod, turbulentMethod};
+  -- I think T, k, mu, P are solved directly using the closure equations from the Navier-Stokes variables
+  return qw;
+  }
+
+couple coupleModels1 (Tin) {
+  var qw; -- heat flux
+  qw = FluidModel(Tin);
+  Tout = ModelSolid (qw);
+  return Tout;
+  }
+
+
+--------------------------------------------------------------------
+-- BackendType in config  --
+--------------------------------------------------------------------
+
+
+-- unsteady/transient simulation
+TimeDependency { -- can we call this in the config block above?
+  TIME_DOMAIN = YES;
+  TIME_MARCHING= DUAL_TIME_STEPPING-2ND_ORDER;
+  INNER_ITER= 50;
+  OUTER_ITER = 1000;
+}
+
+
+--------------------------------------------------------------------
+-- physicsType in FluidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_PhysicsParameters1 which will generate
+
+thermalConductivity {
+  CONDUCTIVITY_MODEL= CONSTANT_PRANDTL;
+  PRANDTL_LAM= 0.72;
+  PRANDTL_TURB= 0.90;
+}
+
+fluidModel {
+  FLUID_MODEL= STANDARD_AIR;
+  GAMMA_VALUE= 1.4; -- ratio of specific heats
+  GAS_CONSTANT= 287.058 J/kg*K;
+}
+
+viscosityModel {
+  VISCOSITY_MODEL= SUTHERLAND;
+  MU_REF= 1.716E-5; -- Sutherland Viscosity Ref
+  MU_T_REF= 273.15; -- Sutherland Temperature Ref
+  SUTHERLAND_CONSTANT= 110.4; -- Sutherland Constant
+}
+
+--------------------------------------------------------------------
+-- SolvingTechnique in FluidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_SolvingTechnique1 which will generate
+
+ConvergenceParams {
+  CONV_FIELD= RMS_DENSITY;
+  CONV_RESIDUAL_MINVAL= -14;
+  CONV_STARTITER= 10;
+  CONV_CAUCHY_ELEMS= 100;
+  CONV_CAUCHY_EPS= 1E-6; -- these values seem to be defaults
+}
+
+--------------------------------------------------------------------
+-- NumericalSchemeType in FluidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_NumericalScheme1 which will generate
+
+NumericalSchemes {
+  NUM_METHOD_GRAD= WEIGHTED_LEAST_SQUARES;
+  CFL_NUMBER= 5.0;
+  CFL_ADAPT= NO;
+  CFL_ADAPT_PARAM= ( 0.1, 2.0, 5.0, 1e10 );
+  RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 ); -- these values seem to be defaults
+}
+
+FlowNumericalMethod {
+  CONV_NUM_METHOD_FLOW= ROE;
+  MUSCL_FLOW= YES;
+  SLOPE_LIMITER_FLOW= NONE;
+  JST_SENSOR_COEFF= ( 0.5, 0.02 );
+  TIME_DISCRE_FLOW= EULER_IMPLICIT;
+}
+
+TurbulentNumericalMethod {
+  CONV_NUM_METHOD_TURB= SCALAR_UPWIND;
+  MUSCL_TURB= NO;
+  SLOPE_LIMITER_TURB= VENKATAKRISHNAN;
+  TIME_DISCRE_TURB= EULER_IMPLICIT;
+}
+
+SlopeLimiter {
+  VENKAT_LIMITER_COEFF= 0.1;
+  ADJ_SHARP_LIMITER_COEFF= 3.0;
+  REF_SHARP_EDGES= 3.0;
+  SENS_REMOVE_SHARP= NO;
+}
+
+--------------------------------------------------------------------
+-- GridDeformation in Model --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword GridDeformation which will generate
+Fixing grid deformations
+
+GridDeformation {
+  DEFORM_LINEAR_SOLVER= FGMRES;
+  DEFORM_LINEAR_SOLVER_ITER= 200;
+  DEFORM_NONLINEAR_ITER= 1;
+  DEFORM_CONSOLE_OUTPUT= YES;
+  DEFORM_STIFFNESS_TYPE= INVERSE_VOLUME;
+}
+
+
+--------------------------------------------------------------------
+-- NumericalSchemeType in SolidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_NumericalScheme2 which will generate
+
+HeatNumericalMethod {
+  TIME_DISCRE_HEAT= EULER_IMPLICIT
+}
+
+--------------------------------------------------------------------
+-- physicsType in SolidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_PhysicsParameters2 which will generate
+
+
+ConductionDefinition {
+  INC_NONDIM = DIMENSIONAL;
+  SOLID_TEMPERATURE_INIT= 300.0 K;
+  SOLID_DENSITY = 8.67 g/cm^3;
+  SPECIFIC_HEAT_CP = 426.4 J/(kg*K);
+  SOLID_THERMAL_CONDUCTIVITY = 17.3 W/(m*K);
+}
+
+--------------------------------------------------------------------
+-- SolvingTechnique in SolidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_SolvingTechnique2 which will generate
+
+LinearSolver {
+  LINEAR_SOLVER= FGMRES;
+  LINEAR_SOLVER_PREC= ILU;
+  LINEAR_SOLVER_ERROR= 1E-15;
+  LINEAR_SOLVER_ITER= 5; -- these values seem to be defaults
+}
+
+ConvergenceParams {
+  CONV_RESIDUAL_MINVAL= -19;
+  CONV_STARTITER= 10;
+  CONV_CAUCHY_ELEMS= 100;
+  CONV_CAUCHY_EPS= 1E-6; -- these values seem to be defaults
+}
+
+--------------------------------------------------------------------
+-- NumericalSchemeType in SolidModel --
+--------------------------------------------------------------------
+Only supported by the following built-in keyword LIB_NumericalScheme2 which will generate
+
+NumericalSchemes {
+  NUM_METHOD_GRAD= GREEN_GAUSS;
+  CFL_NUMBER= 10.0;
+  CFL_ADAPT= NO;
+  CFL_ADAPT_PARAM= ( 1.5, 0.5, 10.0, 10000.0 );
+  RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 ); -- these values seem to be defaults
+}

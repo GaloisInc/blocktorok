@@ -1,4 +1,6 @@
--- Initiate Model settings for this challenge problem 
+
+
+-- Initiate Model settings for this challenge problem
 
 -- Fluid.solver
 compressibleFreeStreamDefinition = {
@@ -45,3 +47,4 @@ conduction_condition_definition {
   -- cp = 17.3/(4.68*8.67)*10^3
   -- cp = 426.4 J/(kg*K)
   }
+

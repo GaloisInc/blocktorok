@@ -3,23 +3,9 @@ config {
     totalTime: 3 s;
     const Temp = 273 K;
     run: m1(Temp);
-    -- backend : OpenFoam;
+    backend : OpenFoam;
 }
 
-SolvingTechnique sTemp {
-    solver : PCG;
-    preconditioner : DIC;
-    tolerance : 1;
-    relTol : 0;
-    }
-
-NumericalScheme nTemp {
-    ddt : Euler;
-    grad : Gauss Linear;
-    laplacian : Gauss Linear Orthogonal;
-    interpolation : Linear;
-    snGrad : Orthogonal;
-}
 
 model m1 (Temp) {
     technique : FVM;
@@ -27,7 +13,7 @@ model m1 (Temp) {
     physics : HeatConduction{tmp};
     const DT = 4; -- e-05  m^2/s
     (∂ Temp) /(∂ t) - DT * △Temp  = 0;
-    solve Temp with {sTemp, nTemp};
+    solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};
     return Temp;
 
 }

@@ -66,6 +66,10 @@ data TokenClass =
   | TokenSolvingTechnique
   | TokenBackend
   | TokenOpenFoam
+  | TokenSu2
+  | TokenFormat
+  | TokenTime
+  | TokenPlotting
   | TokenPow
   | TokenColon
   | TokenSemi
@@ -169,8 +173,12 @@ unLex TokenNinterpolation = "interpolation"
 unLex TokenNsnGrad ="snGrad"
 unLex TokenNumericalScheme = "NumericalScheme"
 unLex TokenSolvingTechnique = "SolvingTechnique"
-unLex TokenBackend = "Backend"
+unLex TokenBackend = "backend"
 unLex TokenOpenFoam = "OpenFoam"
+unLex TokenSu2 = "Su2"
+unLex TokenFormat = "format"
+unLex TokenTime = "time"
+unLex TokenPlotting = "plotting"
 unLex TokenWith = "with"
 unLex TokenComma = ","
 unLex TokenLParen = "("
