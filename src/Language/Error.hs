@@ -20,6 +20,7 @@ module Language.Error
 
 import Data.Class.Render (Render, render)
 import Data.Link.AST (Duration)
+import Data.Link.Identifier (Identifier(..))
 import Data.Physics.Model (PhysicsType)
 import Data.Units.UnitExp (UnitExp)
 
@@ -33,6 +34,8 @@ data LinkError
   | NoModelWithName String
   | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
   | MismatchedDur Duration Duration
+  | MismatchedConstVal Identifier Integer Integer
+  | MismatchedConstUnit Identifier (UnitExp Name Name) (UnitExp Name Name)
   | UnknownFormat String
   | UnknownPhysParams String
   | UnknownSolvingTech String
@@ -44,8 +47,12 @@ instance Render LinkError where
   render (ParseError pe) = "A parsing error occurred: " ++ show pe
   render NoPrograms = "No programs provided. This is probably an internal error!"
   render (NoModelWithName m) = "Could not find model with name \"" ++ m ++ "\""
-  render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ "but found a conflict: " ++ show gs'
-  render (MismatchedDur dur dur') = "Expected a duration of " ++ show dur ++ "but found a conflict: " ++ show dur'
+  render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ " but found a conflict: " ++ show gs'
+  render (MismatchedDur dur dur') = "Expected a duration of " ++ show dur ++ " but found a conflict: " ++ show dur'
+  render (MismatchedConstVal (Identifier ident) v v') =
+    "Expected constant " ++ ident ++ " to have value " ++ show v ++ " but it has value " ++ show v' ++ " in some source"
+  render (MismatchedConstUnit (Identifier ident) u u') =
+    "Expected constant " ++ ident ++ " to have units of " ++ show u ++ " but it has units of " ++ show u' ++ " in some source"
   render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
   render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
   render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st
