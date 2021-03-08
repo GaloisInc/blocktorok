@@ -25,6 +25,7 @@ import Data.Link.Identifier (Identifier)
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)
 import Data.Solver.Backend (BackendConfig)
+import qualified Data.Equation as Eqn
 
 import Language.Haskell.TH.Syntax (Name)
 
@@ -80,5 +81,5 @@ data Coupling =
            , input :: Identifier
            , output :: Identifier
            , getVars :: Map Identifier (UnitExp Name Name)
-           , getEqs :: [Equation] -- ^ The equations governing the model
+           , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
            } deriving (Show)

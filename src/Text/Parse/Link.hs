@@ -12,6 +12,8 @@ This module defines the parser for the LINK language, using Parsec.
 
 module Text.Parse.Link
   ( parseDecl
+  , parseNamedText
+  , table
   ) where
 
 import Control.Monad.Except (Except, withExcept)
@@ -25,9 +27,9 @@ import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
-import Text.Token (Parser, number, tok, tok', variable)
-import Text.TokenClass (TokenClass(..))
-import Data.Math (Equation(..), Exp(..))
+import Text.Token ( Parser, tok, tok', number, variable )
+import Text.TokenClass
+import Data.Math
 import Data.Physics.Model
   ( Boundary(..)
   , BoundaryField(..)
@@ -65,6 +67,8 @@ import Text.Parsec
   , runParserT
   , try
   )
+import qualified Data.Equation as Eqn
+import Text.Parse.Latex(parseLatexEquations)
 
 prefixStrs, unitStrs :: [String]
 prefixStrs =
@@ -547,8 +551,15 @@ parseVarDecls =
          tok' TokenSemi
          return (i, u)
 
-parseEqs :: Parser [Equation]
-parseEqs = many parseEq
+
+parseEqs :: Parser [Eqn.Equation]
+parseEqs =
+  choice [ fmap Eqn.LatexEquation <$> parseLatexEquations
+         , fmap Eqn.MathEquation <$> parseMathEqs
+         ]
+
+parseMathEqs :: Parser [Equation]
+parseMathEqs = many parseEq
   where
     parseEq =
       do lhs <- parseExp
@@ -654,3 +665,4 @@ parseCouplings = many parseCoupling
          o <- parseReturnDecl
          tok' TokenRCurl
          return $ Coupling mname ma mb i o vs eqs
+
