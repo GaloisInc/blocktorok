@@ -21,6 +21,7 @@ executable steel
   -- other-modules:
   -- other-extensions:
   build-depends:       base >= 4.11 && < 4.14
+                     , mtl
                      , optparse-applicative
                      , steel
   -- hs-source-dirs:
@@ -38,6 +39,7 @@ library
                      , optparse-applicative
                      , parsec
                      , template-haskell
+                     , transformers
                      , uniplate
                      , units
                      , units-defs
@@ -58,6 +60,8 @@ library
                        Data.Units.UnitExp
                        Language.Check
                        Language.Compile.SU2
+                       Language.Error
+                       Language.Link
                        Options
                        Text.Lexer
                        Text.Parse.Link

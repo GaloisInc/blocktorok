@@ -55,7 +55,7 @@ instance Show Prog where
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
 data Duration = Iterations Integer (UnitExp Name Name) -- ^ The number of steps to take
               | TotalTime Integer  (UnitExp Name Name) -- ^ The amount of time to simulate
-              deriving (Show)
+              deriving (Eq, Show)
 
 data RunFn = RFn Identifier Identifier
               deriving (Show)
@@ -74,12 +74,12 @@ data Config =
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
 -- that hold at the interface between the models.
-data Coupling = Coupling {
-  name:: Identifier
-  , model1::Identifier
-  , model2::Identifier
-  , input::Identifier
-  , output::Identifier
-  , getVars:: Map Identifier (UnitExp Name Name)
-  , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
-  } deriving (Show)
+data Coupling =
+  Coupling { name :: Identifier
+           , model1 :: Identifier
+           , model2 :: Identifier
+           , input :: Identifier
+           , output :: Identifier
+           , getVars :: Map Identifier (UnitExp Name Name)
+           , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
+           } deriving (Show)
