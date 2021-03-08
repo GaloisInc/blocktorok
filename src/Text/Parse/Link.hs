@@ -56,10 +56,6 @@ import Data.Solver.Backend
 import Language.Haskell.TH.Syntax (Name)
 
 import Text.Parsec
-<<<<<<< HEAD
-import qualified Data.Equation as Eqn
-import Text.Parse.Latex(parseLatexEquations)
-=======
   ( ParseError
   , (<|>)
   , chainl1
@@ -69,7 +65,8 @@ import Text.Parse.Latex(parseLatexEquations)
   , runParserT
   , try
   )
->>>>>>> master
+import qualified Data.Equation as Eqn
+import Text.Parse.Latex(parseLatexEquations)
 
 prefixStrs, unitStrs :: [String]
 prefixStrs =

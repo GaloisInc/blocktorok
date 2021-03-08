@@ -27,7 +27,7 @@ module Text.Lexer
 import Prelude hiding (lex)
 import Control.Monad ( liftM )
 
-import Text.TokenClass (TokenClass(..))
+import Text.TokenClass (TokenClass(..), TokenLatex(..))
 }
 
 %wrapper "monadUserState"
