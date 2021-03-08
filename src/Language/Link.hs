@@ -87,6 +87,9 @@ link (p:ps) =
     constss :: [Map Identifier (Integer, UnitExp Name Name)]
     constss = (\Prog { getConfig = Config { getConsts = consts } } -> consts) <$> ps
 
+    -- NOTE: This is not entirely correct - it does not catch errors between arbitrary pairs of LINK
+    -- programs, as there is a bias for the first provided source in this formulation. Fixing this
+    -- isn't too hard, but requires some care
     linkCfgConsts
       :: Map Identifier (Integer, UnitExp Name Name)
       -> [Map Identifier (Integer, UnitExp Name Name)]
