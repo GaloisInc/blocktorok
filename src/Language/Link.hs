@@ -33,6 +33,7 @@ import Language.Error (LinkError(..))
 import Data.List (find)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Maybe (fromJust, catMaybes)
 import qualified Data.Set as Set
 
 import Language.Haskell.TH.Syntax (Name)
@@ -87,9 +88,6 @@ link (p:ps) =
     constss :: [Map Identifier (Integer, UnitExp Name Name)]
     constss = (\Prog { getConfig = Config { getConsts = consts } } -> consts) <$> ps
 
-    -- NOTE: This is not entirely correct - it does not catch errors between arbitrary pairs of LINK
-    -- programs, as there is a bias for the first provided source in this formulation. Fixing this
-    -- isn't too hard, but requires some care
     linkCfgConsts
       :: Map Identifier (Integer, UnitExp Name Name)
       -> [Map Identifier (Integer, UnitExp Name Name)]
@@ -101,9 +99,20 @@ link (p:ps) =
          if null commonIdents then
            return $ foldr Map.union pConsts psConsts
          else
-           do sequence_ $ checkConst <$> Map.toList pConsts <*> psConsts
+           do sequence_ $ checkConst <$> firstConstDefs commonIdents (pConsts:psConsts) <*> psConsts
               return $ foldr Map.union pConsts psConsts
       where
+        findFirstDef :: Ord k => k -> [Map k a] -> Maybe a
+        findFirstDef k maps =
+          case catMaybes $ Map.lookup k <$> maps of
+            []  -> Nothing
+            a:_ -> Just a
+
+        firstConstDefs :: [Identifier]
+                       -> [Map Identifier (Integer, UnitExp Name Name)]
+                       -> [(Identifier, (Integer, UnitExp Name Name))]
+        firstConstDefs idents cs = zip idents $ fromJust . (`findFirstDef` cs) <$> idents
+
         checkConst
           :: (Identifier, (Integer, UnitExp Name Name))
           -> Map Identifier (Integer, UnitExp Name Name)
