@@ -108,6 +108,8 @@ link (p:ps) =
             []  -> Nothing
             a:_ -> Just a
 
+        -- N.B. The use of @fromJust@ here is safe as this function will only be called in contexts where
+        -- we know there is at least one definition for each identifier
         firstConstDefs :: [Identifier]
                        -> [Map Identifier (Integer, UnitExp Name Name)]
                        -> [(Identifier, (Integer, UnitExp Name Name))]
