@@ -11,6 +11,9 @@ import qualified Text.Parse.Link as LinkParse
 import qualified Text.Parse.Latex as LatexParse
 import qualified Data.LatexSyntax as Latex
 import qualified Text.TokenClass as TC
+import Control.Monad.Except(runExcept)
+import Data.Class.Render(render)
+
 
 main :: IO ()
 main =
@@ -55,10 +58,12 @@ exps =
   , ("a^2", a `pow` int 2)
   , ("a^{b + 1}", a `pow` (b `plus` int 1))
   , ("a b", a `mul` b)
+  , ("a b c", (a `mul` b) `mul` c)
   , ("a \\times b", a `crossProd` b)
   , ("a \\otimes b", a `outerProd` b)
   , ("a \\dot b", a `innerProd` b)
   , ("a + b", a `plus` b)
+  , ("a + b + c", (a `plus` b) `plus` c)
   , ("a - b", a `minus` b)
   , ("\\frac{a}{b}", a `divide` b)
   , ("\\frac{\\partial a}{\\partial b}", partialDeriv a (Latex.Name "b"))
@@ -67,6 +72,7 @@ exps =
   where
     a = name "a"
     b = name "b"
+    c = name "c"
     int = Latex.Int
     name = Latex.Var . Latex.Name
     plus = Latex.BinOp Latex.Add
@@ -86,8 +92,8 @@ exps =
 
 runParser :: Parser a -> String -> IO a
 runParser p s =
-  case LinkParse.parseNamedText p "<unit test>" s of
-    Left err -> HUnit.assertFailure (show err)
+  case runExcept $ LinkParse.parseNamedText p "<unit test>" s of
+    Left err -> HUnit.assertFailure (render err)
     Right a -> pure a
 
 asEqnBlock :: [String] -> String
