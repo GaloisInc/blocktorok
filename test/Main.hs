@@ -1,10 +1,12 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import Test.Tasty(TestTree(..), defaultMain)
 import qualified Test.Tasty as Tasty
 import qualified Test.Tasty.HUnit as HUnit
 import Test.Tasty.HUnit((@=?))
-import Prettyprinter(Pretty(..), pretty, vcat)
+import Prettyprinter(vcat)
+
 
 import Text.Token(Parser(..))
 import qualified Text.Parse.Link as LinkParse
@@ -13,6 +15,10 @@ import qualified Data.LatexSyntax as Latex
 import qualified Text.TokenClass as TC
 import Control.Monad.Except(runExcept)
 import Data.Class.Render(render)
+
+import Text.Parse.Link (parseDecl)
+import qualified Language.Compile.SU2 as SU2
+import Language.Link (link)
 
 
 main :: IO ()
@@ -23,7 +29,47 @@ allTests :: TestTree
 allTests =
   Tasty.testGroup "All tests"
     [ latexParserTests
+    , compilerTests
     ]
+
+compilerTests :: TestTree
+compilerTests =
+  Tasty.testGroup "Compiler output" $
+    uncurry runCompilerTest <$> compilerTestCases
+
+-- (input file, expected output file)
+compilerTestCases :: [(String, String)]
+compilerTestCases =
+  [ ( "test_cases/heat_transfer_rod/su2/compiles0.steel"
+    , "test_cases/expected_output/heat_transfer_rod/su2/compiles0.expected"
+    )
+  ]
+
+runCompilerTest :: FilePath -> FilePath -> TestTree
+runCompilerTest inputFile expectedFile =
+  HUnit.testCase ("Compile " ++ inputFile) $
+    do  output <- runCompiler inputFile
+        expectedOutput <- readFile expectedFile
+        expectedOutput @=? output
+
+runCompiler :: FilePath -> IO String
+runCompiler input =
+  do  contents <- readFile input
+      case runExcept (cmp contents) of
+        Right compiled -> pure compiled
+        Left err -> fail (render err)
+  where
+    cmp contents =
+      do parsed <- parseDecl input contents
+         prog <- link [parsed]
+         render <$> SU2.compile prog
+
+
+
+-------------------------------------------------------------------------------
+-- Compiler tests
+
+
 
 -------------------------------------------------------------------------------
 -- Latex parser tests
