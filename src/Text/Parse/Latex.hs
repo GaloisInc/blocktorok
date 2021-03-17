@@ -1,7 +1,7 @@
 module Text.Parse.Latex(parseLatexExp, parseLatexEquations) where
 
 import Control.Monad((>=>))
-import Text.Parsec(choice, try, between, sepBy, many)
+import Text.Parsec(choice, try, between, sepBy, chainl1, many1)
 
 import qualified Text.Token as Token
 import Text.Token(tok', Parser)
@@ -41,19 +41,20 @@ parseLatexExp0 =
 
 parseLatexExp1 :: Parser LS.Exp
 parseLatexExp1 =
-  do  e0 <- parseLatexExp0
-      choice [ try $ sym "^" >> (LS.BinOp LS.Exponent e0 <$> parseLatexExp0)
-             , try (sym "^") >> (LS.BinOp LS.Exponent e0 <$> inBraces parseLatexExp)
-             , pure e0
-             ]
+  choice [ braced
+         , parseLatexExp0 `chainl1` (sym "^" >> pure (LS.BinOp LS.Exponent))
+         ]
+  where
+    braced =
+      do  e1 <- try (parseLatexExp0 <* sym "^" <* sym "{")
+          e2 <- parseLatexExp
+          sym "}"
+          pure (LS.BinOp LS.Exponent e1 e2)
 
 -- product
 parseLatexExp2 :: Parser LS.Exp
 parseLatexExp2 =
-  do  e1 <- parseLatexExp1
-      choice [ LS.BinOp LS.ScalarProduct e1 <$> try parseLatexExp
-             , pure e1
-             ]
+  foldl1 (LS.BinOp LS.ScalarProduct) <$> many1 parseLatexExp1
 
 parseLatexExp3 :: Parser LS.Exp
 parseLatexExp3 =
@@ -70,25 +71,21 @@ parseLatexExp3 =
 -- there does not appear to be a canonical order of operations for these
 -- i have made the left associative with the same precedence
 parseLatexExp4 :: Parser LS.Exp
-parseLatexExp4 =
-  do  e3 <- parseLatexExp3
-      choice [ parseBinOp e3 "\\times" LS.CrossProduct
-             , parseBinOp e3 "\\otimes" LS.OuterProduct
-             , parseBinOp e3 "\\dot" LS.InnerProduct
-             , pure e3
+parseLatexExp4 = parseLatexExp3 `chainl1` op
+  where
+    op =
+      choice [ sym "\\times" >> pure (LS.BinOp LS.CrossProduct)
+             , sym "\\otimes" >> pure (LS.BinOp LS.OuterProduct)
+             , sym "\\dot" >> pure (LS.BinOp LS.InnerProduct)
              ]
-
-parseBinOp :: LS.Exp -> String -> LS.Op2 -> Parser LS.Exp
-parseBinOp e s op =
-  try (sym s) >> (LS.BinOp op e <$> parseLatexExp)
 
 -- plus/minus
 parseLatexExp5 :: Parser LS.Exp
-parseLatexExp5 =
-  do  e4 <- parseLatexExp4
-      choice [ parseBinOp e4 "+" LS.Add
-             , parseBinOp e4 "-" LS.Subtract
-             , pure e4
+parseLatexExp5 = parseLatexExp4 `chainl1` op
+  where
+    op =
+      choice [ sym "+" >> pure (LS.BinOp LS.Add)
+             , sym "-" >> pure (LS.BinOp LS.Subtract)
              ]
 
 parseLEq :: Parser LS.Equation
