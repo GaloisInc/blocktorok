@@ -32,6 +32,9 @@ allTests =
     , compilerTests
     ]
 
+-------------------------------------------------------------------------------
+-- Compiler tests
+
 compilerTests :: TestTree
 compilerTests =
   Tasty.testGroup "Compiler output" $
@@ -63,13 +66,6 @@ runCompiler input =
       do parsed <- parseDecl input contents
          prog <- link [parsed]
          render <$> SU2.compile prog
-
-
-
--------------------------------------------------------------------------------
--- Compiler tests
-
-
 
 -------------------------------------------------------------------------------
 -- Latex parser tests
