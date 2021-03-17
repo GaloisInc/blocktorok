@@ -12,7 +12,6 @@ config {
 
 model FluidModel (Tw){
   technique : FVM;
-  boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
   boundaryField: MARKER_FAR= ( MarkerName.farfield );
   physics : HeatConduction{LIB_PhysicsParameters_CPFluid};
   SOLVER= RANS;
@@ -25,7 +24,6 @@ model FluidModel (Tw){
 
 model ModelSolid (Tw) {
     technique : FEM;
-    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
     boundaryField : MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 );
     physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
     OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
