@@ -32,6 +32,7 @@ executable steel
 
 library
   build-depends:       base >= 3 && < 5
+                     , aeson
                      , array
                      , containers
                      , mtl
@@ -64,6 +65,7 @@ library
                        Language.Link
                        Options
                        Text.Lexer
+                       Text.Parse.Library
                        Text.Parse.Link
                        Text.Parse.Units
                        Text.Parse.Latex
