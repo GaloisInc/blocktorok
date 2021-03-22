@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Data.Backends.SU2
 Description : Internal representation of SU2 configuration scripts
@@ -30,6 +33,8 @@ module Data.Backends.SU2
   , TabFormat(..)
   ) where
 
+import Data.Aeson (FromJSON, parseJSON, withText)
+
 import Data.Class.Render (Render, render)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
@@ -48,6 +53,16 @@ instance Render SU2Solver where
   render Heat          = "HEAT_EQUATION"
   render ElasticityFEM = "FEM_ELASTICITY"
   render Poisson       = "POISSON_EQUATION"
+
+instance FromJSON SU2Solver where
+  parseJSON = withText "SU2 Solver" $ \case
+      "Euler" -> pure Euler
+      "Navier Stokes" -> pure NS
+      "Wave Equation" -> pure Wave
+      "Heat Equation" -> pure Heat
+      "Elasticity FEM" -> pure ElasticityFEM
+      "Poisson Equation" -> pure Poisson
+      _ -> fail "Unrecognized SU2 solver"
 
 data Objective = Drag
                | Lift
@@ -94,6 +109,32 @@ instance Render Objective where
   render SurfMassFlow     = "SURFACE_MASSFLOW"
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach         = "SURFACE_MACH"
+
+instance FromJSON Objective where
+  parseJSON = withText "Objective" $ \case
+    "Drag" -> pure Drag
+    "Lift" -> pure Lift
+    "Sideforce" -> pure Sideforce
+    "X Moment" -> pure XMoment
+    "Y Moment" -> pure YMoment
+    "Z Moment" -> pure ZMoment
+    "Efficiency" -> pure Efficiency
+    "Equivalent Area" -> pure EquivArea
+    "Nearfield Pressure" -> pure NearPressure
+    "X Force" -> pure XForce
+    "Y Force" -> pure YForce
+    "Z Force" -> pure ZForce
+    "Thrust" -> pure Thrust
+    "Torque" -> pure Torque
+    "Total Heat Flux" -> pure TotalHeatFlux
+    "Max Heat Flux" -> pure MaxHeatFlux
+    "Inverse Design Pressure" -> pure InvDesPressure
+    "Inverse Design Heat Flux" -> pure InvDesHeatFlux
+    "Surface Total Pressure" -> pure SurfTotPressure
+    "Surface Mass Flow" -> pure SurfMassFlow
+    "Surface Static Pressure" -> pure SurfStatPressure
+    "Surface Mach" -> pure SurfMach
+    _ -> fail "Unrecognized SU2 objective"
 
 data MathProb = Direct
               | ContAdjoint
