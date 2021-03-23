@@ -21,6 +21,8 @@ executable steel
   -- other-modules:
   -- other-extensions:
   build-depends:       base >= 4.11 && < 4.14
+                     , bytestring
+                     , directory
                      , mtl
                      , optparse-applicative
                      , steel
@@ -34,6 +36,7 @@ library
   build-depends:       base >= 3 && < 5
                      , aeson
                      , array
+                     , bytestring
                      , containers
                      , mtl
                      , multimap

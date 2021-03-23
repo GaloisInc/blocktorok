@@ -17,6 +17,9 @@ module Main (main) where
 import Control.Monad (zipWithM)
 import Control.Monad.Except (Except, runExcept)
 
+import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy as B
+
 import Data.Backends.SU2 (SU2Config)
 import Data.Class.Render
 import Language.Compile.SU2 (compile)
@@ -27,6 +30,7 @@ import Text.Parse.Link (parseDecl)
 
 import Options.Applicative
 
+import System.Directory (listDirectory)
 import System.Exit
 
 main :: IO ()
@@ -36,14 +40,16 @@ main = realMain =<< execParser opts
       (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
 
 realMain :: Options -> IO ()
-realMain Options { sources = inputs, target = output } =
+realMain Options { sources = inputs, target = output, libDir = lib } =
   do inputContents <- mapM readFile inputs
-     case runExcept $ processProg inputContents of
+     libs <- listDirectory lib
+     libsContents <- mapM B.readFile libs
+     case runExcept $ processProg inputContents libsContents of
        Left e -> putStrLn (render e) >> exitFailure
        Right su2 -> writeFile output (render su2)
   where
-    processProg :: [String] -> Except LinkError SU2Config
-    processProg contents =
-      do progs <- zipWithM parseDecl inputs contents
+    processProg :: [String] -> [ByteString] -> Except LinkError SU2Config
+    processProg inputContents libsContents =
+      do progs <- zipWithM parseDecl inputs inputContents
          prog <- link progs
          compile prog
