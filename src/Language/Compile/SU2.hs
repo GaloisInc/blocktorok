@@ -88,13 +88,11 @@ compile libs (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models
 
     compilePType :: PhysicsType -> SU2Compiler
     compilePType (HeatConduction (Identifier pParams)) =
-      if pParams /= "LIB_PhysicsParameters1" then
-        throwError $ UnknownPhysParams pParams
-      else
-        do SU2Config cfg <- get
-           let pSettings = Map.fromList $ zip ["SOLVER", "MATH_PROBLEM", "RESTART_SO", "OBJECTIVE_FUNCTION", "INC_NONDIM", "SOLID_DENSITY", "SPECIFIC_HEAT_CP", "SOLID_THERMAL_CONDUCTIVITY"]
-                                              [Solver Heat, MathProblem Direct, Boolean False, ObjectiveFns [TotalHeatFlux], IncompressibleScheme Dim, Floating 19300.0, Floating 130.0, Floating 318.0]
-           put $ SU2Config $ Map.union pSettings cfg
+      case Map.lookup pParams libs of
+        Nothing -> throwError $ UnknownPhysParams pParams
+        Just (SU2Config physCfg) ->
+          do SU2Config cfg <- get
+             put $ SU2Config $ Map.union physCfg cfg
     compilePType pType = throwError $ UnsupportedPhys pType
 
     compileSolveTechnique :: Identifier -> SU2Compiler
