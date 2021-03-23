@@ -16,7 +16,19 @@ data.
 -}
 
 module Text.Parse.Library
-  (
+  ( parseLib
   ) where
 
-import Data.Aeson
+import Control.Monad.Except (Except, withExcept)
+import Control.Monad.Trans.Except (except)
+
+import Data.Aeson (eitherDecode')
+
+import Data.Backends.SU2 (SU2Config)
+
+import Data.ByteString.Lazy (ByteString)
+
+import Language.Error (LinkError (LibParseError))
+
+parseLib :: ByteString -> Except LinkError SU2Config
+parseLib lib = withExcept LibParseError $ except (eitherDecode' lib :: Either String SU2Config)
