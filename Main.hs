@@ -45,7 +45,8 @@ realMain :: Options -> IO ()
 realMain Options { sources = inputs, target = output, libDir = lib } =
   do inputContents <- mapM readFile inputs
      libNames <- listDirectory lib
-     libContents <- mapM B.readFile libNames
+     let libFullNames = map ((lib ++ "/") ++) libNames
+     libContents <- mapM B.readFile libFullNames
      case runExcept $ processProg inputContents libNames libContents of
        Left e -> putStrLn (render e) >> exitFailure
        Right su2 -> writeFile output (render su2)
