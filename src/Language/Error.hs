@@ -29,7 +29,7 @@ import Language.Haskell.TH.Syntax (Name)
 import Text.Parsec (ParseError)
 
 data LinkError
-  = ParseError ParseError
+  = LinkParseError ParseError
   | NoPrograms
   | NoModelWithName String
   | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
@@ -44,7 +44,7 @@ data LinkError
   | NYI -- Placeholder for anything we have TODO
 
 instance Render LinkError where
-  render (ParseError pe) = "A parsing error occurred: " ++ show pe
+  render (LinkParseError pe) = "A LINK parsing error occurred: " ++ show pe
   render NoPrograms = "No programs provided. This is probably an internal error!"
   render (NoModelWithName m) = "Could not find model with name \"" ++ m ++ "\""
   render (MismatchedGSs gs gs') = "Expected a global step of " ++ show gs ++ " but found a conflict: " ++ show gs'

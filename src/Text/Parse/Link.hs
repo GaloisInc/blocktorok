@@ -138,7 +138,7 @@ table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
           Right st -> st
 
 parseNamedText :: Parser a -> String -> String -> Except LinkError a
-parseNamedText p n s = withExcept ParseError $ except $
+parseNamedText p n s = withExcept LinkParseError $ except $
   case llex s of
     Left e -> flip runReader table $ runParserT (reportLexError e) () n []
     Right xs -> flip runReader table $ runParserT p () n xs
