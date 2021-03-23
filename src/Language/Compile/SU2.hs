@@ -97,13 +97,18 @@ compile libs (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models
 
     compileSolveTechnique :: Identifier -> SU2Compiler
     compileSolveTechnique (Identifier st) =
-      if st /= "LIB_SolvingTechnique1" then
-        throwError $ UnknownSolvingTech st
-      else
-        do SU2Config cfg <- get
-           let stSettings = Map.fromList $ zip ["LINEAR_SOLVER", "LINEAR_SOLVER_PREC", "LINEAR_SOLVER_ERROR","LINEAR_SOLVER_ITER", "CONV_RESIDUAL_MINVAL", "CONV_STARTITER", "CONV_CAUCY_ELEMS", "CONV_CAUCHY_EPS"]
-                                               [LinearSolver FGMRes, Preconditioner ILU, Floating 1e-15, Integral 5, Integral (negate 19), Integral 10, Integral 100, Floating 1e-6]
-           put $ SU2Config $ Map.union stSettings cfg
+      case Map.lookup st libs of
+        Nothing -> throwError $ UnknownSolvingTech st
+        Just (SU2Config stCfg) ->
+          do (SU2Config cfg) <- get
+             put $ SU2Config $ Map.union stCfg cfg
+      -- if st /= "LIB_SolvingTechnique1" then
+      --   throwError $ UnknownSolvingTech st
+      -- else
+      --   do SU2Config cfg <- get
+      --      let stSettings = Map.fromList $ zip ["LINEAR_SOLVER", "LINEAR_SOLVER_PREC", "LINEAR_SOLVER_ERROR","LINEAR_SOLVER_ITER", "CONV_RESIDUAL_MINVAL", "CONV_STARTITER", "CONV_CAUCY_ELEMS", "CONV_CAUCHY_EPS"]
+      --                                          [LinearSolver FGMRes, Preconditioner ILU, Floating 1e-15, Integral 5, Integral (negate 19), Integral 10, Integral 100, Floating 1e-6]
+      --      put $ SU2Config $ Map.union stSettings cfg
 
     compileNumScheme :: Identifier -> SU2Compiler
     compileNumScheme (Identifier ns) =
