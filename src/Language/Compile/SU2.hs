@@ -46,8 +46,8 @@ type SU2Compiler = StateT SU2Config (Except LinkError) ()
 -- TODO: This function should have a _type_ specialized to the SU2 backend rather than throwing
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
-compile :: Prog -> Except LinkError SU2Config
-compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
+compile :: Map String SU2Config -> Prog -> Except LinkError SU2Config
+compile libs (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler
@@ -129,4 +129,4 @@ compile (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models _) =
       case Map.lookup ident ms of
         Nothing -> throwError $ NoModelWithName $ show ident
         Just m  -> return m
-compile _ = throwError NYI
+compile _ _ = throwError NYI
