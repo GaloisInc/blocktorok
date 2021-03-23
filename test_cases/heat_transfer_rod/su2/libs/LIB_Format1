@@ -1,0 +1,10 @@
+{
+    "MESH_FILENAME": {"tag": "Filename", "contents": "mesh_solid_rod.su2"},
+    "MESH_FORMAT": {"tag": "MeshFormat", "contents": "SU2"},
+    "TABULAR_FORMAT": {"tag": "TabularFormat", "contents": "CSV"},
+    "CONV_FILENAME": {"tag": "Filename", "contents": "history"},
+    "VOLUME_FILENAME": {"tag": "Filename", "contents": "flow"},
+    "SURFACE_FILENAME": {"tag": "Filename", "contents": "surface_flow"},
+    "OUTPUT_WRT_FREQ": {"tag": "Integral", "contents": 250},
+    "SCREEN_WRT_FREQ_TIME": {"tag": "Integral", "contents": 1}
+}

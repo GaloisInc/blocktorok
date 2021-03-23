@@ -60,13 +60,11 @@ compile libs (Prog (Config _ _ _ (RFn f _) (Su2 (Identifier fmt) t plot)) models
 
     compileFmt :: SU2Compiler
     compileFmt =
-      if fmt /= "LIB_Format1" then
-        throwError $ UnknownFormat fmt
-      else
-        do SU2Config cfg <- get
-           let beSettings = Map.fromList $ zip ["MESH_FILENAME", "MESH_FORMAT", "TABULAR_FORMAT", "CONV_FILENAME", "VOLUME_FILENAME", "SURFACE_FILENAME", "OUTPUT_WRT_FREQ", "SCREEN_WRT_FREQ_TIME"]
-                                               [Filename "mesh_solid_rod.su2", MeshFormat SU2, TabularFormat CSV, Filename "history", Filename "flow", Filename "surface_flow", Integral 250, Integral 1]
-           put $ SU2Config $ Map.union beSettings cfg
+      case Map.lookup fmt libs of
+        Nothing -> throwError $ UnknownFormat fmt
+        Just (SU2Config fmtCfg) ->
+          do SU2Config cfg <- get
+             put $ SU2Config $ Map.union fmtCfg cfg
 
     compileTime :: SU2Compiler
     compileTime =
