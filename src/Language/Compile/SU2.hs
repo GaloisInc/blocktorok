@@ -22,17 +22,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 import Data.Backends.SU2
-  ( IncScheme(..)
-  , GradMethod(..)
-  , LinearSolver(..)
-  , MathProb(..)
-  , MeshFormat(..)
-  , Objective(..)
-  , Preconditioner(..)
-  , SU2Config(..)
+  ( SU2Config(..)
   , SU2RHS(..)
-  , SU2Solver(..)
-  , TabFormat(..)
   )
 import Data.Link.AST (Config(..), Prog(..), RunFn(..))
 import Data.Link.Identifier (Identifier(..))

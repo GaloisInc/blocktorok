@@ -33,7 +33,7 @@ import Text.Parse.Link (parseDecl)
 import Options.Applicative
 
 import System.Directory (listDirectory)
-import System.Exit
+import System.Exit (exitFailure)
 
 main :: IO ()
 main = realMain =<< execParser opts
