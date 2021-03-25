@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -35,14 +34,16 @@ module Data.Backends.SU2
   , TabFormat(..)
   ) where
 
-import Data.Aeson (FromJSON, parseJSON, withText)
+import Data.Aeson (FromJSON, Value(..), parseJSON, withText)
 
 import Data.Class.Render (Render, render)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import GHC.Generics
+import Data.Scientific (floatingOrInteger)
+
+import Data.Text (unpack)
 
 data SU2Solver = Euler
                | NS
@@ -57,16 +58,6 @@ instance Render SU2Solver where
   render Heat          = "HEAT_EQUATION"
   render ElasticityFEM = "FEM_ELASTICITY"
   render Poisson       = "POISSON_EQUATION"
-
-instance FromJSON SU2Solver where
-  parseJSON = withText "SU2 Solver" $ \case
-      "Euler" -> pure Euler
-      "Navier Stokes" -> pure NS
-      "Wave Equation" -> pure Wave
-      "Heat Equation" -> pure Heat
-      "Elasticity FEM" -> pure ElasticityFEM
-      "Poisson Equation" -> pure Poisson
-      _ -> fail "Unrecognized SU2 solver"
 
 data Objective = Drag
                | Lift
@@ -148,13 +139,6 @@ instance Render MathProb where
   render ContAdjoint = "CONTINUOUS_ADJOINT"
   render DiscAdjoint = "DISCRETE_ADJOINT"
 
-instance FromJSON MathProb where
-  parseJSON = withText "Math Problem" $ \case
-    "Direct" -> pure Direct
-    "Continuous Adjoint" -> pure ContAdjoint
-    "Discrete Adjoint" -> pure DiscAdjoint
-    _ -> fail "Unrecognized SU2 math problem"
-
 data IncScheme = InitValues
                | RefValues
                | Dim
@@ -163,24 +147,11 @@ instance Render IncScheme where
   render RefValues  = "REFERENCE_VALUES"
   render Dim        = "DIMENSIONAL"
 
-instance FromJSON IncScheme where
-  parseJSON = withText "Incompressible Scheme" $ \case
-    "Initial Values" -> pure InitValues
-    "Reference Values" -> pure RefValues
-    "Dimensional" -> pure Dim
-    _ -> fail "Unrecognized SU2 incompressible scheme"
-
 data GradMethod = GGauss
                 | WLS
 instance Render GradMethod where
   render GGauss = "GREEN_GAUSS"
   render WLS    = "WEIGHTED_LEAST_SQUARES"
-
-instance FromJSON GradMethod where
-  parseJSON = withText "Gradient Method" $ \case
-    "Green-Gauss" -> pure GGauss
-    "Weighted Least Squares" -> pure WLS
-    _ -> fail "Unrecognized SU2 gradient method"
 
 data LinearSolver = FGMRes
                   | RestartFGMRes
@@ -198,17 +169,6 @@ instance Render LinearSolver where
   render SLUSGS        = "SMOOTHER_LUSGS"
   render SLinelet      = "SMOOTHER_LINELET"
 
-instance FromJSON LinearSolver where
-  parseJSON = withText "Linear Solver" $ \case
-    "FGMRes" -> pure FGMRes
-    "Restarted FGMRes" -> pure RestartFGMRes
-    "BCGStab" -> pure BCGStab
-    "Smoother Jacobi" -> pure SJacobi
-    "Smoother ILU" -> pure SILU
-    "Smoother LUSGS" -> pure SLUSGS
-    "Smoother Linelet" -> pure SLinelet
-    _ -> fail "Unrecognized SU2 linear solver"
-
 data Preconditioner = ILU
                     | LU_SGS
                     | Linelet
@@ -219,14 +179,6 @@ instance Render Preconditioner where
   render Linelet = "LINELET"
   render Jacobi  = "JACOBI"
 
-instance FromJSON Preconditioner where
-  parseJSON = withText "Preconditioner" $ \case
-    "ILU" -> pure ILU
-    "LU SGS" -> pure LU_SGS
-    "Linelet" -> pure Linelet
-    "Jacobi" -> pure Jacobi
-    _ -> fail "Unrecognized SU2 preconditioner"
-
 data Stiffness = InvVol
                | WallDist
                | ConstStiff
@@ -234,13 +186,6 @@ instance Render Stiffness where
   render InvVol     = "INVERSE_VOLUME"
   render WallDist   = "WALL_DISTANCE"
   render ConstStiff = "CONSTANT_STIFFNESS"
-
-instance FromJSON Stiffness where
-  parseJSON = withText "Stiffness" $ \case
-    "Inverse Volume" -> pure InvVol
-    "Wall Distance" -> pure WallDist
-    "Constant Stiffness" -> pure ConstStiff
-    _ -> fail "Unrecognized SU2 stiffness"
 
 data TimeDiscre = EulerImp
                 | RKExp
@@ -254,34 +199,15 @@ instance Render TimeDiscre where
   render RK4Exp   = "CLASSICAL_RK4_EXPLICIT"
   render AderDG   = "ADER_DG"
 
-instance FromJSON TimeDiscre where
-  parseJSON = withText "Time Discretization" $ \case
-    "Euler Implicit" -> pure EulerImp
-    "Runge-Kutta Explicit" -> pure RKExp
-    "Classical RK4 Explicit" -> pure RK4Exp
-    "Ader DG" -> pure AderDG
-    _ -> fail "Unrecognized SU2 time discretization"
-
 data MeshFormat = SU2
 instance Render MeshFormat where
   render SU2 = "SU2"
-
-instance FromJSON MeshFormat where
-  parseJSON = withText "Mesh Format" $ \case
-    "SU2" -> pure SU2
-    _ -> fail "Unrecognized SU2 mesh format"
 
 data TabFormat = TECPLOT
                | CSV
 instance Render TabFormat where
   render TECPLOT = "TECPLOT"
   render CSV     = "CSV"
-
-instance FromJSON TabFormat where
-  parseJSON = withText "Tabular Format" $ \case
-    "TECPlot" -> pure TECPLOT
-    "CSV" -> pure CSV
-    _ -> fail "Unrecognized SU2 tabular format"
 
 data SU2RHS = Solver SU2Solver
             | Boolean Bool
@@ -293,7 +219,7 @@ data SU2RHS = Solver SU2Solver
             | MarkerData [(String, Double)]
             | Markers (Maybe [String])
             | IncompressibleScheme IncScheme
-            | GradientMehod GradMethod
+            | GradientMethod GradMethod
             | CFLAdaptParam Double Double Double Double Double
             | RKCoefficient Double Double Double
             | LinearSolver LinearSolver
@@ -303,7 +229,6 @@ data SU2RHS = Solver SU2Solver
             | MeshFormat MeshFormat
             | TabularFormat TabFormat
             | Stiffness Stiffness
-            deriving (Generic)
 instance Render SU2RHS where
   render (Solver s)                           = render s
   render (Boolean True)                       = "YES"
@@ -317,7 +242,7 @@ instance Render SU2RHS where
   render (Markers Nothing)                    = "NONE"
   render (Markers (Just ms))                  = "(" ++ intercalate ", " ms ++ ")"
   render (IncompressibleScheme is)            = render is
-  render (GradientMehod gm)                   = render gm
+  render (GradientMethod gm)                  = render gm
   render (CFLAdaptParam fd fu minV maxV conv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV, conv]) ++ ")"
   render (RKCoefficient x y z)                = "(" ++ intercalate ", " (show <$> [x, y, z]) ++ ")"
   render (LinearSolver ls)                    = render ls
@@ -328,7 +253,48 @@ instance Render SU2RHS where
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
 
-instance FromJSON SU2RHS
+instance FromJSON SU2RHS where
+  parseJSON (String "Euler")                    = pure (Solver Euler)
+  parseJSON (String "Navier Stokes")            = pure (Solver NS)
+  parseJSON (String "Wave Equation")            = pure (Solver Wave)
+  parseJSON (String "Heat Equation")            = pure (Solver Heat)
+  parseJSON (String "Elasticity FEM")           = pure (Solver ElasticityFEM)
+  parseJSON (String "Poisson Equation")         = pure (Solver Poisson)
+  parseJSON (String "Direct")                   = pure (MathProblem Direct)
+  parseJSON (String "Continuous Adjoint")       = pure (MathProblem ContAdjoint)
+  parseJSON (String "Discrete Adjoint")         = pure (MathProblem DiscAdjoint)
+  parseJSON (String "Initial Values")           = pure (IncompressibleScheme InitValues)
+  parseJSON (String "Reference Values")         = pure (IncompressibleScheme RefValues)
+  parseJSON (String "Dimensional")              = pure (IncompressibleScheme Dim)
+  parseJSON (String "Green-Gauss")              = pure (GradientMethod GGauss)
+  parseJSON (String "Weighted Least Squares")   = pure (GradientMethod WLS)
+  parseJSON (String "FGMRes")                   = pure (LinearSolver FGMRes)
+  parseJSON (String "Restarted FGMRes")         = pure (LinearSolver RestartFGMRes)
+  parseJSON (String "BCGStab")                  = pure (LinearSolver BCGStab)
+  parseJSON (String "Smoother Jacobi")          = pure (LinearSolver SJacobi)
+  parseJSON (String "Smoother ILU")             = pure (LinearSolver SILU)
+  parseJSON (String "Smoother LUSGS")           = pure (LinearSolver SLUSGS)
+  parseJSON (String "Smoother Linelet")         = pure (LinearSolver SLinelet)
+  parseJSON (String "ILU")                      = pure (Preconditioner ILU)
+  parseJSON (String "LU SGS")                   = pure (Preconditioner LU_SGS)
+  parseJSON (String "Linelet")                  = pure (Preconditioner Linelet)
+  parseJSON (String "Jacobi")                   = pure (Preconditioner Jacobi)
+  parseJSON (String "Inverse Volume")           = pure (Stiffness InvVol)
+  parseJSON (String "Wall Distance")            = pure (Stiffness WallDist)
+  parseJSON (String "Constant Stiffness")       = pure (Stiffness ConstStiff)
+  parseJSON (String "Euler Implicit")           = pure (TimeDiscre EulerImp)
+  parseJSON (String "Runge-Kutta Explicit")     = pure (TimeDiscre RKExp)
+  parseJSON (String "Classical RK4 Explicit")   = pure (TimeDiscre RK4Exp)
+  parseJSON (String "Ader DG")                  = pure (TimeDiscre AderDG)
+  parseJSON (String "SU2")                      = pure (MeshFormat SU2)
+  parseJSON (String "TECPlot")                  = pure (TabularFormat TECPLOT)
+  parseJSON (String "CSV")                      = pure (TabularFormat CSV)
+  parseJSON (String fname)                      = pure $ Filename $ unpack fname
+  parseJSON (Number x)                          =
+    case floatingOrInteger x of
+      Left f  -> pure (Floating f)
+      Right i -> pure (Integral i)
+  parseJSON (Bool b)                            = pure (Boolean b)
 
 -- | The type of SU2 configuration scripts.
 newtype SU2Config = SU2Config { getOptions :: Map String SU2RHS } deriving (FromJSON)

@@ -43,7 +43,9 @@ library
                      , multimap
                      , optparse-applicative
                      , parsec
+                     , scientific
                      , template-haskell
+                     , text
                      , transformers
                      , uniplate
                      , units
