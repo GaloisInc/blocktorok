@@ -42,7 +42,7 @@ import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Scientific (floatingOrInteger, toRealFloat)
-import Data.Text (unpack)
+import Data.Text (Text, unpack)
 import qualified Data.Vector as V
 
 data SU2Solver = Euler
@@ -265,14 +265,11 @@ instance FromJSON SU2RHS where
                                                  | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
                                          Nothing -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
       _ -> fail "Unknown object type"
-    where
-      isNumber :: Value -> Bool
-      isNumber (Number _) = True
-      isNumber _          = False
-
-      toRF :: RealFloat a => Value -> a
-      toRF (Number x) = toRealFloat x
-      toRF _          = error "This can't happen"
+  parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
+                      | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
+                                                    Just objectives -> pure $ ObjectiveFns $ V.toList objectives
+                                                    Nothing -> fail "Unrecognized objective function"
+                      | otherwise               = fail "Unrecognized array format"
   parseJSON (String "Euler")                    = pure (Solver Euler)
   parseJSON (String "Navier Stokes")            = pure (Solver NS)
   parseJSON (String "Wave Equation")            = pure (Solver Wave)
@@ -323,3 +320,46 @@ instance Render SU2Config where
     where
       renderOpt :: String -> SU2RHS -> String
       renderOpt opt val = opt ++ " = " ++ render val ++ "\n"
+
+-- Some private helpers
+objectiveMap :: Map Text Objective
+objectiveMap = Map.fromList
+  [ ("Drag", Drag)
+  , ("Lift", Lift)
+  , ("Sideforce", Sideforce)
+  , ("X Moment", XMoment)
+  , ("Y Moment", YMoment)
+  , ("Z Moment", ZMoment)
+  , ("Efficiency", Efficiency)
+  , ("Equivalent Area", EquivArea)
+  , ("Nearfield Pressure", NearPressure)
+  , ("X Force", XForce)
+  , ("Y Force", YForce)
+  , ("Z Force", ZForce)
+  , ("Thrust", Thrust)
+  , ("Torque", Torque)
+  , ("Total Heat Flux", TotalHeatFlux)
+  , ("Max Heat Flux", MaxHeatFlux)
+  , ("Inverse Design Pressure", InvDesPressure)
+  , ("Inverse Design Heat Flux", InvDesHeatFlux)
+  , ("Surface Total Pressure", SurfTotPressure)
+  , ("Surface Mass Flow", SurfMassFlow)
+  , ("Surface Static Pressure", SurfStatPressure)
+  , ("Surface Mach", SurfMach)
+  ]
+
+isNumber :: Value -> Bool
+isNumber (Number _) = True
+isNumber _          = False
+
+isString :: Value -> Bool
+isString (String _) = True
+isString _          = False
+
+toRF :: RealFloat a => Value -> a
+toRF (Number x) = toRealFloat x
+toRF _          = error "This can't happen"
+
+toText :: Value -> Text
+toText (String s) = s
+toText _          = error "This can't happen"

@@ -1,10 +1,10 @@
 {
-    "LINEAR_SOLVER": {"tag": "LinearSolver", "contents": "FGMRes"},
-    "LINEAR_SOLVER_PREC": {"tag": "Preconditioner", "contents": "ILU"},
-    "LINEAR_SOLVER_ERROR": {"tag": "Floating", "contents": 1e-15},
-    "LINEAR_SOLVER_ITER": {"tag": "Integral", "contents": 5},
-    "CONV_RESIDUAL_MINVAL": {"tag": "Integral", "contents": -19},
-    "CONV_STARTITER": {"tag": "Integral", "contents": 10},
-    "CONV_CAUCHY_ELEMS": {"tag": "Integral", "contents": 100},
-    "CONV_CAUCHY_EPS": {"tag": "Floating", "contents": 1e-6}
+    "LINEAR_SOLVER": "FGMRes",
+    "LINEAR_SOLVER_PREC": "ILU",
+    "LINEAR_SOLVER_ERROR": 1e-15,
+    "LINEAR_SOLVER_ITER": 5,
+    "CONV_RESIDUAL_MINVAL": -19,
+    "CONV_STARTITER": 10,
+    "CONV_CAUCHY_ELEMS": 100,
+    "CONV_CAUCHY_EPS": 1e-6
 }

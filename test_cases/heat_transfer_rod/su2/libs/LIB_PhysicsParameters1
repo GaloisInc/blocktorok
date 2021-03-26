@@ -1,10 +1,10 @@
 {
-    "SOLVER": {"tag": "Solver", "contents": "Heat Equation"},
-    "MATH_PROBLEM": {"tag": "MathProblem", "contents": "Direct"},
-    "RESTART_SO": {"tag": "Boolean", "contents": false},
-    "OBJECTIVE_FUNCTION": {"tag": "ObjectiveFns", "contents": ["Total Heat Flux"]},
-    "INC_NONDIM": {"tag": "IncompressibleScheme", "contents": "Dimensional"},
-    "SOLID_DENSITY": {"tag": "Floating", "contents": 19300.0},
-    "SPECIFIC_HEAT_CP": {"tag": "Floating", "contents": 130.0},
-    "SOLID_THERMAL_CONDUCTIVITY": {"tag": "Floating", "contents": 318.0}
+    "SOLVER": "Heat Equation",
+    "MATH_PROBLEM": "Direct",
+    "RESTART_SO": false,
+    "OBJECTIVE_FUNCTION": ["Total Heat Flux"],
+    "INC_NONDIM": "Dimensional",
+    "SOLID_DENSITY": 19300.0,
+    "SPECIFIC_HEAT_CP": 130.0,
+    "SOLID_THERMAL_CONDUCTIVITY": 318.0
 }
