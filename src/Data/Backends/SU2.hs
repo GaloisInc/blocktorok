@@ -37,13 +37,13 @@ module Data.Backends.SU2
 import Data.Aeson (FromJSON, Value(..), parseJSON, withText)
 
 import Data.Class.Render (Render, render)
+import qualified Data.HashMap.Strict as HMap
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-
-import Data.Scientific (floatingOrInteger)
-
+import Data.Scientific (floatingOrInteger, toRealFloat)
 import Data.Text (unpack)
+import qualified Data.Vector as V
 
 data SU2Solver = Euler
                | NS
@@ -254,6 +254,25 @@ instance Render SU2RHS where
   render (Stiffness s)                        = render s
 
 instance FromJSON SU2RHS where
+  parseJSON (Object v)                          =
+    case HMap.lookup "type" v of
+      Just (String "RKCoefficient") -> case traverse (v HMap.!?) ["x", "y", "z"] of
+                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ RKCoefficient (head nums) (nums !! 1) (nums !! 2)
+                                                 | otherwise -> fail "Non-numbers provided as RK Coefficients"
+                                         Nothing -> fail "Expected fields 'x', 'y', 'z'"
+      Just (String "CFLAdaptParam") -> case traverse (v HMap.!?) ["fd", "fu", "minV", "maxV", "conv"] of
+                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ CFLAdaptParam (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
+                                                 | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         Nothing -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
+      _ -> fail "Unknown object type"
+    where
+      isNumber :: Value -> Bool
+      isNumber (Number _) = True
+      isNumber _          = False
+
+      toRF :: RealFloat a => Value -> a
+      toRF (Number x) = toRealFloat x
+      toRF _          = error "This can't happen"
   parseJSON (String "Euler")                    = pure (Solver Euler)
   parseJSON (String "Navier Stokes")            = pure (Solver NS)
   parseJSON (String "Wave Equation")            = pure (Solver Wave)
@@ -295,6 +314,7 @@ instance FromJSON SU2RHS where
       Left f  -> pure (Floating f)
       Right i -> pure (Integral i)
   parseJSON (Bool b)                            = pure (Boolean b)
+  parseJSON Null                                = pure (Markers Nothing)
 
 -- | The type of SU2 configuration scripts.
 newtype SU2Config = SU2Config { getOptions :: Map String SU2RHS } deriving (FromJSON)
