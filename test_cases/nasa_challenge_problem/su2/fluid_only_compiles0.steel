@@ -1,0 +1,19 @@
+config {
+    iterations: 10000;
+    run: FluidModel(LIB_PhysicsParameters1);
+    backend : Su2 {
+        format : LIB_InputOutput1,
+        plotting : (cylinder, inflow)
+      };
+}
+
+
+model FluidModel (Temp) {
+    technique : FVM;
+    boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 ); MARKER_SUPERSONIC_OUTLET=( outflow ); MARKER_ISOTHERMAL = ( cylinder, 200 )
+    physics : ReynoldsAveragedNavierStokes{LIB_PhysicsParameters1};
+    -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
+    -- PRESSURE_COEFF, LAMINAR_VISCOSITY, SKIN_FRICTION, HEAT_FLUX, Y_PLUS, EDDY_VISCOSITY (outputs depend on the solver)
+    solve Temp, pressure, density, ... with {LIB_SolvingTechnique1, LIB_NumericalScheme1, LIB_GridDeformation1};
+    return Temp, pressure, density, ...;
+}
