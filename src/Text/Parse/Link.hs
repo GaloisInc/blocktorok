@@ -12,9 +12,13 @@ This module defines the parser for the LINK language, using Parsec.
 
 module Text.Parse.Link
   ( parseDecl
+  , parseNamedText
+  , table
   ) where
 
+import Control.Monad.Except (Except, withExcept)
 import Control.Monad.Reader (runReader)
+import Control.Monad.Trans.Except (except)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -23,9 +27,9 @@ import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
-import Text.Token (Parser, number, tok, tok', variable)
-import Text.TokenClass (TokenClass(..))
-import Data.Math (Equation(..), Exp(..))
+import Text.Token ( Parser, tok, tok', number, variable )
+import Text.TokenClass
+import Data.Math
 import Data.Physics.Model
   ( Boundary(..)
   , BoundaryField(..)
@@ -42,20 +46,20 @@ import Data.Units.SI (siUnits)
 import Data.Units.SI.Prefixes (siPrefixes)
 import Data.Solver.Backend
   ( BackendConfig(..)
-  , DerivKind(..)
-  , Ddt(..)
-  , NumericalScheme(..)
+  -- , DerivKind(..)
+  -- , Ddt(..)
+  -- , NumericalScheme(..)
   , PlotMarkers(..)
-  , Preconditioner(..)
-  , Solver(..)
-  , SolvingTechnique(..)
+  -- , Preconditioner(..)
+  -- , Solver(..)
+  -- , SolvingTechnique(..)
   )
+import Language.Error (LinkError(..))
 
 import Language.Haskell.TH.Syntax (Name)
 
 import Text.Parsec
-  ( ParseError
-  , (<|>)
+  ( (<|>)
   , chainl1
   , choice
   , many
@@ -63,6 +67,8 @@ import Text.Parsec
   , runParserT
   , try
   )
+import qualified Data.Equation as Eqn
+import Text.Parse.Latex(parseLatexEquations)
 
 prefixStrs, unitStrs :: [String]
 prefixStrs =
@@ -131,8 +137,8 @@ table = case mkSymbolTable (zip prefixStrs siPrefixes) (zip unitStrs siUnits) of
           Left e -> error e
           Right st -> st
 
-parseNamedText :: Parser a -> String -> String -> Either ParseError a
-parseNamedText p n s =
+parseNamedText :: Parser a -> String -> String -> Except LinkError a
+parseNamedText p n s = withExcept ParseError $ except $
   case llex s of
     Left e -> flip runReader table $ runParserT (reportLexError e) () n []
     Right xs -> flip runReader table $ runParserT p () n xs
@@ -141,139 +147,139 @@ reportLexError :: String -> Parser a
 reportLexError msg = fail ("lexical error: " ++ msg)
 
 -- | Parse an entire LINK script.
-parseDecl :: FilePath -> String -> Either ParseError Prog
+parseDecl :: FilePath -> String -> Except LinkError Prog
 parseDecl = parseNamedText parseProg
 
-parseSolver:: Parser Solver
-parseSolver =
- do
-    tok' TokenTsolver
-    tok' TokenColon
-    s <- tok TokenPCG
-    tok' TokenSemi
-    return $ case s of
-            TokenPCG -> PCG
-            _ -> error "This can't happen"
+-- parseSolver:: Parser Solver
+-- parseSolver =
+--  do
+--     tok' TokenTsolver
+--     tok' TokenColon
+--     s <- tok TokenPCG
+--     tok' TokenSemi
+--     return $ case s of
+--             TokenPCG -> PCG
+--             _ -> error "This can't happen"
 
-parsePreconditioner:: Parser Preconditioner
-parsePreconditioner =
- do
-    tok' TokenTpreconditioner
-    tok' TokenColon
-    p <- tok TokenDIC
-    tok' TokenSemi
-    return $ case p of
-            TokenDIC -> DIC
-            _ -> error "This can't happen"
+-- parsePreconditioner:: Parser Preconditioner
+-- parsePreconditioner =
+--  do
+--     tok' TokenTpreconditioner
+--     tok' TokenColon
+--     p <- tok TokenDIC
+--     tok' TokenSemi
+--     return $ case p of
+--             TokenDIC -> DIC
+--             _ -> error "This can't happen"
 
-parseDdt :: Parser Ddt
-parseDdt =
- do
-    tok' TokenNddt
-    tok' TokenColon
-    d <- tok TokenEuler
-    tok' TokenSemi
-    return $ case d of
-            TokenEuler -> Euler
-            _ -> error "This can't happen"
+-- parseDdt :: Parser Ddt
+-- parseDdt =
+--  do
+--     tok' TokenNddt
+--     tok' TokenColon
+--     d <- tok TokenEuler
+--     tok' TokenSemi
+--     return $ case d of
+--             TokenEuler -> Euler
+--             _ -> error "This can't happen"
 
-parseDerivkind :: Parser DerivKind
-parseDerivkind =
- do
-    d <- tok TokenLinear <|> tok TokenOrthogonal
-    tok' TokenSemi
-    return $ case d of
-            TokenLinear -> Linear
-            TokenOrthogonal -> Orthogonal
-            TokenGauss -> Gauss
-            _ -> error "This can't happen"
+-- parseDerivkind :: Parser DerivKind
+-- parseDerivkind =
+--  do
+--     d <- tok TokenLinear <|> tok TokenOrthogonal
+--     tok' TokenSemi
+--     return $ case d of
+--             TokenLinear -> Linear
+--             TokenOrthogonal -> Orthogonal
+--             TokenGauss -> Gauss
+--             _ -> error "This can't happen"
 
-parseGradKind :: Parser DerivKind
-parseGradKind =
- do
-    tok' TokenNgrad
-    tok' TokenColon
-    tok' TokenGauss
-    tok' TokenLinear
-    tok' TokenSemi
-    return $ GaussLinear
+-- parseGradKind :: Parser DerivKind
+-- parseGradKind =
+--  do
+--     tok' TokenNgrad
+--     tok' TokenColon
+--     tok' TokenGauss
+--     tok' TokenLinear
+--     tok' TokenSemi
+--     return $ GaussLinear
 
-parseLaplacianKind :: Parser DerivKind
-parseLaplacianKind =
- do
-    tok' TokenNlaplacian
-    tok' TokenColon
-    tok' TokenGauss
-    tok' TokenLinear
-    tok' TokenOrthogonal
-    tok' TokenSemi
-    return $ GaussLinearOrthongonal
+-- parseLaplacianKind :: Parser DerivKind
+-- parseLaplacianKind =
+--  do
+--     tok' TokenNlaplacian
+--     tok' TokenColon
+--     tok' TokenGauss
+--     tok' TokenLinear
+--     tok' TokenOrthogonal
+--     tok' TokenSemi
+--     return $ GaussLinearOrthongonal
 
-parseDerivkindDecl setting =
- do
-    tok' setting
-    tok' TokenColon
-    d <- parseDerivkind
-    return $ d
+-- parseDerivkindDecl setting =
+--  do
+--     tok' setting
+--     tok' TokenColon
+--     d <- parseDerivkind
+--     return $ d
 
-parseDerivkindsDecl setting =
- do
-    tok' setting
-    tok' TokenColon
-    d <- (many parseDerivkind)
-    return $ d
+-- parseDerivkindsDecl setting =
+--  do
+--     tok' setting
+--     tok' TokenColon
+--     d <- (many parseDerivkind)
+--     return $ d
 
-parseIntSetting setting =
- do
-    tok' setting
-    tok' TokenColon
-    n <- number
-    tok' TokenSemi
-    return n
+-- parseIntSetting setting =
+--  do
+--     tok' setting
+--     tok' TokenColon
+--     n <- number
+--     tok' TokenSemi
+--     return n
 
-parseSolvingTechnique:: Parser SolvingTechnique
-parseSolvingTechnique =
-  do tok' TokenSolvingTechnique
-     name <- parseIdentifier
-     tok' TokenLCurl
-     s <- parseSolver
-     p <- parsePreconditioner
-     t <- parseIntSetting TokenTtolerance
-     r <- parseIntSetting TokenTrelTol
-     tok' TokenRCurl
-     return $ SolvingTechnique {
-        solver = s,
-        preconditioner = p,
-        tolerance = t,
-        relTol = r
-       }
+-- parseSolvingTechnique:: Parser SolvingTechnique
+-- parseSolvingTechnique =
+--   do tok' TokenSolvingTechnique
+--      name <- parseIdentifier
+--      tok' TokenLCurl
+--      s <- parseSolver
+--      p <- parsePreconditioner
+--      t <- parseIntSetting TokenTtolerance
+--      r <- parseIntSetting TokenTrelTol
+--      tok' TokenRCurl
+--      return $ SolvingTechnique {
+--         solver = s,
+--         preconditioner = p,
+--         tolerance = t,
+--         relTol = r
+--        }
 
-parseNumericalScheme:: Parser NumericalScheme
-parseNumericalScheme =
-  do tok' TokenNumericalScheme
-     name <- parseIdentifier
-     tok' TokenLCurl
-     d <- parseDdt
-     g <- parseGradKind
-     l <- parseLaplacianKind
-     i <- parseDerivkindDecl TokenNinterpolation
-     s <- parseDerivkindDecl TokenNsnGrad
-     tok' TokenRCurl
-     return $  NumericalScheme  {
-        ddt = d,
-        grad = g,
-        laplacian = l,
-        interpolation = i,
-        snGrad = s
-       }
+-- parseNumericalScheme:: Parser NumericalScheme
+-- parseNumericalScheme =
+--   do tok' TokenNumericalScheme
+--      name <- parseIdentifier
+--      tok' TokenLCurl
+--      d <- parseDdt
+--      g <- parseGradKind
+--      l <- parseLaplacianKind
+--      i <- parseDerivkindDecl TokenNinterpolation
+--      s <- parseDerivkindDecl TokenNsnGrad
+--      tok' TokenRCurl
+--      return $  NumericalScheme  {
+--         ddt = d,
+--         grad = g,
+--         laplacian = l,
+--         interpolation = i,
+--         snGrad = s
+--        }
 
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
-     --solvingTechnique <- parseSolvingTechnique
-     --numericalScheme <- parseNumericalScheme
+     -- solvingTechnique <- parseSolvingTechnique
+     -- numericalScheme <- parseNumericalScheme
      models <- parseModels
-     --Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
+     -- Prog cfg solvingTechnique numericalScheme models  <$> parseCouplings
      Prog cfg models  <$> parseCouplings
 
 parseRunFn :: Parser RunFn
@@ -381,10 +387,10 @@ parseModels =
   where
     parseModel =
       do tok' TokenModel
-         name <- parseIdentifier
+         nm <- parseIdentifier
          i <- parseSingleArg
          model <- parseModelBody i
-         return (name, model)
+         return (nm, model)
 
     parseModelBody inputDecl =
       do tok' TokenLCurl
@@ -449,23 +455,23 @@ parseBoundaryTypeDecl =
     tok' TokenColon
     method <- parseBoundaryType
     tok' TokenLParen
-    id <- parseIdentifier
+    ident <- parseIdentifier
     tok' TokenRParen
     tok' TokenSemi
-    return (T method id)
+    return (T method ident)
 
 
 parseBoundaryField :: Parser BoundaryField
 parseBoundaryField =
   do tok' TokenLParen
-     id <- parseIdentifier
+     ident <- parseIdentifier
      tok' TokenComma
      method <- parseBoundaryType
      tok' TokenComma
      n <- number
      tok' TokenRParen
      tok' TokenSemi
-     return (BoundaryField id method  n)
+     return (BoundaryField ident method  n)
 
 parseBoundaryFieldsDecl :: Parser Boundary
 parseBoundaryFieldsDecl =
@@ -545,8 +551,15 @@ parseVarDecls =
          tok' TokenSemi
          return (i, u)
 
-parseEqs :: Parser [Equation]
-parseEqs = many parseEq
+
+parseEqs :: Parser [Eqn.Equation]
+parseEqs =
+  choice [ fmap Eqn.LatexEquation <$> parseLatexEquations
+         , fmap Eqn.MathEquation <$> parseMathEqs
+         ]
+
+parseMathEqs :: Parser [Equation]
+parseMathEqs = many parseEq
   where
     parseEq =
       do lhs <- parseExp
@@ -652,3 +665,4 @@ parseCouplings = many parseCoupling
          o <- parseReturnDecl
          tok' TokenRCurl
          return $ Coupling mname ma mb i o vs eqs
+

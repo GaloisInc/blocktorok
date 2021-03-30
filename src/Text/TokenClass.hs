@@ -13,6 +13,7 @@ analysis.
 
 module Text.TokenClass
   ( TokenClass(..)
+  , TokenLatex(..)
   , unLex
   ) where
 
@@ -96,6 +97,15 @@ data TokenClass =
   | TokenLCurl
   | TokenRCurl
   | TokenEOF
+  | TokenLatexBegin
+  | TokenLatexEnd
+  | TokenLatex TokenLatex
+  deriving (Eq, Show)
+
+data TokenLatex =
+    TLIdent String
+  | TLInt Integer
+  | TLSymbol String
   deriving (Eq, Show)
 
 -- | Given a @TokenClass@, return a string for use in error messages.
@@ -177,4 +187,9 @@ unLex TokenLBracket = "["
 unLex TokenRBracket = "]"
 unLex TokenLCurl= "{"
 unLex TokenRCurl = "}"
+unLex TokenLatexBegin = "\\begin{equations}"
+unLex TokenLatexEnd = "\\end{equations}"
+unLex (TokenLatex (TLInt i)) = show i
+unLex (TokenLatex (TLIdent s)) = s
+unLex (TokenLatex (TLSymbol s)) = s
 unLex TokenEOF = "<EOF>"

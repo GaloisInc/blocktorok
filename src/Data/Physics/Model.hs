@@ -30,6 +30,7 @@ import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
 import Language.Haskell.TH.Syntax (Name)
+import qualified Data.Equation as Eqn
 
 -- An ugly function I added. Forgive me.
 mkIndent :: (Show a, Show b) => a -> b -> String
@@ -65,7 +66,7 @@ data Model =
         , getConsts :: Map Identifier (Integer, UnitExp Name Name) -- ^ The named constants used in this model
         , getLib :: Map Identifier (Identifier, Identifier) -- ^ Named library imports to support model expression/simulation
         , getVars :: Map Identifier (UnitExp Name Name) -- ^ The variables appearing in the model equations
-        , getEqs :: [Equation] -- ^ The equations governing the model
+        , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
         , getSolve :: VarSolve
         }
 instance Show Model where
@@ -87,7 +88,7 @@ mkModel :: Identifier -> Identifier
         -> Map Identifier (Integer, UnitExp Name Name)
         -> Map Identifier (Identifier, Identifier)
         -> Map Identifier (UnitExp Name Name)
-        -> [Equation]
+        -> [Eqn.Equation]
         -> VarSolve
         -> Model
 mkModel = Model

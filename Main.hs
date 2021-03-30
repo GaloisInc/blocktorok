@@ -14,9 +14,14 @@ functionality, and behavior.
 
 module Main (main) where
 
+import Control.Monad (zipWithM)
+import Control.Monad.Except (Except, runExcept)
+
+import Data.Backends.SU2 (SU2Config)
 import Data.Class.Render
-import Language.Check (hasAllCouplings, allVarsDeclared)
 import Language.Compile.SU2 (compile)
+import Language.Error (LinkError)
+import Language.Link (link)
 import Options
 import Text.Parse.Link (parseDecl)
 
@@ -30,16 +35,15 @@ main = realMain =<< execParser opts
     opts = info (parseOpts <**> helper)
       (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
 
--- TODO: Deal with these nested case expressions. ExceptT?
 realMain :: Options -> IO ()
-realMain (Options input output) =
-  do parseRes <- parseDecl input <$> readFile input
-     case parseRes of
-       Left e -> print e >> exitFailure
-       Right prog ->
-         if hasAllCouplings prog && allVarsDeclared prog then
-           case compile prog of
-             Left e -> print e >> exitFailure
-             Right su2 -> writeFile output (render su2)
-         else
-           error "Basic static analysis failed (do you have all couplings and are all variables declared before use?)"
+realMain Options { sources = inputs, target = output } =
+  do inputContents <- mapM readFile inputs
+     case runExcept $ processProg inputContents of
+       Left e -> putStrLn (render e) >> exitFailure
+       Right su2 -> writeFile output (render su2)
+  where
+    processProg :: [String] -> Except LinkError SU2Config
+    processProg contents =
+      do progs <- zipWithM parseDecl inputs contents
+         prog <- link progs
+         compile prog

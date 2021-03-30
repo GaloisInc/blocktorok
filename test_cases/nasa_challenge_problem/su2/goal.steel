@@ -1,0 +1,44 @@
+config {
+    timeStep : 5 ms;-- size of the time step
+    iterations : 200; -- total number of time steps
+    const Temp = 300 K; -- SOLID_TEMPERATURE_INIT
+    run: f(Temp);
+    backend : Su2 {
+        format : LIB_FormatCP,
+        time : 200,
+        plotting : (cylinderouter1, cylinderouter2, cylinderouter3)
+      };
+}
+
+model FluidModel (Tw){
+  technique : FVM;
+  boundaryField: MARKER_FAR= ( MarkerName.farfield );
+  physics : HeatConduction{LIB_PhysicsParameters_CPFluid};
+  SOLVER= RANS;
+  KIND_TURB_MODEL= SA;
+  -- Note: paused on math equations for now
+  const DT = 4;
+  solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};
+  return qw;
+}
+
+model ModelSolid (Tw) {
+    technique : FEM;
+    boundaryField : MARKER_ISOTHERMAL= ( MarkerName.solid_surace, 300.0 );
+    physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
+    OBJECTIVE_FUNCTION = TOTAL_HEATFLUX; -- evaluated at the surfaces listed in MARKER_MONITORING
+    OBJECTIVE_WEIGHT= 1.0
+    const rhos =  8.67 g/cm^3; --P.SolidDensity;
+    const ks = 17.3 W/(m*K); -- P.SolidThermalConductivity;
+    const cps = 426.4 J/(kg*K); -- P.SolidSpecificHeat;
+    rhos*cps*∇Tw- ks*△Tw = qw;
+    (∂ Temp) /(∂ t) - DT * △Temp  = 0;
+    solve Tw with {LIB_NumericalScheme_CPSolid, LIB_SolvingTechnique_CPSolid};
+    return Tw;
+}
+
+couple f FluidModel ModelSolid (Tin){
+  qw = FluidModel(Tin);  -- heat flux
+  out = ModelSolid (qw);
+  return out;
+  }
