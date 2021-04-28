@@ -23,9 +23,9 @@ model ModelSolid (Tw) {
     technique : FEM;
     boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
     physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
-    const rhos =  8.67 g/cm^3; --P.SolidDensity;
-    const ks = 17.3 W/(m*K); -- P.SolidThermalConductivity;
-    const cps = 426.4 J/(kg*K); -- P.SolidSpecificHeat;
+    const rhos =  8 g/cm^3; --P.SolidDensity 8.67;
+    const ks = 17 W/(m*K); -- P.SolidThermalConductivity 17.3;
+    const cps = 426 J/(kg*K); -- P.SolidSpecificHeat 426.4;
     rhos*cps*∇Tw- ks*△Tw = qw;
     (∂ Temp) /(∂ t) - DT * △Temp  = 0;
     solve Tw with {LIB_NumericalScheme_CPSolid, LIB_SolvingTechnique_CPSolid};
