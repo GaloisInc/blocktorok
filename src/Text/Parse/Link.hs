@@ -67,6 +67,7 @@ import Text.Parsec
   , runParserT
   , try
   )
+import qualified Text.Parsec as Parsec
 import qualified Data.Equation as Eqn
 import Text.Parse.Latex(parseLatexEquations)
 
@@ -294,18 +295,10 @@ parseRunFn =
      return $ RFn f arg
 
 parsePlotting :: Parser PlotMarkers
-parsePlotting =
-  do
-    tok' TokenLParen
-    m1 <- parseIdentifier
-    tok' TokenComma
-    m2 <- parseIdentifier
-    tok' TokenComma
-    m3 <- parseIdentifier
-    tok' TokenComma
-    m4 <- parseIdentifier
-    tok' TokenRParen
-    return $ PlotMarkers [m1, m2, m3, m4]
+parsePlotting = PlotMarkers <$> inParens markerList
+  where
+    inParens = Parsec.between (tok' TokenLParen) (tok' TokenRParen)
+    markerList = Parsec.sepBy1 parseIdentifier (tok' TokenComma)
 
 parseBackendSu2 :: Parser BackendConfig
 parseBackendSu2 =
