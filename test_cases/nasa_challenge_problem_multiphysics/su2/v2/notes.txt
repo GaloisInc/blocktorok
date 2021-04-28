@@ -1,0 +1,88 @@
+__________________________________________________________________________
+________________________________ Config __________________________________
+__________________________________________________________________________
+
+Configuration File :
+
+TODO: Add a timeDomain definition 
+++++ timeDomain: transient; -- steady state or transient simulation
+
+TODO:  Add a recoupingIterations definition 
+++++ recouplingIterations: 1000;
+
+TODO: add words to library definitions
+---- LIB_PhysicsParametersSolid.SOLID_TEMPERATURE_INIT
+
+
+TODO: Add the ability to make rhs to a constant variable definition a library definition 
+++++ const Tw = LIB_PhysicsParametersSolid.SOLID_TEMPERATURE_INIT;
+---- const Temp = 300 K; 
+
+TODO: Add a mesh definition 
+++++ mesh: mesh_name.su2;
+
+TODO: define a library input file with this definition
+++++ format : LIB_InputOutput
+---- format : LIB_FormatCP
+
+TODO: remove time parameter in Su2 config
+---- time : 200
+
+TODO: Add a shared_params definition in the Su2 block 
+++++ shared_params: LIB_SharedSettings
+
+TODO:Changes '[]' to '()' and allow two parameters
+++++ plotting : [cylinder, inflow]
+---- plotting : (cylinderouter1, cylinderouter2, cylinderouter3, cat)
+
+__________________________________________________________________________
+________________________________ Coupling ________________________________
+__________________________________________________________________________
+
+
+Coupling Function :
+TODO: Add a CoupledSurfaces definition 
++++++ coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner);
+
+
+TODO: Allow functions to have multiple input parameters.
+++++   qw = FluidModel(Tin, coupledSurface);
+----   qw = FluidModel(Tin); 
+
+__________________________________________________________________________
+________________________________ Structure /Fluid Models ________________________
+__________________________________________________________________________
+
+TODO: Add innerItations definition 
+++++ innerIterations: 100;
+
+TODO: Change possible right hand side for the boundaryFIeld 
+----   boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
+++++ boundaryField : MARKER_ISOTHERMAL= ( MarkerName, 300.0 );
+++++ boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 ); MARKER_SUPERSONIC_OUTLET=( outflow ); MARKER_ISOTHERMAL = ( cylinder, 300 )
+
+TODO: Remove physics definition (Check with Yerim)
+---- physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
+
+TODO: Add variable definition line (Check with Yerim)
+----- var Tw;
+
+TODO: add words to library definitions
+++++ LIB_PhysicsParametersSolid.SOLID_DENSITY;LIB_PhysicsParametersSolid.SOLID_THERMAL_CONDUCTIVITY; LIB_PhysicsParametersSolid.SPECIFIC_HEAT_CP
+
+TODO: let rhs of a constant variable be a library definition 
+++++ const rhos = LIB_PhysicsParametersSolid.SOLID_DENSITY;
+---- const rhos =  8 g/cm^3; --P.SolidDensity 8.67;
+
+TODO: add words to library definitions
+++++ LIB_PhysicsParametersSolid, LIB_SolvingTechniqueSolid, LIB_NumericalSchemeSolid
+++++ LIB_PhysicsParametersFluid, LIB_SolvingTechniqueFluid, LIB_NumericalSchemeFluid, LIB_GridDeformation
+
+TODO: Be able to solve with 3-4 parameters instead of just 2
+---- solve Tw with {LIB_NumericalScheme_CPSolid, LIB_SolvingTechnique_CPSolid};
+++++ solve Tw with {LIB_NumericalScheme_CPSolid, LIB_SolvingTechnique_CPSolid, LIB_PhysicsParametersSolid};
+
+
+TODO: Be able to return multiple variables
+++++ return Temp, pressure, density;
+---- return qw;
