@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
@@ -294,6 +294,16 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
+parseMesh :: Parser MeshFileTy
+parseMesh =
+  do tok' TokenMesh
+     tok' TokenColon
+     name <- parseIdentifier
+     tok' TokenDot
+     src <- parseIdentifier
+     tok' TokenSemi
+     return $ MeshFile name src
+
 parsePlotting :: Parser PlotMarkers
 parsePlotting = PlotMarkers <$> inParens markerList
   where
@@ -309,16 +319,12 @@ parseBackendSu2 =
      tok' TokenColon
      f <- parseIdentifier
      tok' TokenComma
-     tok' TokenTime
-     tok' TokenColon
-     n <- number
-     tok' TokenComma
      tok' TokenPlotting
      tok' TokenColon
      p <- parsePlotting
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f n p
+     return $ Su2 f p
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
@@ -334,6 +340,14 @@ parseBackend =
     tok' TokenColon
     parseBackendOpenFoam <|> parseBackendSu2
 
+parseCouplingIterations :: Parser Integer
+parseCouplingIterations =
+  do
+    tok' TokenIterationsCoupling
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n 
 
 parseConfig :: Parser Config
 parseConfig =
@@ -341,11 +355,13 @@ parseConfig =
      tok' TokenLCurl
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
+     couplingIterations <- parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
+     mesh <- parseMesh
      backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeStep duration consts runfn backend
+     return $ Config timeStep duration couplingIterations consts runfn mesh backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
@@ -356,13 +372,13 @@ parseConfig =
          return (n,u)
 
     parseDurationConfig =
-      do mode <- tok TokenIterations <|> tok TokenTotalTime
+      do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
          tok' TokenColon
          n <- number
          u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
-                    TokenIterations -> Iterations n u
+                    TokenIterationsTime -> IterationsTime n u
                     TokenTotalTime -> TotalTime n u
                     _ -> error "This can't happen"
 parseSingleArg :: Parser Identifier
@@ -658,4 +674,3 @@ parseCouplings = many parseCoupling
          o <- parseReturnDecl
          tok' TokenRCurl
          return $ Coupling mname ma mb i o vs eqs
-

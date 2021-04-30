@@ -1,11 +1,12 @@
 config {
     timeStep : 5 ms;-- size of the time step
-    iterations : 200; -- total number of time steps
+    timeIterations : 200; -- total number of time steps
+    couplingIterations: 1000;
     const Temp = 300 K; -- SOLID_TEMPERATURE_INIT
     run: coupleModels1(Temp);
+    mesh: mesh_name.su2;
     backend : Su2 {
         format : LIB_FormatCP,
-        time : 200,
         plotting : (cylinderouter1, cylinderouter2, cylinderouter3, cat)
       };
 }

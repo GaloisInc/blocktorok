@@ -41,7 +41,9 @@ tokens :-
 <0>  $digit+                               { lex (TokenInt . read)     }
 <0>  config                                { lex' TokenConfig          }
 <0>  run                                   { lex' TokenRun             }
-<0>  iterations                            { lex' TokenIterations      }
+<0>  timeIterations                        { lex' TokenIterationsTime }
+<0>  couplingIterations                    { lex' TokenIterationsCoupling }
+<0>  innerIterations                       { lex' TokenIterationsInner }
 <0>  model                                 { lex' TokenModel           }
 <0>  const                                 { lex' TokenConst           }
 <0>  couple                                { lex' TokenCouple          }
@@ -82,11 +84,11 @@ tokens :-
 <0>  snGrad                                { lex' TokenNsnGrad         }
 <0>  NumericalScheme                       { lex' TokenNumericalScheme }
 <0>  SolvingTechnique                      { lex' TokenSolvingTechnique }
+<0>  mesh                                  { lex' TokenMesh            }
 <0>  backend                               { lex' TokenBackend         }
 <0>  OpenFoam                              { lex' TokenOpenFoam        }
 <0>  Su2                                   { lex' TokenSu2             }
 <0>  format                                { lex' TokenFormat          }
-<0>  time                                  { lex' TokenTime            }
 <0>  plotting                              { lex' TokenPlotting        }
 <0>  with                                  { lex' TokenWith            }
 <0>  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }

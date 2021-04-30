@@ -23,7 +23,9 @@ data TokenClass =
   | TokenVar String
   | TokenConfig
   | TokenRun
-  | TokenIterations
+  | TokenIterationsTime
+  | TokenIterationsCoupling
+  | TokenIterationsInner
   | TokenModel
   | TokenConst
   | TokenCouple
@@ -64,11 +66,11 @@ data TokenClass =
   | TokenNsnGrad
   | TokenNumericalScheme
   | TokenSolvingTechnique
+  | TokenMesh
   | TokenBackend
   | TokenOpenFoam
   | TokenSu2
   | TokenFormat
-  | TokenTime
   | TokenPlotting
   | TokenPow
   | TokenColon
@@ -114,7 +116,9 @@ unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
 unLex TokenRun ="Run"
-unLex TokenIterations = "iterations"
+unLex TokenIterationsTime = "time iterations"
+unLex TokenIterationsCoupling= "coupling Iterations"
+unLex TokenIterationsInner = "inner iterations"
 unLex TokenModel = "model"
 unLex TokenConst = "const"
 unLex TokenCouple = "couple"
@@ -173,11 +177,11 @@ unLex TokenNinterpolation = "interpolation"
 unLex TokenNsnGrad ="snGrad"
 unLex TokenNumericalScheme = "NumericalScheme"
 unLex TokenSolvingTechnique = "SolvingTechnique"
+unLex TokenMesh  = "Mesh"
 unLex TokenBackend = "backend"
 unLex TokenOpenFoam = "OpenFoam"
 unLex TokenSu2 = "Su2"
 unLex TokenFormat = "format"
-unLex TokenTime = "time"
 unLex TokenPlotting = "plotting"
 unLex TokenWith = "with"
 unLex TokenComma = ","
