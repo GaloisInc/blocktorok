@@ -14,7 +14,7 @@ config {
         -- other options regarding settings for both models:
         -- 1. use with statement in run: coupleModels1 (Tw) with {LIB_SharedSettings}
         -- 2. parameters in LIB_SharedSettings can go in LIB_InputOutput (rename LIB_InputOutput to something like LIB_SharedSettings)
-        shared_params: LIB_SharedSettings,
+        sharedParams: LIB_SharedSettings,
         plotting : [cylinder, inflow, ...]
       };
 }
