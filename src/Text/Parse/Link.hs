@@ -347,7 +347,16 @@ parseCouplingIterations =
     tok' TokenColon
     n <- number
     tok' TokenSemi
-    return n 
+    return n
+
+parseInnerIterations :: Parser Integer
+parseInnerIterations =
+  do
+    tok' TokenIterationsInner
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n
 
 parseConfig :: Parser Config
 parseConfig =
@@ -404,6 +413,7 @@ parseModels =
     parseModelBody inputDecl =
       do tok' TokenLCurl
          technique <- parseSettingTechnique
+         innerIterations <- parseInnerIterations
          boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
@@ -413,7 +423,7 @@ parseModels =
          varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs varSolve
+         return $ mkModel inputDecl outputDecl technique  innerIterations boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =

@@ -69,7 +69,7 @@ data MeshFileTy = MeshFile Identifier Identifier
 data Config =
   Config { getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
-         , getCouplingIterations :: Integer 
+         , getCouplingIterations :: Integer
          , getConsts :: Map Identifier (Integer, UnitExp Name Name)
          , getRunFn :: RunFn
          , getMesh :: MeshFileTy

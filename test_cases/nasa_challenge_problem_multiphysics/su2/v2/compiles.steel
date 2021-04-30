@@ -13,6 +13,7 @@ config {
 
 model StructureModel(Tw) {
     technique : FVM;
+    innerIterations: 100;
     boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
     physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
     const rhos =  8 g/cm^3; --P.SolidDensity 8.67;
@@ -26,6 +27,7 @@ model StructureModel(Tw) {
 
 model FluidModel (Tw){
   technique : FVM;
+  innerIterations: 10000;
   boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
   physics : HeatConduction{LIB_PhysicsParameters_CPFluid};
   solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};

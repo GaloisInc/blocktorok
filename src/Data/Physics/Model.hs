@@ -61,6 +61,7 @@ data Model =
   Model { getInput :: Identifier
         , getOutput :: Identifier
         , getTechnique :: Technique -- ^ What solving technique should be used
+        , getInnerIterations :: Integer
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
         , getConsts :: Map Identifier (Integer, UnitExp Name Name) -- ^ The named constants used in this model
@@ -70,10 +71,11 @@ data Model =
         , getSolve :: VarSolve
         }
 instance Show Model where
-      show (Model i o t b p c l v e s) =
+      show (Model i o t it b p c l v e s) =
            mkIndent "input" i
         ++ mkIndent "output" o
         ++ mkIndent "Technique" t
+        ++ mkIndent "Inner Iteration" it
         ++ mkIndent "Boundary" b
         ++ mkIndent "PhysicsType" p
         ++ mkIndent "constants" c
@@ -84,7 +86,9 @@ instance Show Model where
 
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> Identifier
-        -> Technique -> Boundary -> PhysicsType
+        -> Technique
+        -> Integer 
+        -> Boundary -> PhysicsType
         -> Map Identifier (Integer, UnitExp Name Name)
         -> Map Identifier (Identifier, Identifier)
         -> Map Identifier (UnitExp Name Name)

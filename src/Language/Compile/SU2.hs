@@ -71,7 +71,7 @@ compile (Prog (Config g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Identifier fmt) 
     compileTime :: SU2Compiler
     compileTime =
       do SU2Config cfg <- get
-         let t = ci 
+         let t = ci
          put $ SU2Config $ Map.insert "INNER_ITER" (Integral t) cfg
 
     compilePlotting :: SU2Compiler
@@ -84,7 +84,7 @@ compile (Prog (Config g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Identifier fmt) 
 
     compileModel :: SU2Compiler
     compileModel =
-      do Model _ _ _ _ pType _ _ _ _ (VarSolve _ st ns)  <- lift $ lookupModel f models
+      do Model i o t it b pType c l v e (VarSolve _ st ns)  <- lift $ lookupModel f models
          compilePType pType
          compileSolveTechnique st
          compileNumScheme ns
