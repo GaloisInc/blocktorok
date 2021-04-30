@@ -71,6 +71,7 @@ data TokenClass =
   | TokenOpenFoam
   | TokenSu2
   | TokenFormat
+  | TokenSharedParams
   | TokenPlotting
   | TokenPow
   | TokenColon
@@ -182,6 +183,7 @@ unLex TokenBackend = "backend"
 unLex TokenOpenFoam = "OpenFoam"
 unLex TokenSu2 = "Su2"
 unLex TokenFormat = "format"
+unLex TokenSharedParams ="shared params"
 unLex TokenPlotting = "plotting"
 unLex TokenWith = "with"
 unLex TokenComma = ","

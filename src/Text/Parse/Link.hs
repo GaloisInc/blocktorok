@@ -315,16 +315,21 @@ parseBackendSu2 =
   do
      tok' TokenSu2
      tok' TokenLCurl
+
      tok' TokenFormat
      tok' TokenColon
      f <- parseIdentifier
+     tok' TokenComma
+     tok' TokenSharedParams
+     tok' TokenColon
+     sp <- parseIdentifier
      tok' TokenComma
      tok' TokenPlotting
      tok' TokenColon
      p <- parsePlotting
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f p
+     return $ Su2 f sp p
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =

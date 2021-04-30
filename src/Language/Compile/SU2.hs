@@ -47,7 +47,7 @@ type SU2Compiler = StateT SU2Config (Except LinkError) ()
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
 compile :: Prog -> Except LinkError SU2Config
-compile (Prog (Config g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Identifier fmt) plot)) models _) =
+compile (Prog (Config g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Identifier fmt) sp plot)) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler

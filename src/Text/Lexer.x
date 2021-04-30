@@ -89,6 +89,7 @@ tokens :-
 <0>  OpenFoam                              { lex' TokenOpenFoam        }
 <0>  Su2                                   { lex' TokenSu2             }
 <0>  format                                { lex' TokenFormat          }
+<0>  sharedParams                          { lex' TokenSharedParams    }
 <0>  plotting                              { lex' TokenPlotting        }
 <0>  with                                  { lex' TokenWith            }
 <0>  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }

@@ -31,6 +31,7 @@ import Data.Link.Identifier (Identifier)
 newtype PlotMarkers = PlotMarkers [Identifier] deriving (Show)
 
 data BackendConfig = Su2 { format ::Identifier
+                         , sharedParams ::Identifier
                          , plotting :: PlotMarkers
                          }
                    | OpenFoam

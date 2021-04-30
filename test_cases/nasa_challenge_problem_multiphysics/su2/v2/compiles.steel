@@ -7,6 +7,7 @@ config {
     mesh: mesh_name.su2;
     backend : Su2 {
         format : LIB_FormatCP,
+        sharedParams: LIB_SharedSettings,
         plotting : (cylinderouter1, cylinderouter2, cylinderouter3, cat)
       };
 }
