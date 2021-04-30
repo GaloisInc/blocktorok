@@ -22,7 +22,7 @@ config {
 model StructureModel (qw) {
   technique : FVM;
   innerIterations: 100;
-  boundaryField : MARKER_ISOTHERMAL= ( MarkerName, 300.0 );
+  boundaryField : MARKER_SYM= ( Symmetry );
   physics : LIB_PhysicsParametersSolid.SOLVER; -- this line serves no purpose
   const rhos = LIB_PhysicsParametersSolid.SOLID_DENSITY;
   const ks = LIB_PhysicsParametersSolid.SOLID_THERMAL_CONDUCTIVITY;
@@ -38,7 +38,7 @@ model FluidModel (Temp) {
     innerIterations: 10000;
     boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
                     MARKER_SUPERSONIC_OUTLET=( outflow );
-                    MARKER_ISOTHERMAL = ( cylinder, 300 )
+                    MARKER_SYM= ( Symmetry )
     physics : LIB_PhysicsParametersFluid.SOLVER; -- this line serves no purpose
 
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
