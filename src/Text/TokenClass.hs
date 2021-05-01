@@ -23,6 +23,9 @@ data TokenClass =
   | TokenVar String
   | TokenConfig
   | TokenRun
+  | TokenTimeDomain
+  | TokenTransient
+  | TokenSteady
   | TokenIterationsTime
   | TokenIterationsCoupling
   | TokenIterationsInner
@@ -117,6 +120,9 @@ unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
 unLex TokenRun ="Run"
+unLex TokenTimeDomain ="time domain"
+unLex TokenTransient = "transient"
+unLex TokenSteady = "steady"
 unLex TokenIterationsTime = "time iterations"
 unLex TokenIterationsCoupling= "coupling Iterations"
 unLex TokenIterationsInner = "inner iterations"

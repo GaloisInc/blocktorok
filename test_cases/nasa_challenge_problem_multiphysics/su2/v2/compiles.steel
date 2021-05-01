@@ -1,4 +1,5 @@
 config {
+    timeDomain: transient; -- steady state or transient simulation
     timeStep : 5 ms;-- size of the time step
     timeIterations : 200; -- total number of time steps
     couplingIterations: 1000;

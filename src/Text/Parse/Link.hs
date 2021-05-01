@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
@@ -274,6 +274,16 @@ parseDecl = parseNamedText parseProg
 --         snGrad = s
 --        }
 
+
+parseTimeDomain :: Parser TimeDomainTy
+parseTimeDomain =
+  do tok' TokenTimeDomain
+     tok' TokenColon
+     tok' TokenTransient
+     tok' TokenSemi
+     return $ Transient
+
+
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
@@ -315,7 +325,6 @@ parseBackendSu2 =
   do
      tok' TokenSu2
      tok' TokenLCurl
-
      tok' TokenFormat
      tok' TokenColon
      f <- parseIdentifier
@@ -367,6 +376,7 @@ parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
      tok' TokenLCurl
+     timeDomain <- parseTimeDomain
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
      couplingIterations <- parseCouplingIterations
@@ -375,7 +385,7 @@ parseConfig =
      mesh <- parseMesh
      backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeStep duration couplingIterations consts runfn mesh backend
+     return $ Config timeDomain timeStep duration couplingIterations consts runfn mesh backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep

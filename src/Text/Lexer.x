@@ -41,7 +41,10 @@ tokens :-
 <0>  $digit+                               { lex (TokenInt . read)     }
 <0>  config                                { lex' TokenConfig          }
 <0>  run                                   { lex' TokenRun             }
-<0>  timeIterations                        { lex' TokenIterationsTime }
+<0>  timeDomain                            { lex' TokenTimeDomain      }
+<0>  transient                             { lex' TokenTransient       }
+<0>  steady                                { lex' TokenSteady          }
+<0>  timeIterations                        { lex' TokenIterationsTime  }
 <0>  couplingIterations                    { lex' TokenIterationsCoupling }
 <0>  innerIterations                       { lex' TokenIterationsInner }
 <0>  model                                 { lex' TokenModel           }
