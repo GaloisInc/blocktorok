@@ -17,6 +17,7 @@ module Data.Link.AST
   , Duration(..)
   , Prog(..)
   , RunFn(..)
+  , MeshFileTy(..), TimeDomainTy(..)
   ) where
 
 import Data.Map.Strict (Map)
@@ -49,24 +50,32 @@ instance Show Prog where
       -- ++ "\n\n\t" ++ show s
       -- ++ "\n\n\t" ++ show n
 
+data TimeDomainTy = Transient | Steady
+              deriving (Show)
 
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
-data Duration = Iterations Integer (UnitExp Name Name) -- ^ The number of steps to take
+data Duration = IterationsTime Integer (UnitExp Name Name) -- ^ The number of steps to take
               | TotalTime Integer  (UnitExp Name Name) -- ^ The amount of time to simulate
               deriving (Eq, Show)
 
 data RunFn = RFn Identifier Identifier
               deriving (Show)
+data MeshFileTy = MeshFile Identifier Identifier
+              deriving (Show)
+
 
 -- | LINK Configuration, consisting of the global simulation step size and the
 --   total @Duration@
 data Config =
-  Config { getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
+  Config { getTimeDomain :: TimeDomainTy
+         , getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
+         , getCouplingIterations :: Integer
          , getConsts :: Map Identifier (Integer, UnitExp Name Name)
          , getRunFn :: RunFn
+         , getMesh :: MeshFileTy
          , getBackendConfig ::BackendConfig
          } deriving (Show)
 

@@ -1,17 +1,21 @@
 config {
+    timeDomain: transient; -- steady state or transient simulation
     timeStep : 5 ms;-- size of the time step
-    iterations : 200; -- total number of time steps
+    timeIterations : 200; -- total number of time steps
+    couplingIterations: 1000;
     const Temp = 300 K; -- SOLID_TEMPERATURE_INIT
     run: coupleModels1(Temp);
+    mesh: mesh_name.su2;
     backend : Su2 {
         format : LIB_FormatCP,
-        time : 200,
+        sharedParams: LIB_SharedSettings,
         plotting : (cylinderouter1, cylinderouter2, cylinderouter3, cat)
       };
 }
 
 model StructureModel(Tw) {
     technique : FVM;
+    innerIterations: 100;
     boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
     physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
     const rhos =  8 g/cm^3; --P.SolidDensity 8.67;
@@ -25,6 +29,7 @@ model StructureModel(Tw) {
 
 model FluidModel (Tw){
   technique : FVM;
+  innerIterations: 10000;
   boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
   physics : HeatConduction{LIB_PhysicsParameters_CPFluid};
   solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};

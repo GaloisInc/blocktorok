@@ -23,7 +23,12 @@ data TokenClass =
   | TokenVar String
   | TokenConfig
   | TokenRun
-  | TokenIterations
+  | TokenTimeDomain
+  | TokenTransient
+  | TokenSteady
+  | TokenIterationsTime
+  | TokenIterationsCoupling
+  | TokenIterationsInner
   | TokenModel
   | TokenConst
   | TokenCouple
@@ -64,11 +69,12 @@ data TokenClass =
   | TokenNsnGrad
   | TokenNumericalScheme
   | TokenSolvingTechnique
+  | TokenMesh
   | TokenBackend
   | TokenOpenFoam
   | TokenSu2
   | TokenFormat
-  | TokenTime
+  | TokenSharedParams
   | TokenPlotting
   | TokenPow
   | TokenColon
@@ -114,7 +120,12 @@ unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
 unLex TokenRun ="Run"
-unLex TokenIterations = "iterations"
+unLex TokenTimeDomain ="time domain"
+unLex TokenTransient = "transient"
+unLex TokenSteady = "steady"
+unLex TokenIterationsTime = "time iterations"
+unLex TokenIterationsCoupling= "coupling Iterations"
+unLex TokenIterationsInner = "inner iterations"
 unLex TokenModel = "model"
 unLex TokenConst = "const"
 unLex TokenCouple = "couple"
@@ -173,11 +184,12 @@ unLex TokenNinterpolation = "interpolation"
 unLex TokenNsnGrad ="snGrad"
 unLex TokenNumericalScheme = "NumericalScheme"
 unLex TokenSolvingTechnique = "SolvingTechnique"
+unLex TokenMesh  = "Mesh"
 unLex TokenBackend = "backend"
 unLex TokenOpenFoam = "OpenFoam"
 unLex TokenSu2 = "Su2"
 unLex TokenFormat = "format"
-unLex TokenTime = "time"
+unLex TokenSharedParams ="shared params"
 unLex TokenPlotting = "plotting"
 unLex TokenWith = "with"
 unLex TokenComma = ","

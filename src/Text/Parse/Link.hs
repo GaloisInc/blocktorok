@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
@@ -274,6 +274,16 @@ parseDecl = parseNamedText parseProg
 --         snGrad = s
 --        }
 
+
+parseTimeDomain :: Parser TimeDomainTy
+parseTimeDomain =
+  do tok' TokenTimeDomain
+     tok' TokenColon
+     tok' TokenTransient
+     tok' TokenSemi
+     return $ Transient
+
+
 parseProg :: Parser Prog
 parseProg =
   do cfg <- parseConfig
@@ -294,6 +304,16 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
+parseMesh :: Parser MeshFileTy
+parseMesh =
+  do tok' TokenMesh
+     tok' TokenColon
+     name <- parseIdentifier
+     tok' TokenDot
+     src <- parseIdentifier
+     tok' TokenSemi
+     return $ MeshFile name src
+
 parsePlotting :: Parser PlotMarkers
 parsePlotting = PlotMarkers <$> inParens markerList
   where
@@ -309,16 +329,16 @@ parseBackendSu2 =
      tok' TokenColon
      f <- parseIdentifier
      tok' TokenComma
-     tok' TokenTime
+     tok' TokenSharedParams
      tok' TokenColon
-     n <- number
+     sp <- parseIdentifier
      tok' TokenComma
      tok' TokenPlotting
      tok' TokenColon
      p <- parsePlotting
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f n p
+     return $ Su2 f sp p
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
@@ -334,18 +354,38 @@ parseBackend =
     tok' TokenColon
     parseBackendOpenFoam <|> parseBackendSu2
 
+parseCouplingIterations :: Parser Integer
+parseCouplingIterations =
+  do
+    tok' TokenIterationsCoupling
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n
+
+parseInnerIterations :: Parser Integer
+parseInnerIterations =
+  do
+    tok' TokenIterationsInner
+    tok' TokenColon
+    n <- number
+    tok' TokenSemi
+    return n
 
 parseConfig :: Parser Config
 parseConfig =
   do tok' TokenConfig
      tok' TokenLCurl
+     timeDomain <- parseTimeDomain
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
+     couplingIterations <- parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
+     mesh <- parseMesh
      backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeStep duration consts runfn backend
+     return $ Config timeDomain timeStep duration couplingIterations consts runfn mesh backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
@@ -356,13 +396,13 @@ parseConfig =
          return (n,u)
 
     parseDurationConfig =
-      do mode <- tok TokenIterations <|> tok TokenTotalTime
+      do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
          tok' TokenColon
          n <- number
          u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
-                    TokenIterations -> Iterations n u
+                    TokenIterationsTime -> IterationsTime n u
                     TokenTotalTime -> TotalTime n u
                     _ -> error "This can't happen"
 parseSingleArg :: Parser Identifier
@@ -388,6 +428,7 @@ parseModels =
     parseModelBody inputDecl =
       do tok' TokenLCurl
          technique <- parseSettingTechnique
+         innerIterations <- parseInnerIterations
          boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
@@ -397,7 +438,7 @@ parseModels =
          varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique boundaryDecl physType consts libs vs eqs varSolve
+         return $ mkModel inputDecl outputDecl technique  innerIterations boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
@@ -658,4 +699,3 @@ parseCouplings = many parseCoupling
          o <- parseReturnDecl
          tok' TokenRCurl
          return $ Coupling mname ma mb i o vs eqs
-
