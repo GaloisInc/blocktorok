@@ -32,6 +32,7 @@ data TokenClass =
   | TokenModel
   | TokenConst
   | TokenCouple
+  | TokenCoupledSurfaces
   | TokenTimeStep
   | TokenTotalTime
   | TokenInput
@@ -129,6 +130,7 @@ unLex TokenIterationsInner = "inner iterations"
 unLex TokenModel = "model"
 unLex TokenConst = "const"
 unLex TokenCouple = "couple"
+unLex TokenCoupledSurfaces = "coupled surfaces"
 unLex TokenTimeStep  = "TimeStep"
 unLex TokenTotalTime = "totalTime"
 unLex TokenTechnique = "technique"
