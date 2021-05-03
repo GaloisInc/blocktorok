@@ -38,6 +38,7 @@ model FluidModel (Tw){
 
 
 couple coupleModels1 FluidModel ModelSolid (Tin){
+  coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner)
   qw = FluidModel(Tin);  -- heat flux
   out = StructureModel (qw);
   return out;

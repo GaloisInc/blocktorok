@@ -50,6 +50,7 @@ tokens :-
 <0>  model                                 { lex' TokenModel           }
 <0>  const                                 { lex' TokenConst           }
 <0>  couple                                { lex' TokenCouple          }
+<0>  CoupledSurfaces                       { lex' TokenCoupledSurfaces }
 <0>  timeStep                              { lex' TokenTimeStep        }
 <0>  totalTime                             { lex' TokenTotalTime       }
 <0>  input                                 { lex' TokenInput           }

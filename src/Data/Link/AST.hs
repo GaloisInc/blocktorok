@@ -17,7 +17,7 @@ module Data.Link.AST
   , Duration(..)
   , Prog(..)
   , RunFn(..)
-  , MeshFileTy(..), TimeDomainTy(..)
+  , MeshFileTy(..), TimeDomainTy(..), CoupledSurfacesTy(..)
   ) where
 
 import Data.Map.Strict (Map)
@@ -65,7 +65,6 @@ data RunFn = RFn Identifier Identifier
 data MeshFileTy = MeshFile Identifier Identifier
               deriving (Show)
 
-
 -- | LINK Configuration, consisting of the global simulation step size and the
 --   total @Duration@
 data Config =
@@ -79,6 +78,9 @@ data Config =
          , getBackendConfig ::BackendConfig
          } deriving (Show)
 
+data CoupledSurfacesTy =  CoupledSurfaces Identifier Identifier Identifier
+  deriving (Show)
+
 -- TODO: A coupling relates two models via boundary equations and knowledge of
 -- what variables are communicated via the boundary. At minimum, a coupling
 -- must consist of two models and the set of consistency/coordination equations
@@ -89,6 +91,7 @@ data Coupling =
            , model2 :: Identifier
            , input :: Identifier
            , output :: Identifier
+           , coupledSurfaces :: CoupledSurfacesTy
            , getVars :: Map Identifier (UnitExp Name Name)
            , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
            } deriving (Show)

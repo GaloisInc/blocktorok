@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..), CoupledSurfacesTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
@@ -684,6 +684,20 @@ parseExp = parseExp1 `chainl1` pAddOp
              tok' TokenRParen
              return $ Paran e
 
+parseCoupledSurfaces :: Parser CoupledSurfacesTy
+parseCoupledSurfaces =
+  do
+    name <- parseIdentifier
+    tok' TokenEq
+    tok' TokenCoupledSurfaces
+    tok' TokenLParen
+    x <- parseIdentifier
+    tok' TokenComma
+    y <- parseIdentifier
+    tok' TokenRParen
+    return $(CoupledSurfaces name x y)
+
+
 parseCouplings :: Parser [Coupling]
 parseCouplings = many parseCoupling
   where
@@ -694,8 +708,9 @@ parseCouplings = many parseCoupling
          mb <- parseIdentifier
          i <- parseSingleArg
          tok' TokenLCurl
+         cs <- parseCoupledSurfaces
          vs <- parseVarDecls
          eqs <- parseEqs
          o <- parseReturnDecl
          tok' TokenRCurl
-         return $ Coupling mname ma mb i o vs eqs
+         return $ Coupling mname ma mb i o cs vs eqs
