@@ -8,14 +8,13 @@ config {
 
     const Tw = LIB_PhysicsParametersSolid.SOLID_TEMPERATURE_INIT;
     run: coupleModels1 (Tw);
-    mesh: mesh_name.su2;
+    mesh: vehicle-axi-filled.su2;
     backend : Su2 {
         format : LIB_InputOutput,
         -- other options regarding settings for both models:
         -- 1. use with statement in run: coupleModels1 (Tw) with {LIB_SharedSettings}
         -- 2. parameters in LIB_SharedSettings can go in LIB_InputOutput (rename LIB_InputOutput to something like LIB_SharedSettings)
-        sharedParams: LIB_SharedSettings,
-        plotting : [cylinder, inflow, ...]
+        sharedParams: LIB_SharedSettings
       };
 }
 
@@ -23,6 +22,7 @@ model StructureModel (qw) {
   technique : FVM;
   innerIterations: 100;
   boundaryField : MARKER_SYM= ( Symmetry );
+  plotting : [ wall ]
   physics : LIB_PhysicsParametersSolid.SOLVER; -- this line serves no purpose
   const rhos = LIB_PhysicsParametersSolid.SOLID_DENSITY;
   const ks = LIB_PhysicsParametersSolid.SOLID_THERMAL_CONDUCTIVITY;
@@ -39,6 +39,7 @@ model FluidModel (Temp) {
     boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
                     MARKER_SUPERSONIC_OUTLET=( outflow );
                     MARKER_SYM= ( Symmetry )
+    plotting : [ wall ]
     physics : LIB_PhysicsParametersFluid.SOLVER; -- this line serves no purpose
 
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
