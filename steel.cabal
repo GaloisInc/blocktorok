@@ -20,7 +20,7 @@ executable steel
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >= 4.11 && < 4.14
+  build-depends:       base >= 3 && < 5
                      , mtl
                      , optparse-applicative
                      , steel
