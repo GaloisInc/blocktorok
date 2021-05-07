@@ -38,12 +38,12 @@ model FluidModel (Temp) {
     boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
                     MARKER_SUPERSONIC_OUTLET=( outflow );
                     MARKER_SYM= ( Symmetry )
-    physics : LIB_PhysicsParametersFluid.SOLVER; -- this line serves no purpose
-
+    physics : LIB_PhysicsParametersFluid.SOLVER;
+    
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
     -- PRESSURE_COEFF, LAMINAR_VISCOSITY, SKIN_FRICTION, HEAT_FLUX, Y_PLUS, EDDY_VISCOSITY (outputs depend on the solver)
-    solve Temp, pressure, density, ... with {LIB_PhysicsParametersFluid, LIB_SolvingTechniqueFluid, LIB_NumericalSchemeFluid, LIB_GridDeformation};
-    return Temp, pressure, density, ...;
+    solve heat_flux with {LIB_PhysicsParametersFluid, LIB_SolvingTechniqueFluid, LIB_NumericalSchemeFluid, LIB_GridDeformation};
+    return heat_flux;
 }
 
 couple coupleModels1 (Tin) {
