@@ -8,7 +8,7 @@ config {
 
     const Tw = LIB_PhysicsParametersSolid.SOLID_TEMPERATURE_INIT;
     run: coupleModels1 (Tw);
-    mesh: vehicle-axi-filled.su2;
+    
     backend : Su2 {
         format : LIB_InputOutput,
         -- other options regarding settings for both models:
@@ -21,6 +21,7 @@ config {
 model StructureModel (qw) {
   technique : FVM;
   innerIterations: 100;
+  mesh: vehicle-axi-filled.su2;
   boundaryField : MARKER_SYM= ( Symmetry );
   physics : LIB_PhysicsParametersSolid.SOLVER; -- this line serves no purpose
   const rhos = LIB_PhysicsParametersSolid.SOLID_DENSITY;
@@ -35,6 +36,7 @@ model StructureModel (qw) {
 model FluidModel (Temp) {
     technique : FVM;
     innerIterations: 10000;
+    mesh: fore-aft-no-sting-axi.su2;
     boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
                     MARKER_SUPERSONIC_OUTLET=( outflow );
                     MARKER_SYM= ( Symmetry )
