@@ -15,10 +15,11 @@ config {
         -- 1. use with statement in run: coupleModels1 (Tw) with {LIB_SharedSettings}
         -- 2. parameters in LIB_SharedSettings can go in LIB_InputOutput (rename LIB_InputOutput to something like LIB_SharedSettings)
         sharedParams: LIB_SharedSettings
+        gridDeform: LIB_GridDeformation
       };
 }
 
-model StructureModel (qw) {
+model SolidModel (qw) {
   technique : FVM;
   innerIterations: 100;
   mesh: vehicle-axi-filled.su2;
@@ -44,7 +45,7 @@ model FluidModel (Temp) {
     
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
     -- PRESSURE_COEFF, LAMINAR_VISCOSITY, SKIN_FRICTION, HEAT_FLUX, Y_PLUS, EDDY_VISCOSITY (outputs depend on the solver)
-    solve heat_flux with {LIB_PhysicsParametersFluid, LIB_SolvingTechniqueFluid, LIB_NumericalSchemeFluid, LIB_GridDeformation};
+    solve heat_flux with {LIB_PhysicsParametersFluid, LIB_SolvingTechniqueFluid, LIB_NumericalSchemeFluid};
     return heat_flux;
 }
 
@@ -52,6 +53,6 @@ couple coupleModels1 (Tin) {
   var qw; -- heat flux
   coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner);
   qw = FluidModel(Tin, coupledSurface);
-  Tout = ModelSolid (qw, coupledSurface);
+  Tout = SolidModel (qw, coupledSurface);
   return Tout;
   }
