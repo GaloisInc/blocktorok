@@ -6,7 +6,7 @@ config {
 	-- time -> outer iter where coupling/information exchange happens -> inner iter for each zone/model convergence
 	couplingIterations: 1000;
 
-    const Tw = LIB_PhysicsParametersSolid.SOLID_TEMPERATURE_INIT;
+    const Tw = 300.0 K;
     run: coupleModels1 (Tw);
     
     backend : Su2 {
@@ -24,10 +24,10 @@ model SolidModel (qw) {
   innerIterations: 100;
   mesh: vehicle-axi-filled.su2;
   boundaryField : MARKER_SYM= ( Symmetry );
-  physics : LIB_PhysicsParametersSolid.SOLVER; -- this line serves no purpose
-  const rhos = LIB_PhysicsParametersSolid.SOLID_DENSITY;
-  const ks = LIB_PhysicsParametersSolid.SOLID_THERMAL_CONDUCTIVITY;
-  const cps = LIB_PhysicsParametersSolid.SPECIFIC_HEAT_CP;
+  physics : HEAT_EQUATION; -- this line serves no purpose
+  const rhos = 8670 kg/m^3;
+  const ks = 17.3 W/m*K;
+  const cps = 426.4 J/kg*K;
   var Tw;
   rhos*cps*∇Tw- ks*△Tw = qw;
   solve Tw with {LIB_PhysicsParametersSolid, LIB_SolvingTechniqueSolid, LIB_NumericalSchemeSolid};
@@ -41,7 +41,7 @@ model FluidModel (Temp) {
     boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
                     MARKER_SUPERSONIC_OUTLET=( outflow );
                     MARKER_SYM= ( Symmetry )
-    physics : LIB_PhysicsParametersFluid.SOLVER;
+    physics : RANS;
     
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
     -- PRESSURE_COEFF, LAMINAR_VISCOSITY, SKIN_FRICTION, HEAT_FLUX, Y_PLUS, EDDY_VISCOSITY (outputs depend on the solver)
