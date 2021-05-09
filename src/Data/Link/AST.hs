@@ -90,7 +90,7 @@ data Coupling =
            , model1 :: Identifier
            , model2 :: Identifier
            , input :: Identifier
-           , output :: Identifier
+           , output :: [Identifier]
            , coupledSurfaces :: CoupledSurfacesTy
            , getVars :: Map Identifier (UnitExp Name Name)
            , getEqs :: [Eqn.Equation] -- ^ The equations governing the model

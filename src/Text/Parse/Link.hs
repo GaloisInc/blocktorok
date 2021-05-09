@@ -32,8 +32,6 @@ import Text.TokenClass
 import Data.Math
 import Data.Physics.Model
   ( Boundary(..)
-  , BoundaryField(..)
-  , BoundaryType(..)
   , Model
   , PhysicsType(..)
   , VarSolve(..)
@@ -444,12 +442,10 @@ parseIdentifier :: Parser Identifier
 parseIdentifier =
   do Identifier <$> variable
 
-parseReturnDecl :: Parser Identifier
+parseReturnDecl :: Parser [Identifier]
 parseReturnDecl =
    do tok' TokenReturn
-      var <- variable
-      tok' TokenSemi
-      return $ Identifier var
+      Parsec.sepBy parseIdentifier (tok' TokenComma) <* tok' TokenSemi
 
 parseVarSolveDecl :: Parser VarSolve
 parseVarSolveDecl =
@@ -457,13 +453,10 @@ parseVarSolveDecl =
       var <- variable
       tok' TokenWith
       tok' TokenLCurl
-      s <- variable
-      tok' TokenComma
-      n <- variable
+      s <- Parsec.sepBy parseIdentifier (tok' TokenComma)
       tok' TokenRCurl
       tok' TokenSemi
-      return $ VarSolve (Identifier var) (Identifier s) (Identifier n)
-
+      return $ VarSolve (Identifier var) s
 parseSettingTechnique :: Parser Technique
 parseSettingTechnique =
   do tok' TokenTechnique
@@ -475,50 +468,10 @@ parseSettingTechnique =
                 TokenFVM -> FVM
                 _ -> error "This can't happen"
 
-parseBoundaryType :: Parser BoundaryType
-parseBoundaryType =
-  do methodTok <- tok TokenDirichlet <|> tok TokenNeumann
-     return $ case methodTok of
-             TokenDirichlet -> Dirichlet
-             TokenNeumann -> Neumann
-             _ -> error "This can't happen"
-
-parseBoundaryTypeDecl :: Parser Boundary
-parseBoundaryTypeDecl =
- do tok' TokenBoundary
-    tok' TokenColon
-    method <- parseBoundaryType
-    tok' TokenLParen
-    ident <- parseIdentifier
-    tok' TokenRParen
-    tok' TokenSemi
-    return (T method ident)
-
-
-parseBoundaryField :: Parser BoundaryField
-parseBoundaryField =
-  do tok' TokenLParen
-     ident <- parseIdentifier
-     tok' TokenComma
-     method <- parseBoundaryType
-     tok' TokenComma
-     n <- number
-     tok' TokenRParen
-     tok' TokenSemi
-     return (BoundaryField ident method  n)
-
-parseBoundaryFieldsDecl :: Parser Boundary
-parseBoundaryFieldsDecl =
-  do
-    tok' TokenBoundaryField
-    tok' TokenColon
-    x <- (many parseBoundaryField)
-    return (F x)
-
 parseBoundaryDecl :: Parser Boundary
 parseBoundaryDecl =
-  do
-    parseBoundaryFieldsDecl <|> parseBoundaryTypeDecl
+  do  tok' TokenBoundaryField >> tok' TokenColon
+      BoundaryLibs <$> (Parsec.sepBy1 parseIdentifier (tok' TokenComma) <* tok' TokenSemi)
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -670,7 +623,7 @@ parseExp = parseExp1 `chainl1` pAddOp
         parseFnApp =
           do f <- parseIdentifier
              tok' TokenLParen
-             arg <- parseIdentifier
+             arg <- Parsec.sepBy parseIdentifier (tok' TokenComma)
              tok' TokenRParen
              return $ FnApp f arg
 

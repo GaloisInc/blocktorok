@@ -15,8 +15,6 @@ designed to be extended with whatever we feel is important.)
 
 module Data.Physics.Model
   ( Boundary(..)
-  , BoundaryField(..)
-  , BoundaryType(..)
   , Model(..)
   , PhysicsType(..)
   , VarSolve(..)
@@ -36,14 +34,8 @@ import qualified Data.Equation as Eqn
 mkIndent :: (Show a, Show b) => a -> b -> String
 mkIndent lhs rhs = "\n\t" ++ show lhs ++ " : " ++ show rhs
 
-data BoundaryType = Neumann | Dirichlet
-              deriving (Show)
-
-data BoundaryField =  BoundaryField Identifier  BoundaryType Integer
-              deriving (Show)
-
-data Boundary =  T BoundaryType Identifier | F [BoundaryField]
-              deriving (Show)
+newtype Boundary = BoundaryLibs [Identifier]
+              deriving Show
 
 data PhysicsType = HeatTransfer Identifier
                  | FluidFlow Identifier
@@ -51,15 +43,14 @@ data PhysicsType = HeatTransfer Identifier
                 deriving (Show)
 data VarSolve = VarSolve
   Identifier   -- ^ Variable we are solving for
-  Identifier   -- ^ Solving technique
-  Identifier   -- ^ Numerical scheme
+  [Identifier] -- ^ Libraries
   deriving (Show)
 
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
   Model { getInput :: Identifier
-        , getOutput :: Identifier
+        , getOutput :: [Identifier]
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getInnerIterations :: Integer
         , getBoundary :: Boundary
@@ -85,7 +76,7 @@ instance Show Model where
         ++ mkIndent "solvingvariables" s
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Identifier -> Identifier
+mkModel :: Identifier -> [Identifier]
         -> Technique
         -> Integer 
         -> Boundary -> PhysicsType
