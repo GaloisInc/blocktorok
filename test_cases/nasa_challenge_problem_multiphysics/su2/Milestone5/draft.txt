@@ -38,7 +38,7 @@ model FluidModel (Temp) {
     technique : FVM;
     innerIterations: 10000;
     mesh: fore-aft-no-sting-axi.su2;
-    boundaryField : LIB_BoundaryConditionsFluid
+    boundaryField : LIB_BoundaryConditionsFluid;
     physics : RANS;
     
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
