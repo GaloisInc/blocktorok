@@ -23,7 +23,7 @@ model SolidModel (qw) {
   technique : FVM;
   innerIterations: 100;
   mesh: vehicle-axi-filled.su2;
-  boundaryField : MARKER_SYM= ( Symmetry );
+  boundaryField : LIB_BoundaryConditionsSolid;
   physics : HEAT_EQUATION; -- this line serves no purpose
   const rhos = 8670 kg/m^3;
   const ks = 17.3 W/m*K;
@@ -38,9 +38,7 @@ model FluidModel (Temp) {
     technique : FVM;
     innerIterations: 10000;
     mesh: fore-aft-no-sting-axi.su2;
-    boundaryField : MARKER_SUPERSONIC_INLET=( inflow, 200, 57.4, 2000, 0, 0 );
-                    MARKER_SUPERSONIC_OUTLET=( outflow );
-                    MARKER_SYM= ( Symmetry )
+    boundaryField : LIB_BoundaryConditionsFluid
     physics : RANS;
     
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
