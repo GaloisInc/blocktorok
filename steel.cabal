@@ -21,6 +21,9 @@ executable steel
   -- other-modules:
   -- other-extensions:
   build-depends:       base >= 3 && < 5
+                     , bytestring
+                     , containers
+                     , directory
                      , mtl
                      , optparse-applicative
                      , steel
@@ -32,17 +35,23 @@ executable steel
 
 library
   build-depends:       base >= 3 && < 5
+                     , aeson
                      , array
+                     , bytestring
                      , containers
                      , mtl
                      , multimap
                      , optparse-applicative
                      , parsec
+                     , scientific
                      , template-haskell
+                     , text
                      , transformers
                      , uniplate
                      , units
                      , units-defs
+                     , unordered-containers
+                     , vector
                      , prettyprinter
   hs-source-dirs:      src
   default-language:    Haskell2010
@@ -64,6 +73,7 @@ library
                        Language.Link
                        Options
                        Text.Lexer
+                       Text.Parse.Library
                        Text.Parse.Link
                        Text.Parse.Units
                        Text.Parse.Latex

@@ -17,17 +17,23 @@ module Main (main) where
 import Control.Monad (zipWithM)
 import Control.Monad.Except (Except, runExcept)
 
+import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy as B
+import qualified Data.Map.Strict as M
+
 import Data.Backends.SU2 (SU2Config)
 import Data.Class.Render
 import Language.Compile.SU2 (compile)
 import Language.Error (LinkError)
 import Language.Link (link)
 import Options
+import Text.Parse.Library (parseLib)
 import Text.Parse.Link (parseDecl)
 
 import Options.Applicative
 
-import System.Exit
+import System.Directory (listDirectory)
+import System.Exit (exitFailure)
 
 main :: IO ()
 main = realMain =<< execParser opts
@@ -36,14 +42,19 @@ main = realMain =<< execParser opts
       (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
 
 realMain :: Options -> IO ()
-realMain Options { sources = inputs, target = output } =
+realMain Options { sources = inputs, target = output, libDir = lib } =
   do inputContents <- mapM readFile inputs
-     case runExcept $ processProg inputContents of
+     libNames <- listDirectory lib
+     let libFullNames = map ((lib ++ "/") ++) libNames
+     libContents <- mapM B.readFile libFullNames
+     case runExcept $ processProg inputContents libNames libContents of
        Left e -> putStrLn (render e) >> exitFailure
        Right su2 -> writeFile output (render su2)
   where
-    processProg :: [String] -> Except LinkError SU2Config
-    processProg contents =
-      do progs <- zipWithM parseDecl inputs contents
+    processProg :: [String] -> [String] -> [ByteString] -> Except LinkError SU2Config
+    processProg inputContents libNames libContents =
+      do libs <- mapM parseLib libContents
+         let namedLibs = M.fromList $ zip libNames libs
+         progs <- zipWithM parseDecl inputs inputContents
          prog <- link progs
-         compile prog
+         compile namedLibs prog

@@ -1,3 +1,7 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Data.Backends.SU2
 Description : Internal representation of SU2 configuration scripts
@@ -30,10 +34,16 @@ module Data.Backends.SU2
   , TabFormat(..)
   ) where
 
+import Data.Aeson (FromJSON, Value(..), parseJSON, withText)
+
 import Data.Class.Render (Render, render)
+import qualified Data.HashMap.Strict as HMap
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Scientific (floatingOrInteger, toRealFloat)
+import Data.Text (Text, unpack)
+import qualified Data.Vector as V
 
 data SU2Solver = Euler
                | NS
@@ -95,6 +105,32 @@ instance Render Objective where
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach         = "SURFACE_MACH"
 
+instance FromJSON Objective where
+  parseJSON = withText "Objective" $ \case
+    "Drag" -> pure Drag
+    "Lift" -> pure Lift
+    "Sideforce" -> pure Sideforce
+    "X Moment" -> pure XMoment
+    "Y Moment" -> pure YMoment
+    "Z Moment" -> pure ZMoment
+    "Efficiency" -> pure Efficiency
+    "Equivalent Area" -> pure EquivArea
+    "Nearfield Pressure" -> pure NearPressure
+    "X Force" -> pure XForce
+    "Y Force" -> pure YForce
+    "Z Force" -> pure ZForce
+    "Thrust" -> pure Thrust
+    "Torque" -> pure Torque
+    "Total Heat Flux" -> pure TotalHeatFlux
+    "Max Heat Flux" -> pure MaxHeatFlux
+    "Inverse Design Pressure" -> pure InvDesPressure
+    "Inverse Design Heat Flux" -> pure InvDesHeatFlux
+    "Surface Total Pressure" -> pure SurfTotPressure
+    "Surface Mass Flow" -> pure SurfMassFlow
+    "Surface Static Pressure" -> pure SurfStatPressure
+    "Surface Mach" -> pure SurfMach
+    _ -> fail "Unrecognized SU2 objective"
+
 data MathProb = Direct
               | ContAdjoint
               | DiscAdjoint
@@ -141,7 +177,7 @@ instance Render Preconditioner where
   render ILU     = "ILU"
   render LU_SGS  = "LU_SGS"
   render Linelet = "LINELET"
-  render Jacobi  = "Jacobi"
+  render Jacobi  = "JACOBI"
 
 data Stiffness = InvVol
                | WallDist
@@ -183,7 +219,7 @@ data SU2RHS = Solver SU2Solver
             | MarkerData [(String, Double)]
             | Markers (Maybe [String])
             | IncompressibleScheme IncScheme
-            | GradientMehod GradMethod
+            | GradientMethod GradMethod
             | CFLAdaptParam Double Double Double Double Double
             | RKCoefficient Double Double Double
             | LinearSolver LinearSolver
@@ -206,7 +242,7 @@ instance Render SU2RHS where
   render (Markers Nothing)                    = "NONE"
   render (Markers (Just ms))                  = "(" ++ intercalate ", " ms ++ ")"
   render (IncompressibleScheme is)            = render is
-  render (GradientMehod gm)                   = render gm
+  render (GradientMethod gm)                  = render gm
   render (CFLAdaptParam fd fu minV maxV conv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV, conv]) ++ ")"
   render (RKCoefficient x y z)                = "(" ++ intercalate ", " (show <$> [x, y, z]) ++ ")"
   render (LinearSolver ls)                    = render ls
@@ -217,10 +253,113 @@ instance Render SU2RHS where
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
 
+instance FromJSON SU2RHS where
+  parseJSON (Object v)                          =
+    case HMap.lookup "type" v of
+      Just (String "RKCoefficient") -> case traverse (v HMap.!?) ["x", "y", "z"] of
+                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ RKCoefficient (head nums) (nums !! 1) (nums !! 2)
+                                                 | otherwise -> fail "Non-numbers provided as RK Coefficients"
+                                         Nothing -> fail "Expected fields 'x', 'y', 'z'"
+      Just (String "CFLAdaptParam") -> case traverse (v HMap.!?) ["fd", "fu", "minV", "maxV", "conv"] of
+                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ CFLAdaptParam (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
+                                                 | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         Nothing -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
+      _ -> fail "Unknown object type"
+  parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
+                      | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
+                                                    Just objectives -> pure $ ObjectiveFns $ V.toList objectives
+                                                    Nothing -> fail "Unrecognized objective function"
+                      | otherwise               = fail "Unrecognized array format"
+  parseJSON (String "Euler")                    = pure (Solver Euler)
+  parseJSON (String "Navier Stokes")            = pure (Solver NS)
+  parseJSON (String "Wave Equation")            = pure (Solver Wave)
+  parseJSON (String "Heat Equation")            = pure (Solver Heat)
+  parseJSON (String "Elasticity FEM")           = pure (Solver ElasticityFEM)
+  parseJSON (String "Poisson Equation")         = pure (Solver Poisson)
+  parseJSON (String "Direct")                   = pure (MathProblem Direct)
+  parseJSON (String "Continuous Adjoint")       = pure (MathProblem ContAdjoint)
+  parseJSON (String "Discrete Adjoint")         = pure (MathProblem DiscAdjoint)
+  parseJSON (String "Initial Values")           = pure (IncompressibleScheme InitValues)
+  parseJSON (String "Reference Values")         = pure (IncompressibleScheme RefValues)
+  parseJSON (String "Dimensional")              = pure (IncompressibleScheme Dim)
+  parseJSON (String "Green-Gauss")              = pure (GradientMethod GGauss)
+  parseJSON (String "Weighted Least Squares")   = pure (GradientMethod WLS)
+  parseJSON (String "FGMRes")                   = pure (LinearSolver FGMRes)
+  parseJSON (String "Restarted FGMRes")         = pure (LinearSolver RestartFGMRes)
+  parseJSON (String "BCGStab")                  = pure (LinearSolver BCGStab)
+  parseJSON (String "Smoother Jacobi")          = pure (LinearSolver SJacobi)
+  parseJSON (String "Smoother ILU")             = pure (LinearSolver SILU)
+  parseJSON (String "Smoother LUSGS")           = pure (LinearSolver SLUSGS)
+  parseJSON (String "Smoother Linelet")         = pure (LinearSolver SLinelet)
+  parseJSON (String "ILU")                      = pure (Preconditioner ILU)
+  parseJSON (String "LU SGS")                   = pure (Preconditioner LU_SGS)
+  parseJSON (String "Linelet")                  = pure (Preconditioner Linelet)
+  parseJSON (String "Jacobi")                   = pure (Preconditioner Jacobi)
+  parseJSON (String "Inverse Volume")           = pure (Stiffness InvVol)
+  parseJSON (String "Wall Distance")            = pure (Stiffness WallDist)
+  parseJSON (String "Constant Stiffness")       = pure (Stiffness ConstStiff)
+  parseJSON (String "Euler Implicit")           = pure (TimeDiscre EulerImp)
+  parseJSON (String "Runge-Kutta Explicit")     = pure (TimeDiscre RKExp)
+  parseJSON (String "Classical RK4 Explicit")   = pure (TimeDiscre RK4Exp)
+  parseJSON (String "Ader DG")                  = pure (TimeDiscre AderDG)
+  parseJSON (String "SU2")                      = pure (MeshFormat SU2)
+  parseJSON (String "TECPlot")                  = pure (TabularFormat TECPLOT)
+  parseJSON (String "CSV")                      = pure (TabularFormat CSV)
+  parseJSON (String fname)                      = pure $ Filename $ unpack fname
+  parseJSON (Number x)                          =
+    case floatingOrInteger x of
+      Left f  -> pure (Floating f)
+      Right i -> pure (Integral i)
+  parseJSON (Bool b)                            = pure (Boolean b)
+  parseJSON Null                                = pure (Markers Nothing)
+
 -- | The type of SU2 configuration scripts.
-newtype SU2Config = SU2Config { getOptions :: Map String SU2RHS }
+newtype SU2Config = SU2Config { getOptions :: Map String SU2RHS } deriving (FromJSON)
 instance Render SU2Config where
   render (SU2Config opts) = Map.foldMapWithKey renderOpt opts
     where
       renderOpt :: String -> SU2RHS -> String
       renderOpt opt val = opt ++ " = " ++ render val ++ "\n"
+
+-- Some private helpers
+objectiveMap :: Map Text Objective
+objectiveMap = Map.fromList
+  [ ("Drag", Drag)
+  , ("Lift", Lift)
+  , ("Sideforce", Sideforce)
+  , ("X Moment", XMoment)
+  , ("Y Moment", YMoment)
+  , ("Z Moment", ZMoment)
+  , ("Efficiency", Efficiency)
+  , ("Equivalent Area", EquivArea)
+  , ("Nearfield Pressure", NearPressure)
+  , ("X Force", XForce)
+  , ("Y Force", YForce)
+  , ("Z Force", ZForce)
+  , ("Thrust", Thrust)
+  , ("Torque", Torque)
+  , ("Total Heat Flux", TotalHeatFlux)
+  , ("Max Heat Flux", MaxHeatFlux)
+  , ("Inverse Design Pressure", InvDesPressure)
+  , ("Inverse Design Heat Flux", InvDesHeatFlux)
+  , ("Surface Total Pressure", SurfTotPressure)
+  , ("Surface Mass Flow", SurfMassFlow)
+  , ("Surface Static Pressure", SurfStatPressure)
+  , ("Surface Mach", SurfMach)
+  ]
+
+isNumber :: Value -> Bool
+isNumber (Number _) = True
+isNumber _          = False
+
+isString :: Value -> Bool
+isString (String _) = True
+isString _          = False
+
+toRF :: RealFloat a => Value -> a
+toRF (Number x) = toRealFloat x
+toRF _          = error "This can't happen"
+
+toText :: Value -> Text
+toText (String s) = s
+toText _          = error "This can't happen"

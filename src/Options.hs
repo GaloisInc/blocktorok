@@ -22,9 +22,11 @@ import Options.Applicative (Parser, argument, help, metavar, long, short, some, 
 data Options =
   Options { sources :: [String]
           , target :: String
+          , libDir :: String
           }
 
 parseOpts :: Parser Options
 parseOpts =
   Options <$> some (argument str (metavar "FILES..." <> help "The LINK sources to be compiled"))
           <*> strOption (long "output" <> short 'o' <> metavar "FILE" <> help "The file to output to")
+          <*> strOption (long "lib" <> short 'l' <> metavar "DIR" <> help "Directory containing backend libraries")

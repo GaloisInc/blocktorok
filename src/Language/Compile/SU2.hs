@@ -22,17 +22,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 import Data.Backends.SU2
-  ( IncScheme(..)
-  , GradMethod(..)
-  , LinearSolver(..)
-  , MathProb(..)
-  , MeshFormat(..)
-  , Objective(..)
-  , Preconditioner(..)
-  , SU2Config(..)
+  ( SU2Config(..)
   , SU2RHS(..)
-  , SU2Solver(..)
-  , TabFormat(..)
   )
 import Data.Link.AST (Config(..), Prog(..), RunFn(..), MeshFileTy(..))
 import Data.Link.Identifier (Identifier(..))
@@ -46,8 +37,8 @@ type SU2Compiler = StateT SU2Config (Except LinkError) ()
 -- TODO: This function should have a _type_ specialized to the SU2 backend rather than throwing
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
-compile :: Prog -> Except LinkError SU2Config
-compile (Prog (Config timedomain g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Identifier fmt) sp plot)) models _) =
+compile :: Map String SU2Config -> Prog -> Except LinkError SU2Config
+compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) t plot)) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler
@@ -60,13 +51,11 @@ compile (Prog (Config timedomain g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Ident
 
     compileFmt :: SU2Compiler
     compileFmt =
-      if fmt /= "LIB_Format1" then
-        throwError $ UnknownFormat fmt
-      else
-        do SU2Config cfg <- get
-           let beSettings = Map.fromList $ zip ["MESH_FILENAME", "MESH_FORMAT", "TABULAR_FORMAT", "CONV_FILENAME", "VOLUME_FILENAME", "SURFACE_FILENAME", "OUTPUT_WRT_FREQ", "SCREEN_WRT_FREQ_TIME"]
-                                               [Filename "mesh_solid_rod.su2", MeshFormat SU2, TabularFormat CSV, Filename "history", Filename "flow", Filename "surface_flow", Integral 250, Integral 1]
-           put $ SU2Config $ Map.union beSettings cfg
+      case Map.lookup fmt libs of
+        Nothing -> throwError $ UnknownFormat fmt
+        Just (SU2Config fmtCfg) ->
+          do SU2Config cfg <- get
+             put $ SU2Config $ Map.union fmtCfg cfg
 
     compileTime :: SU2Compiler
     compileTime =
@@ -91,32 +80,28 @@ compile (Prog (Config timedomain g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Ident
 
     compilePType :: PhysicsType -> SU2Compiler
     compilePType (HeatConduction (Identifier pParams)) =
-      if pParams /= "LIB_PhysicsParameters1" then
-        throwError $ UnknownPhysParams pParams
-      else
-        do SU2Config cfg <- get
-           let pSettings = Map.fromList $ zip ["SOLVER", "MATH_PROBLEM", "RESTART_SO", "OBJECTIVE_FUNCTION", "INC_NONDIM", "SOLID_DENSITY", "SPECIFIC_HEAT_CP", "SOLID_THERMAL_CONDUCTIVITY"]
-                                              [Solver Heat, MathProblem Direct, Boolean False, ObjectiveFns [TotalHeatFlux], IncompressibleScheme Dim, Floating 19300.0, Floating 130.0, Floating 318.0]
-           put $ SU2Config $ Map.union pSettings cfg
+      case Map.lookup pParams libs of
+        Nothing -> throwError $ UnknownPhysParams pParams
+        Just (SU2Config physCfg) ->
+          do SU2Config cfg <- get
+             put $ SU2Config $ Map.union physCfg cfg
     compilePType pType = throwError $ UnsupportedPhys pType
 
     compileSolveTechnique :: Identifier -> SU2Compiler
     compileSolveTechnique (Identifier st) =
-      if st /= "LIB_SolvingTechnique1" then
-        throwError $ UnknownSolvingTech st
-      else
-        do SU2Config cfg <- get
-           let stSettings = Map.fromList $ zip ["LINEAR_SOLVER", "LINEAR_SOLVER_PREC", "LINEAR_SOLVER_ERROR","LINEAR_SOLVER_ITER", "CONV_RESIDUAL_MINVAL", "CONV_STARTITER", "CONV_CAUCY_ELEMS", "CONV_CAUCHY_EPS"]
-                                               [LinearSolver FGMRes, Preconditioner ILU, Floating 1e-15, Integral 5, Integral (negate 19), Integral 10, Integral 100, Floating 1e-6]
-           put $ SU2Config $ Map.union stSettings cfg
+      case Map.lookup st libs of
+        Nothing -> throwError $ UnknownSolvingTech st
+        Just (SU2Config stCfg) ->
+          do (SU2Config cfg) <- get
+             put $ SU2Config $ Map.union stCfg cfg
 
     compileNumScheme :: Identifier -> SU2Compiler
     compileNumScheme (Identifier ns) =
-      if ns /= "LIB_NumericalScheme1" then
-        throwError $ UnknownNumScheme ns
-      else
-        do SU2Config cfg <- get
-           put $ SU2Config $ Map.insert "NUM_METHOD_GRAD" (GradientMehod GGauss) cfg
+      case Map.lookup ns libs of
+        Nothing -> throwError $ UnknownNumScheme ns
+        Just (SU2Config nsCfg) ->
+          do (SU2Config cfg) <- get
+             put $ SU2Config $ Map.union nsCfg cfg
 
     compileMagic :: SU2Compiler
     compileMagic =
@@ -130,4 +115,4 @@ compile (Prog (Config timedomain g d ci cts (RFn f _) (MeshFile _ _ )(Su2 (Ident
       case Map.lookup ident ms of
         Nothing -> throwError $ NoModelWithName $ show ident
         Just m  -> return m
-compile _ = throwError NYI
+compile _ _ = throwError NYI
