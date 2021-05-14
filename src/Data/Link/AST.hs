@@ -21,7 +21,6 @@ module Data.Link.AST
   ) where
 
 import Data.Map.Strict (Map)
-import Data.Math (Equation)
 import Data.Link.Identifier (Identifier)
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)

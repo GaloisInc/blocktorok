@@ -24,7 +24,6 @@ module Data.Physics.Model
 import Data.Map.Strict (Map)
 
 import Data.Link.Identifier
-import Data.Math
 import Data.Solver.Technique
 import Data.Units.UnitExp
 import Language.Haskell.TH.Syntax (Name)
