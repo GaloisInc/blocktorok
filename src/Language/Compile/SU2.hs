@@ -25,7 +25,7 @@ import Data.Backends.SU2
   ( SU2Config(..)
   , SU2RHS(..)
   )
-import Data.Link.AST (Config(..), Prog(..), RunFn(..), MeshFileTy(..))
+import Data.Link.AST (Config(..), Prog(..), RunFn(..))
 import Data.Link.Identifier (Identifier(..))
 import Data.Physics.Model (Model(..), PhysicsType(..), VarSolve(..))
 import Data.Solver.Backend (BackendConfig(..), PlotMarkers(..))
@@ -38,7 +38,7 @@ type SU2Compiler = StateT SU2Config (Except LinkError) ()
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
 compile :: Map String SU2Config -> Prog -> Except LinkError SU2Config
-compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) t plot)) models _) =
+compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) _ plot)) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler
@@ -60,8 +60,7 @@ compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) t plot))
     compileTime :: SU2Compiler
     compileTime =
       do SU2Config cfg <- get
-         let t = ci
-         put $ SU2Config $ Map.insert "INNER_ITER" (Integral t) cfg
+         put $ SU2Config $ Map.insert "INNER_ITER" (Integral ci) cfg
 
     compilePlotting :: SU2Compiler
     compilePlotting =
@@ -73,10 +72,17 @@ compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) t plot))
 
     compileModel :: SU2Compiler
     compileModel =
-      do Model i o t it b pType c l v e (VarSolve _ st ns)  <- lift $ lookupModel f models
+      do Model _ _ _ _ _ pType _ _ _ _ (VarSolve _ libs')  <- lift $ lookupModel f models
          compilePType pType
-         compileSolveTechnique st
-         compileNumScheme ns
+         sequence_ $ compileLib <$> libs'
+
+    compileLib :: Identifier -> SU2Compiler
+    compileLib (Identifier i) =
+      case Map.lookup i libs of
+        Nothing -> throwError $ UnknownLib i
+        Just (SU2Config lib) ->
+          do (SU2Config cfg) <- get
+             put $ SU2Config $ Map.union lib cfg
 
     compilePType :: PhysicsType -> SU2Compiler
     compilePType (HeatConduction (Identifier pParams)) =
@@ -86,22 +92,6 @@ compile libs (Prog (Config _ _ _ ci _ (RFn f _) _ (Su2 (Identifier fmt) t plot))
           do SU2Config cfg <- get
              put $ SU2Config $ Map.union physCfg cfg
     compilePType pType = throwError $ UnsupportedPhys pType
-
-    compileSolveTechnique :: Identifier -> SU2Compiler
-    compileSolveTechnique (Identifier st) =
-      case Map.lookup st libs of
-        Nothing -> throwError $ UnknownSolvingTech st
-        Just (SU2Config stCfg) ->
-          do (SU2Config cfg) <- get
-             put $ SU2Config $ Map.union stCfg cfg
-
-    compileNumScheme :: Identifier -> SU2Compiler
-    compileNumScheme (Identifier ns) =
-      case Map.lookup ns libs of
-        Nothing -> throwError $ UnknownNumScheme ns
-        Just (SU2Config nsCfg) ->
-          do (SU2Config cfg) <- get
-             put $ SU2Config $ Map.union nsCfg cfg
 
     compileMagic :: SU2Compiler
     compileMagic =

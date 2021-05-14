@@ -39,6 +39,7 @@ data LinkError
   | MismatchedConstUnit Identifier (UnitExp Name Name) (UnitExp Name Name)
   | UnknownFormat String
   | UnknownPhysParams String
+  | UnknownLib String
   | UnknownSolvingTech String
   | UnknownNumScheme String
   | UnsupportedPhys PhysicsType
@@ -57,6 +58,7 @@ instance Render LinkError where
     "Constant " ++ ident ++ " defined with two different units: " ++ show u ++ " and " ++ show u'
   render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
   render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
+  render (UnknownLib lib) = "Unknown library: " ++ lib
   render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st
   render (UnknownNumScheme ns) = "Unknown numerical scheme: " ++ ns
   render (UnsupportedPhys pType) = "Unsupported physics type: " ++ show pType
