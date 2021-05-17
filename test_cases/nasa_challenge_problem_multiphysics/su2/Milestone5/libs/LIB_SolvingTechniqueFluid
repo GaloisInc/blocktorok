@@ -1,7 +1,7 @@
 {
     "SOLVER": "RANS",
     "KIND_TURB_MODEL": "SA",
-    "OBJECTIVE_FUNCTION": "Total Heat Flux",
+    "OBJECTIVE_FUNCTION": "TOTAL_HEATFLUX",
     "OBJECTIVE_WEIGHT": 1.0,
     "MARKER_PLOTTING": [ "wall" ],
     "MARKER_MONITORING": ["wall"],
