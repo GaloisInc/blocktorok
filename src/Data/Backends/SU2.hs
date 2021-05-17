@@ -220,7 +220,7 @@ data SU2RHS = Solver SU2Solver
             | Markers (Maybe [String])
             | IncompressibleScheme IncScheme
             | GradientMethod GradMethod
-            | CFLAdaptParam Double Double Double Double Double
+            | CFLAdaptParam Double Double Double Double (Maybe Double)
             | RKCoefficient Double Double Double
             | LinearSolver LinearSolver
             | Preconditioner Preconditioner
@@ -244,7 +244,7 @@ instance Render SU2RHS where
   render (Markers (Just ms))                  = "(" ++ intercalate ", " ms ++ ")"
   render (IncompressibleScheme is)            = render is
   render (GradientMethod gm)                  = render gm
-  render (CFLAdaptParam fd fu minV maxV conv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV, conv]) ++ ")"
+  render (CFLAdaptParam fd fu minV maxV mconv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV]) ++ maybe "" (\c -> ", " ++ show c) mconv ++ ")"
   render (RKCoefficient x y z)                = "(" ++ intercalate ", " (show <$> [x, y, z]) ++ ")"
   render (LinearSolver ls)                    = render ls
   render (Preconditioner p)                   = render p
@@ -262,10 +262,12 @@ instance FromJSON SU2RHS where
                                          Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ RKCoefficient (head nums) (nums !! 1) (nums !! 2)
                                                  | otherwise -> fail "Non-numbers provided as RK Coefficients"
                                          Nothing -> fail "Expected fields 'x', 'y', 'z'"
-      Just (String "CFLAdaptParam") -> case traverse (v HMap.!?) ["fd", "fu", "minV", "maxV", "conv"] of
-                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ CFLAdaptParam (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
-                                                 | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
-                                         Nothing -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
+      Just (String "CFLAdaptParam") -> case (traverse (v HMap.!?) ["fd", "fu", "minV", "maxV"], v HMap.!? "conv") of
+                                         (Just ns, Nothing) | all isNumber ns -> let [fd, fu, minV, maxV] = toRF <$> ns in pure $ CFLAdaptParam fd fu minV maxV Nothing
+                                                            | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         (Just ns, Just conv) | all isNumber ns && isNumber conv -> let [fd, fu, minV, maxV] = toRF <$> ns in pure $ CFLAdaptParam fd fu minV maxV (Just $ toRF conv)
+                                                              | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         (Nothing, _) -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
       Just (String "SupersonicInlet") -> case traverse (v HMap.!?) ["marker", "temp", "pressure", "vx", "vy", "vz"] of
                                            Just (m:rest) | isString m && all isNumber rest -> let nums = toRF <$> rest in pure $ InletData (unpack $ toText m) (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
                                            Nothing -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
