@@ -1,5 +1,5 @@
 {
-    "MATH_PROBLEM": "DIRECT",
-    "RESTART_SOL": "NO",
+    "MATH_PROBLEM": "Direct",
+    "RESTART_SOL": false,
     "TIME_MARCHING": "DUAL_TIME_STEPPING-2ND_ORDER"
 }
