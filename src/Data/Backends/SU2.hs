@@ -275,7 +275,7 @@ instance FromJSON SU2RHS where
   parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
                       | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
                                                     Just objectives -> pure $ ObjectiveFns $ V.toList objectives
-                                                    Nothing -> fail "Unrecognized objective function"
+                                                    Nothing -> pure $ Markers $ sequence $ V.toList $ (Just . unpack . toText) <$> v
                       | otherwise               = fail "Unrecognized array format"
   parseJSON (String "Euler")                    = pure (Solver Euler)
   parseJSON (String "Navier Stokes")            = pure (Solver NS)
