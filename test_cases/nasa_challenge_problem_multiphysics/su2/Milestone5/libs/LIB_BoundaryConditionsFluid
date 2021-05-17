@@ -1,12 +1,12 @@
 {
-    "MARKER_SUPERSONIC_INLET" = { "type": "SupersonicInlet"
-                                , "marker": "inflow"
-                                , "temp": 200
-                                , "pressure": 57.4
-                                , "vx": 2000
-                                , "vy": 0
-                                , "vz": 0
-                                },
-    "MARKER_SUPERSONIC_OUTLET" = [ "outflow" ],
-    "MARKER_SYM" = [ "Symmetry" ]
+    "MARKER_SUPERSONIC_INLET": { "type": "SupersonicInlet"
+                               , "marker": "inflow"
+                               , "temp": 200
+                               , "pressure": 57.4
+                               , "vx": 2000
+                               , "vy": 0
+                               , "vz": 0
+                               },
+    "MARKER_SUPERSONIC_OUTLET": [ "outflow" ],
+    "MARKER_SYM": [ "Symmetry" ]
 }
