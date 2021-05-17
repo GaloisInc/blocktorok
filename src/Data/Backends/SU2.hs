@@ -209,6 +209,22 @@ instance Render TabFormat where
   render TECPLOT = "TECPLOT"
   render CSV     = "CSV"
 
+data ConvectiveMethod = ROE
+instance Render ConvectiveMethod where
+  render ROE = "ROE"
+
+data SlopeLimiter = None
+                  | Venkatakrishnan
+                  | VenkatakrishnanWang
+                  | BarthJespersen
+                  | VanAlbadaEdge
+instance Render SlopeLimiter where
+  render None = "NONE"
+  render Venkatakrishnan = "VENKATAKRISHNAN"
+  render VenkatakrishnanWang = "VENKATAKRISHNAN_WANG"
+  render BarthJespersen = "BARTH_JESPERSEN"
+  render VanAlbadaEdge = "VAN_ALBADA_EDGE"
+
 data SU2RHS = Solver SU2Solver
             | Boolean Bool
             | ObjectiveFns [Objective]
@@ -230,6 +246,8 @@ data SU2RHS = Solver SU2Solver
             | TabularFormat TabFormat
             | Stiffness Stiffness
             | InletData String Double Double Double Double Double
+            | ConvectiveMethod ConvectiveMethod
+            | SlopeLimiter SlopeLimiter
 instance Render SU2RHS where
   render (Solver s)                           = render s
   render (Boolean True)                       = "YES"
@@ -254,6 +272,8 @@ instance Render SU2RHS where
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
   render (InletData m t p vx vy vz)           = "(" ++ m ++ ", " ++ intercalate ", " (show <$> [t, p, vx, vy, vz]) ++ ")"
+  render (ConvectiveMethod c)                 = render c
+  render (SlopeLimiter sl)                    = render sl
 
 instance FromJSON SU2RHS where
   parseJSON (Object v)                          =
@@ -312,6 +332,9 @@ instance FromJSON SU2RHS where
   parseJSON (String "SU2")                      = pure (MeshFormat SU2)
   parseJSON (String "TECPlot")                  = pure (TabularFormat TECPLOT)
   parseJSON (String "CSV")                      = pure (TabularFormat CSV)
+  parseJSON (String "ROE")                      = pure (ConvectiveMethod ROE)
+  parseJSON (String "None")                     = pure (SlopeLimiter None)
+  parseJSON (String "Venkatakrishnan")          = pure (SlopeLimiter Venkatakrishnan)
   parseJSON (String fname)                      = pure $ Filename $ unpack fname
   parseJSON (Number x)                          =
     case floatingOrInteger x of
