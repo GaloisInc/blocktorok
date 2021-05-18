@@ -16,7 +16,8 @@ Parsec, which is used to parse LINK programs.
 module Text.Token
   ( tok
   , tok'
-  , number
+  , floating
+  , integer
   , satisfy'
   , variable
   , Parser
@@ -58,11 +59,18 @@ tok t = satisfy (\(Token _ t') -> t' == t) <?> show t
 tok' :: (Stream [Token] m Token) => TokenClass -> ParsecT [Token] u m ()
 tok' p = void $ tok p
 
--- | Parse a @TokenInt@.
-number :: Monad m => ParsecT [Token] u m Integer
-number = satisfy' p <?> "integer"
+-- | Parse a @TokenFloat@.
+floating :: Monad m => ParsecT [Token] u m Double
+floating = satisfy' p <?> "float"
   where p (Token _ t) = case t of
-                          TokenInt n -> Just n
+                          TokenFloat d -> Just d
+                          _ -> Nothing
+
+-- | Parse a @TokenInt@.
+integer :: Monad m => ParsecT [Token] u m Integer
+integer = satisfy' p <?> "integer"
+  where p (Token _ t) = case t of
+                          TokenInt i -> Just i
                           _ -> Nothing
 
 -- | Parse a @TokenVar@.

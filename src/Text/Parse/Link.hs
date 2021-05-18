@@ -27,7 +27,7 @@ import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
-import Text.Token ( Parser, tok, tok', number, variable )
+import Text.Token ( Parser, tok, tok', floating, integer, variable )
 import Text.TokenClass
 import Data.Math
 import Data.Physics.Model
@@ -357,7 +357,7 @@ parseCouplingIterations =
   do
     tok' TokenIterationsCoupling
     tok' TokenColon
-    n <- number
+    n <- integer
     tok' TokenSemi
     return n
 
@@ -366,7 +366,7 @@ parseInnerIterations =
   do
     tok' TokenIterationsInner
     tok' TokenColon
-    n <- number
+    n <- integer
     tok' TokenSemi
     return n
 
@@ -388,7 +388,7 @@ parseConfig =
     parseTimeStepConfig =
       do tok' TokenTimeStep
          tok' TokenColon
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return (n,u)
@@ -396,7 +396,7 @@ parseConfig =
     parseDurationConfig =
       do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
          tok' TokenColon
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
@@ -492,7 +492,7 @@ parsePhysicsType =
                     TokenHeatConduction -> HeatConduction n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp Name Name))
+parseConstDecls :: Parser (Map Identifier (Double, U.UnitExp Name Name))
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls
@@ -501,7 +501,7 @@ parseConstDecls =
       do tok' TokenConst
          i <- parseIdentifier
          tok' TokenEq
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return (i, (n, u))
@@ -614,7 +614,7 @@ parseExp = parseExp1 `chainl1` pAddOp
              f <$> parseExp5
 
     parseExp6 :: Parser Exp
-    parseExp6 = (IntE <$> number)
+    parseExp6 = (IntE <$> integer)
              <|> try parseFnApp
              <|> (Var <$> variable)
              <|> parseNeg

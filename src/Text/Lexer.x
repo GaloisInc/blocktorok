@@ -38,7 +38,8 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-<0>  $digit+                               { lex (TokenInt . read)     }
+<0>  \-? $digit+ \. $digit*                { lex (TokenFloat . read)   }
+<0>  \-? $digit+                           { lex (TokenInt . read)     }
 <0>  config                                { lex' TokenConfig          }
 <0>  run                                   { lex' TokenRun             }
 <0>  timeDomain                            { lex' TokenTimeDomain      }

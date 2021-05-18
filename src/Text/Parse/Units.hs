@@ -48,7 +48,7 @@ import Data.Maybe (catMaybes)
 import Data.Units.UnitExp (UnitExp(..))
 import Data.Units.SymbolTable (SymbolTable(..))
 import Text.Lexer (Token(..))
-import Text.Token (number, satisfy', tok', variable)
+import Text.Token (integer, satisfy', tok', variable)
 import Text.TokenClass (TokenClass(..))
 
 #if __GLASGOW_HASKELL__ < 709
@@ -138,7 +138,7 @@ numP =
   do tok' TokenMinus
      negate <$> numP
   <|>
-  number
+  integer
 
 -- parse an exponentiation, like "^2"
 powP :: GenUnitParser pre u (UnitExp pre u -> UnitExp pre u)
