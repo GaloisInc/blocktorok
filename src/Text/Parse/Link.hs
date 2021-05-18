@@ -302,15 +302,15 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
-parseMesh :: Parser MeshFileTy
+parseMesh :: Parser Identifier
 parseMesh =
   do tok' TokenMesh
      tok' TokenColon
-     name <- parseIdentifier
+     Identifier name <- parseIdentifier
      tok' TokenDot
-     src <- parseIdentifier
+     Identifier ext <- parseIdentifier
      tok' TokenSemi
-     return $ MeshFile name src
+     return $ Identifier $ name ++ "." ++ ext
 
 parsePlotting :: Parser PlotMarkers
 parsePlotting = PlotMarkers <$> inParens markerList
@@ -380,10 +380,10 @@ parseConfig =
      couplingIterations <- parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
-     mesh <- parseMesh
+     -- mesh <- parseMesh
      backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeDomain timeStep duration couplingIterations consts runfn mesh backend
+     return $ Config timeDomain timeStep duration couplingIterations consts runfn backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
@@ -427,6 +427,7 @@ parseModels =
       do tok' TokenLCurl
          technique <- parseSettingTechnique
          innerIterations <- parseInnerIterations
+         mesh <- parseMesh
          boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
@@ -436,7 +437,7 @@ parseModels =
          varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique  innerIterations boundaryDecl physType consts libs vs eqs varSolve
+         return $ mkModel inputDecl outputDecl technique  innerIterations mesh boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =

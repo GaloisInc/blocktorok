@@ -52,6 +52,7 @@ data Model =
         , getOutput :: [Identifier]
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getInnerIterations :: Integer
+        , getMesh :: Identifier
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
         , getConsts :: Map Identifier (Double, UnitExp Name Name) -- ^ The named constants used in this model
@@ -61,11 +62,12 @@ data Model =
         , getSolve :: VarSolve
         }
 instance Show Model where
-      show (Model i o t it b p c l v e s) =
+      show (Model i o t it m b p c l v e s) =
            mkIndent "input" i
         ++ mkIndent "output" o
         ++ mkIndent "Technique" t
         ++ mkIndent "Inner Iteration" it
+        ++ mkIndent "Mesh" m
         ++ mkIndent "Boundary" b
         ++ mkIndent "PhysicsType" p
         ++ mkIndent "constants" c
@@ -78,6 +80,7 @@ instance Show Model where
 mkModel :: Identifier -> [Identifier]
         -> Technique
         -> Integer
+        -> Identifier
         -> Boundary -> PhysicsType
         -> Map Identifier (Double, UnitExp Name Name)
         -> Map Identifier (Identifier, Identifier)

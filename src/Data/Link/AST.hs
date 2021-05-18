@@ -73,7 +73,7 @@ data Config =
          , getCouplingIterations :: Integer
          , getConsts :: Map Identifier (Double, UnitExp Name Name)
          , getRunFn :: RunFn
-         , getMesh :: MeshFileTy
+         -- , getMesh :: MeshFileTy
          , getBackendConfig ::BackendConfig
          } deriving (Show)
 
