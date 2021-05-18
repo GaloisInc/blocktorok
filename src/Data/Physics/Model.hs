@@ -54,7 +54,7 @@ data Model =
         , getInnerIterations :: Integer
         , getBoundary :: Boundary
         , getPhysicsType :: PhysicsType
-        , getConsts :: Map Identifier (Integer, UnitExp Name Name) -- ^ The named constants used in this model
+        , getConsts :: Map Identifier (Double, UnitExp Name Name) -- ^ The named constants used in this model
         , getLib :: Map Identifier (Identifier, Identifier) -- ^ Named library imports to support model expression/simulation
         , getVars :: Map Identifier (UnitExp Name Name) -- ^ The variables appearing in the model equations
         , getEqs :: [Eqn.Equation] -- ^ The equations governing the model
@@ -77,9 +77,9 @@ instance Show Model where
 -- | Construct a new @Model@ from its basic components
 mkModel :: Identifier -> [Identifier]
         -> Technique
-        -> Integer 
+        -> Integer
         -> Boundary -> PhysicsType
-        -> Map Identifier (Integer, UnitExp Name Name)
+        -> Map Identifier (Double, UnitExp Name Name)
         -> Map Identifier (Identifier, Identifier)
         -> Map Identifier (UnitExp Name Name)
         -> [Eqn.Equation]

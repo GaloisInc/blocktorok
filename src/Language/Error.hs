@@ -33,9 +33,9 @@ data LinkError
   | LinkParseError ParseError
   | NoPrograms
   | NoModelWithName String
-  | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
+  | MismatchedGSs (Double, UnitExp Name Name) (Double, UnitExp Name Name)
   | MismatchedDur Duration Duration
-  | MismatchedConstVal Identifier Integer Integer
+  | MismatchedConstVal Identifier Double Double
   | MismatchedConstUnit Identifier (UnitExp Name Name) (UnitExp Name Name)
   | UnknownFormat String
   | UnknownPhysParams String
