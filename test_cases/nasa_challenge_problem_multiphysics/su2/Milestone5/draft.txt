@@ -1,7 +1,7 @@
 config {
     timeDomain: transient; -- steady state or transient simulation
-    timeStep : 5e-3 s; -- size of the time step
-	timeIterations : 200; -- total number of time steps
+    timeStep : 0.005 s; -- size of the time step
+	timeIterations : 200.0; -- total number of time steps
 	-- I'm making the assumption that all backends utilize the loosely coupled approach:
 	-- time -> outer iter where coupling/information exchange happens -> inner iter for each zone/model convergence
 	couplingIterations: 1000;
