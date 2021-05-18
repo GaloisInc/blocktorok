@@ -95,9 +95,9 @@ tokens :-
 <0>  Su2                                   { lex' TokenSu2             }
 <0>  format                                { lex' TokenFormat          }
 <0>  sharedParams                          { lex' TokenSharedParams    }
-<0>  plotting                              { lex' TokenPlotting        }
+<0>  gridDeform                            { lex' TokenGridDeform      }
 <0>  with                                  { lex' TokenWith            }
-<0>  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
+<0>  $alpha [$alpha $digit \_ \' \-]*         { lex  TokenVar             }
 <0>  \^                                    { lex' TokenPow             }
 <0>  \:                                    { lex' TokenColon           }
 <0>  \;                                    { lex' TokenSemi            }

@@ -14,7 +14,7 @@ config {
         -- other options regarding settings for both models:
         -- 1. use with statement in run: coupleModels1 (Tw) with {LIB_SharedSettings}
         -- 2. parameters in LIB_SharedSettings can go in LIB_InputOutput (rename LIB_InputOutput to something like LIB_SharedSettings)
-        sharedParams: LIB_SharedSettings
+        sharedParams: LIB_SharedSettings,
         gridDeform: LIB_GridDeformation
       };
 }
@@ -24,11 +24,11 @@ model SolidModel (qw) {
   innerIterations: 100;
   mesh: vehicle-axi-filled.su2;
   boundaryField : LIB_BoundaryConditionsSolid;
-  physics : HEAT_EQUATION; -- this line serves no purpose
-  const rhos = 8670 kg/m^3;
+  physics : HeatTransfer{LIB_SolvingTechniqueSolid}; -- this line serves no purpose
+  const rhos = 8670.0 kg/m^3;
   const ks = 17.3 W/m*K;
   const cps = 426.4 J/kg*K;
-  var Tw;
+  var Tw: K;
   rhos*cps*∇Tw- ks*△Tw = qw;
   solve Tw with {LIB_PhysicsParametersSolid, LIB_SolvingTechniqueSolid, LIB_NumericalSchemeSolid};
   return Tw;
@@ -39,7 +39,7 @@ model FluidModel (Temp) {
     innerIterations: 10000;
     mesh: fore-aft-no-sting-axi.su2;
     boundaryField : LIB_BoundaryConditionsFluid;
-    physics : RANS;
+    physics : FluidFlow{LIB_SolvingTechniqueFluid};
     
     -- output of SU2 are DENSITY, MOMENTUM, ENERGY, NU_TILDE (turbulence SA model), PRESSURE, TEMPERATURE, MACH,
     -- PRESSURE_COEFF, LAMINAR_VISCOSITY, SKIN_FRICTION, HEAT_FLUX, Y_PLUS, EDDY_VISCOSITY (outputs depend on the solver)
@@ -47,9 +47,9 @@ model FluidModel (Temp) {
     return heat_flux;
 }
 
-couple coupleModels1 (Tin) {
-  var qw; -- heat flux
+couple Coupled SolidModel FluidModel (Tin) {
   coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner);
+  var qw: J; -- heat flux
   qw = FluidModel(Tin, coupledSurface);
   Tout = SolidModel (qw, coupledSurface);
   return Tout;

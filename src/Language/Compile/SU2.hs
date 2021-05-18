@@ -28,7 +28,7 @@ import Data.Backends.SU2
 import Data.Link.AST (Config(..), Prog(..), RunFn(..))
 import Data.Link.Identifier (Identifier(..))
 import Data.Physics.Model (Model(..), PhysicsType(..), VarSolve(..))
-import Data.Solver.Backend (BackendConfig(..), PlotMarkers(..))
+import Data.Solver.Backend (BackendConfig(..))
 import Language.Error (LinkError(..))
 
 -- TODO: Might want this to be gesneric in the return type, but for now all we care about is the state
@@ -38,14 +38,14 @@ type SU2Compiler = StateT SU2Config (Except LinkError) ()
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
 compile :: Map String SU2Config -> Prog -> Except LinkError SU2Config
-compile libs (Prog (Config _ _ _ ci _ (RFn f _) (Su2 (Identifier fmt) _ plot)) models _) =
+compile libs (Prog (Config _ _ _ ci _ (RFn f _) (Su2 (Identifier fmt) _ (Identifier gridD))) models _) =
   execStateT compile' $ SU2Config Map.empty
   where
     compile' :: SU2Compiler
     compile' =
       do compileFmt
          compileTime
-         compilePlotting
+         compileGridDeform
          compileModel
          compileMagic
 
@@ -62,13 +62,13 @@ compile libs (Prog (Config _ _ _ ci _ (RFn f _) (Su2 (Identifier fmt) _ plot)) m
       do SU2Config cfg <- get
          put $ SU2Config $ Map.insert "INNER_ITER" (Integral ci) cfg
 
-    compilePlotting :: SU2Compiler
-    compilePlotting =
-      do SU2Config cfg <- get
-         let mplots = case plot of
-                        PlotMarkers [] -> Nothing
-                        PlotMarkers ps -> Just $ (\(Identifier s) -> s) <$> ps
-         put $ SU2Config $ Map.insert "MARKER_PLOTTING" (Markers mplots) cfg
+    compileGridDeform :: SU2Compiler
+    compileGridDeform =
+      case Map.lookup gridD libs of
+        Nothing -> throwError $ UnknownLib gridD
+        Just (SU2Config gridCfg) ->
+          do SU2Config cfg <- get
+             put $ SU2Config $ Map.union gridCfg cfg
 
     compileModel :: SU2Compiler
     compileModel =

@@ -23,7 +23,7 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..), CoupledSurfacesTy(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), TimeDomainTy(..), CoupledSurfacesTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
@@ -47,7 +47,6 @@ import Data.Solver.Backend
   -- , DerivKind(..)
   -- , Ddt(..)
   -- , NumericalScheme(..)
-  , PlotMarkers(..)
   -- , Preconditioner(..)
   -- , Solver(..)
   -- , SolvingTechnique(..)
@@ -312,12 +311,6 @@ parseMesh =
      tok' TokenSemi
      return $ Identifier $ name ++ "." ++ ext
 
-parsePlotting :: Parser PlotMarkers
-parsePlotting = PlotMarkers <$> inParens markerList
-  where
-    inParens = Parsec.between (tok' TokenLParen) (tok' TokenRParen)
-    markerList = Parsec.sepBy1 parseIdentifier (tok' TokenComma)
-
 parseBackendSu2 :: Parser BackendConfig
 parseBackendSu2 =
   do
@@ -331,12 +324,12 @@ parseBackendSu2 =
      tok' TokenColon
      sp <- parseIdentifier
      tok' TokenComma
-     tok' TokenPlotting
+     tok' TokenGridDeform
      tok' TokenColon
-     p <- parsePlotting
+     gridD <- parseIdentifier
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f sp p
+     return $ Su2 f sp gridD
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
@@ -649,6 +642,7 @@ parseCoupledSurfaces =
     tok' TokenComma
     y <- parseIdentifier
     tok' TokenRParen
+    tok' TokenSemi
     return $(CoupledSurfaces name x y)
 
 
