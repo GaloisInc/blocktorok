@@ -1,5 +1,8 @@
 {
     "MATH_PROBLEM": "Direct",
     "RESTART_SOL": false,
-    "TIME_MARCHING": "DUAL_TIME_STEPPING-2ND_ORDER"
+    "TIME_MARCHING": "DUAL_TIME_STEPPING-2ND_ORDER",
+    "MARKER_ZONE_INTERFACE": [ "wall", "wall" ],
+    "MARKER_CHT_INTERFACE": [ "wall", "wall" ],
+    "MULTIZONE_MESH": false
 }

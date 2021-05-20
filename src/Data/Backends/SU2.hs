@@ -29,6 +29,7 @@ module Data.Backends.SU2
   , Objective(..)
   , Preconditioner(..)
   , SU2Config(..)
+  , SU2Prog(..)
   , SU2RHS(..)
   , SU2Solver(..)
   , TabFormat(..)
@@ -51,6 +52,7 @@ data SU2Solver = Euler
                | Heat
                | ElasticityFEM
                | Poisson
+               | Multi
 instance Render SU2Solver where
   render Euler         = "EULER"
   render NS            = "NAVIER_STOKES"
@@ -58,6 +60,7 @@ instance Render SU2Solver where
   render Heat          = "HEAT_EQUATION"
   render ElasticityFEM = "FEM_ELASTICITY"
   render Poisson       = "POISSON_EQUATION"
+  render Multi         = "MULTIPHYSICS"
 
 data Objective = Drag
                | Lift
@@ -350,6 +353,12 @@ instance Render SU2Config where
     where
       renderOpt :: String -> SU2RHS -> String
       renderOpt opt val = opt ++ " = " ++ render val ++ "\n"
+
+-- | The type of multi-file SU2 programs.
+data SU2Prog =
+  SU2Prog { getTop :: SU2Config
+          , getDomains :: [SU2Config]
+          }
 
 -- Some private helpers
 objectiveMap :: Map Text Objective
