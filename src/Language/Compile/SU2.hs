@@ -50,6 +50,9 @@ compile libs (Prog (Config td (step, _) timeIter ci _ _ (Su2 fmt shared gridD)) 
     compile' =
       do compileTopLevel
          sequence_ $ compileModel <$> models
+         let mNames = Markers $ Just $ zipWith (++) (const "m" <$> Map.toList models) (show <$> [1..])
+         SU2Prog (SU2Config topCfg) rest <- get
+         put $ SU2Prog (SU2Config $ Map.insert "CONFIG_LIST" mNames topCfg) rest
 
     compileTopLevel :: SU2Compiler ()
     compileTopLevel =

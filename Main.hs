@@ -21,7 +21,7 @@ import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Map.Strict as M
 
-import Data.Backends.SU2 (SU2Config)
+import Data.Backends.SU2 (SU2Prog(..))
 import Data.Class.Render
 import Language.Compile.SU2 (compile)
 import Language.Error (LinkError)
@@ -49,9 +49,14 @@ realMain Options { sources = inputs, target = output, libDir = lib } =
      libContents <- mapM B.readFile libFullNames
      case runExcept $ processProg inputContents libNames libContents of
        Left e -> putStrLn (render e) >> exitFailure
-       Right su2 -> writeFile output (render su2)
+       Right (SU2Prog top rest) ->
+         do writeFile output (render top)
+            let mNames = zipWith (++) (const "m" <$> rest) (show <$> [1..])
+                mOuts  = zip mNames (render <$> rest)
+            sequence_ $ (uncurry writeFile) <$> mOuts
+
   where
-    processProg :: [String] -> [String] -> [ByteString] -> Except LinkError SU2Config
+    processProg :: [String] -> [String] -> [ByteString] -> Except LinkError SU2Prog
     processProg inputContents libNames libContents =
       do libs <- mapM parseLib libContents
          let namedLibs = M.fromList $ zip libNames libs
