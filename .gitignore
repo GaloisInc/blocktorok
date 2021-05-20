@@ -1,1 +1,8 @@
+*.dat
+*.idea
+*.DS_Store
+*.ipynb
+*.vtu
+*.vtk
+*.csv
 dist-newstyle/
