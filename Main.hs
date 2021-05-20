@@ -50,8 +50,8 @@ realMain Options { sources = inputs, target = output, libDir = lib } =
      case runExcept $ processProg inputContents libNames libContents of
        Left e -> putStrLn (render e) >> exitFailure
        Right (SU2Prog top rest) ->
-         do writeFile output (render top)
-            let mNames = zipWith (++) (const "m" <$> rest) (show <$> [1..])
+         do writeFile (output ++ "/top.cfg") (render top)
+            let mNames = zipWith (\m n -> output ++ "/" ++ m ++ n ++ ".cfg") (const "m" <$> rest) (show <$> [1..])
                 mOuts  = zip mNames (render <$> rest)
             sequence_ $ (uncurry writeFile) <$> mOuts
 

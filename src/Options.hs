@@ -28,5 +28,5 @@ data Options =
 parseOpts :: Parser Options
 parseOpts =
   Options <$> some (argument str (metavar "FILES..." <> help "The LINK sources to be compiled"))
-          <*> strOption (long "output" <> short 'o' <> metavar "FILE" <> help "The file to output to")
+          <*> strOption (long "output" <> short 'o' <> metavar "DIR" <> help "The directory to output to")
           <*> strOption (long "lib" <> short 'l' <> metavar "DIR" <> help "Directory containing backend libraries")
