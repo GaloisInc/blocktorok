@@ -4,5 +4,7 @@
     "TIME_MARCHING": "DUAL_TIME_STEPPING-2ND_ORDER",
     "MARKER_ZONE_INTERFACE": [ "wall", "wall" ],
     "MARKER_CHT_INTERFACE": [ "wall", "wall" ],
-    "MULTIZONE_MESH": false
+    "MULTIZONE_MESH": false,
+    "OBJECTIVE_FUNCTION": "TOTAL_HEATFLUX",
+    "OBJECTIVE_WEIGHT": 1.0
 }
