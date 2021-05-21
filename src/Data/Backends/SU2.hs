@@ -35,7 +35,7 @@ module Data.Backends.SU2
   , TabFormat(..)
   ) where
 
-import Data.Aeson (FromJSON, Value(..), parseJSON, withText)
+import Data.Aeson (FromJSON, Value(..), parseJSON)
 
 import Data.Class.Render (Render, render)
 import qualified Data.HashMap.Strict as HMap
@@ -107,32 +107,6 @@ instance Render Objective where
   render SurfMassFlow     = "SURFACE_MASSFLOW"
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach         = "SURFACE_MACH"
-
-instance FromJSON Objective where
-  parseJSON = withText "Objective" $ \case
-    "Drag" -> pure Drag
-    "Lift" -> pure Lift
-    "Sideforce" -> pure Sideforce
-    "X Moment" -> pure XMoment
-    "Y Moment" -> pure YMoment
-    "Z Moment" -> pure ZMoment
-    "Efficiency" -> pure Efficiency
-    "Equivalent Area" -> pure EquivArea
-    "Nearfield Pressure" -> pure NearPressure
-    "X Force" -> pure XForce
-    "Y Force" -> pure YForce
-    "Z Force" -> pure ZForce
-    "Thrust" -> pure Thrust
-    "Torque" -> pure Torque
-    "Total Heat Flux" -> pure TotalHeatFlux
-    "Max Heat Flux" -> pure MaxHeatFlux
-    "Inverse Design Pressure" -> pure InvDesPressure
-    "Inverse Design Heat Flux" -> pure InvDesHeatFlux
-    "Surface Total Pressure" -> pure SurfTotPressure
-    "Surface Mass Flow" -> pure SurfMassFlow
-    "Surface Static Pressure" -> pure SurfStatPressure
-    "Surface Mach" -> pure SurfMach
-    _ -> fail "Unrecognized SU2 objective"
 
 data MathProb = Direct
               | ContAdjoint
@@ -293,7 +267,7 @@ instance FromJSON SU2RHS where
                                          (Nothing, _) -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
       Just (String "SupersonicInlet") -> case traverse (v HMap.!?) ["marker", "temp", "pressure", "vx", "vy", "vz"] of
                                            Just (m:rest) | isString m && all isNumber rest -> let nums = toRF <$> rest in pure $ InletData (unpack $ toText m) (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
-                                           Nothing -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
+                                           _ -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
       _ -> fail "Unknown object type"
   parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
                       | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
