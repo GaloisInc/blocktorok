@@ -1,45 +1,46 @@
 config {
-    timeDomain: transient; -- steady state or transient simulation
-    timeStep : 5 ms;-- size of the time step
-    timeIterations : 200; -- total number of time steps
-    couplingIterations: 1000;
-    const Temp = 300 K; -- SOLID_TEMPERATURE_INIT
-    run: coupleModels1(Temp);
-    mesh: mesh_name.su2;
-    backend : Su2 {
-        format : LIB_FormatCP,
-        sharedParams: LIB_SharedSettings,
-        plotting : (cylinderouter1, cylinderouter2, cylinderouter3, cat)
-      };
+  timeDomain: transient; -- steady state or transient simulation
+  timeStep : 0.005 s;-- size of the time step
+  timeIterations : 200.0; -- total number of time steps
+  couplingIterations: 1000;
+  const Temp = 300.0 K; -- SOLID_TEMPERATURE_INIT
+  run: coupleModels1(Temp);
+  backend : Su2 {
+      format : LIB_InputOutput,
+      sharedParams: LIB_SharedSettings,
+      gridDeform: LIB_GridDeformation
+  };
 }
 
-model StructureModel(Tw) {
-    technique : FVM;
-    innerIterations: 100;
-    boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
-    physics : HeatConduction{LIB_PhysicsParameters_CPSolid};
-    const rhos =  8 g/cm^3; --P.SolidDensity 8.67;
-    const ks = 17 W/(m*K); -- P.SolidThermalConductivity 17.3;
-    const cps = 426 J/(kg*K); -- P.SolidSpecificHeat 426.4;
-    rhos*cps*∇Tw- ks*△Tw = qw;
-    solve Tw with {LIB_NumericalScheme_CPSolid, LIB_SolvingTechnique_CPSolid};
-    return Tw;
+model SolidModel(qw) {
+  technique : FVM;
+  innerIterations: 100;
+  mesh: vehicle-axi-filled.su2;
+  boundaryField : LIB_BoundaryConditionsSolid;
+  physics : HeatConduction{LIB_SolvingTechniqueSolid};
+  const rhos = 8670.0 kg/cm^3;
+  const ks = 17.3 W/m*K;
+  const cps = 426.4 J/kg*K;
+  rhos*cps*∇Tw- ks*△Tw = qw;
+  solve Tw with {LIB_NumericalSchemeSolid, LIB_PhysicsParametersSolid};
+  return Tw;
 }
 
 
-model FluidModel (Tw){
+model FluidModel (Tw) {
   technique : FVM;
   innerIterations: 10000;
-  boundaryField : (top, Neumann, 0 ); (right, Dirichlet, 273); (bottom, Neumann, 0); (left, Dirichlet, 573);
-  physics : HeatConduction{LIB_PhysicsParameters_CPFluid};
-  solve Temp with {LIB_SolvingTechnique1, LIB_NumericalScheme1};
+  mesh: fore-aft-no-sting-axi.su2;
+  boundaryField : LIB_BoundaryConditionsFluid;
+  physics : FluidFlow{LIB_SolvingTechniqueFluid};
+  solve qw with {LIB_NumericalSchemeFluid, LIB_PhysicsParametersFluid};
   return qw;
 }
 
 
-couple coupleModels1 FluidModel ModelSolid (Tin){
-  coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner)
-  qw = FluidModel(Tin);  -- heat flux
+couple coupleModels1 SolidModel FluidModel (Tin) {
+  coupledSurface = CoupledSurfaces(fluid_outer, cylinder_inner);
+  qw = FluidModel(Tin);
   out = StructureModel (qw);
   return out;
-  }
+}

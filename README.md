@@ -24,7 +24,7 @@ linked resource.
 
 ## Building LINK
 
-To build LINK, simply run `cabal build` from within the directory containing
+To build LINK, simply run `cabal build exe:steel` from within the directory containing
 this README. Any Haskell dependencies necessary will be fetched and built
 automatically.
 
@@ -37,9 +37,9 @@ Executing `cabal run steel` within the directory containing this README results
 in this output:
 
 ```bash
-Missing: FILES... (-o|--output FILE)
+Missing: FILES... (-o|--output DIR) (-l|--lib DIR)
 
-Usage: steel FILES... (-o|--output FILE)
+Usage: steel FILES... (-o|--output DIR) (-l|--lib DIR)
   Compile a LINK program
 ```
 
@@ -50,30 +50,29 @@ LINK executable rather than `cabal`. Here is the help output:
 ```text
 steel - A LINK compiler
 
-Usage: steel FILES... (-o|--output FILE)
+Usage: steel FILES... (-o|--output DIR) (-l|--lib DIR)
   Compile a LINK program
 
 Available options:
   FILES...                 The LINK sources to be compiled
-  -o,--output FILE         The file to output to
-  -h, --help               Show this help text
+  -o,--output DIR          The directory to output to
+  -l,--lib DIR             Directory containing backend libraries
+  -h,--help                Show this help text
 ```
 
 So, given a collection of LINK sources (say `a.steel`, `b.steel`, `c.steel`),
 and a desired output file `out.cfg`, the compiler can be run like so:
 
 ```bash
-cabal run steel -- a.steel b.steel c.steel --output out.cfg
+cabal run steel -- a.steel b.steel c.steel --output outdir
 ```
 
-This will link and compile the source files, dumping the output in `out.cfg`.
+This will link and compile the source files, dumping the output into the
+directory `outdir`, relative to where the compiler was invoked.
 
 ## Samples and Documentation
 
-The `test_cases/heat_transfer_rod/su2` documentary contains some LINK sources
-that will successfully link and compile - The sources are identical as this is
-simply a proof-of-concept for some of the compiler features. The problem
-represented is a single-model heat conduction problem along a simple rod.
+TODO: Update with info on running the challenge problem.
 
-Documentation for the LINK language can be found in the report distributed with
-this code release.
+Documentation for the LINK language can be found in the report distributed as
+part of the Milestone 4 deliverables.

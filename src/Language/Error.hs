@@ -33,12 +33,13 @@ data LinkError
   | LinkParseError ParseError
   | NoPrograms
   | NoModelWithName String
-  | MismatchedGSs (Integer, UnitExp Name Name) (Integer, UnitExp Name Name)
+  | MismatchedGSs (Double, UnitExp Name Name) (Double, UnitExp Name Name)
   | MismatchedDur Duration Duration
-  | MismatchedConstVal Identifier Integer Integer
+  | MismatchedConstVal Identifier Double Double
   | MismatchedConstUnit Identifier (UnitExp Name Name) (UnitExp Name Name)
   | UnknownFormat String
   | UnknownPhysParams String
+  | UnknownLib String
   | UnknownSolvingTech String
   | UnknownNumScheme String
   | UnsupportedPhys PhysicsType
@@ -57,6 +58,7 @@ instance Render LinkError where
     "Constant " ++ ident ++ " defined with two different units: " ++ show u ++ " and " ++ show u'
   render (UnknownFormat fmt) = "Unknown format configuration: " ++ fmt
   render (UnknownPhysParams pParams) = "Unknown physics parameters: " ++ pParams
+  render (UnknownLib lib) = "Unknown library: " ++ lib
   render (UnknownSolvingTech st) = "Unknown solving technique: " ++ st
   render (UnknownNumScheme ns) = "Unknown numerical scheme: " ++ ns
   render (UnsupportedPhys pType) = "Unsupported physics type: " ++ show pType

@@ -38,7 +38,8 @@ $alpha = [A-Za-z]
 tokens :-
   $white+                               ;
   "--".*                                ;
-<0>  $digit+                               { lex (TokenInt . read)     }
+<0>  \-? $digit+ \. $digit*                { lex (TokenFloat . read)   }
+<0>  \-? $digit+                           { lex (TokenInt . read)     }
 <0>  config                                { lex' TokenConfig          }
 <0>  run                                   { lex' TokenRun             }
 <0>  timeDomain                            { lex' TokenTimeDomain      }
@@ -94,9 +95,9 @@ tokens :-
 <0>  Su2                                   { lex' TokenSu2             }
 <0>  format                                { lex' TokenFormat          }
 <0>  sharedParams                          { lex' TokenSharedParams    }
-<0>  plotting                              { lex' TokenPlotting        }
+<0>  gridDeform                            { lex' TokenGridDeform      }
 <0>  with                                  { lex' TokenWith            }
-<0>  $alpha [$alpha $digit \_ \']*         { lex  TokenVar             }
+<0>  $alpha [$alpha $digit \_ \' \-]*         { lex  TokenVar             }
 <0>  \^                                    { lex' TokenPow             }
 <0>  \:                                    { lex' TokenColon           }
 <0>  \;                                    { lex' TokenSemi            }

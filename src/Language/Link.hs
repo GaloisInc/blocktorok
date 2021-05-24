@@ -79,19 +79,19 @@ link (p:ps) =
            Just a' -> throwError $ aErr a a'
            Nothing -> return ()
 
-    gSteps :: [(Integer, UnitExp Name Name)]
+    gSteps :: [(Double, UnitExp Name Name)]
     gSteps = (\Prog { getConfig = Config { getGlobalStep = gs } } -> gs) <$> ps
 
     durs :: [Duration]
     durs = (\Prog { getConfig = Config { getDuration = dur } } -> dur) <$> ps
 
-    constss :: [Map Identifier (Integer, UnitExp Name Name)]
+    constss :: [Map Identifier (Double, UnitExp Name Name)]
     constss = (\Prog { getConfig = Config { getConsts = consts } } -> consts) <$> ps
 
     linkCfgConsts
-      :: Map Identifier (Integer, UnitExp Name Name)
-      -> [Map Identifier (Integer, UnitExp Name Name)]
-      -> Except LinkError (Map Identifier (Integer, UnitExp Name Name))
+      :: Map Identifier (Double, UnitExp Name Name)
+      -> [Map Identifier (Double, UnitExp Name Name)]
+      -> Except LinkError (Map Identifier (Double, UnitExp Name Name))
     linkCfgConsts pConsts psConsts =
       do let constKeys = Map.keysSet pConsts
              restKeys = Map.keysSet <$> psConsts
@@ -111,13 +111,13 @@ link (p:ps) =
         -- N.B. The use of @fromJust@ here is safe as this function will only be called in contexts where
         -- we know there is at least one definition for each identifier
         firstConstDefs :: [Identifier]
-                       -> [Map Identifier (Integer, UnitExp Name Name)]
-                       -> [(Identifier, (Integer, UnitExp Name Name))]
+                       -> [Map Identifier (Double, UnitExp Name Name)]
+                       -> [(Identifier, (Double, UnitExp Name Name))]
         firstConstDefs idents cs = zip idents $ fromJust . (`findFirstDef` cs) <$> idents
 
         checkConst
-          :: (Identifier, (Integer, UnitExp Name Name))
-          -> Map Identifier (Integer, UnitExp Name Name)
+          :: (Identifier, (Double, UnitExp Name Name))
+          -> Map Identifier (Double, UnitExp Name Name)
           -> Except LinkError ()
         checkConst (ident, (expectedVal, expectedUnit)) consts =
           do case Map.lookup ident consts of

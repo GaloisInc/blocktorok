@@ -21,7 +21,6 @@ module Data.Link.AST
   ) where
 
 import Data.Map.Strict (Map)
-import Data.Math (Equation)
 import Data.Link.Identifier (Identifier)
 import Data.Physics.Model (Model)
 import Data.Units.UnitExp (UnitExp)
@@ -56,8 +55,8 @@ data TimeDomainTy = Transient | Steady
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
-data Duration = IterationsTime Integer (UnitExp Name Name) -- ^ The number of steps to take
-              | TotalTime Integer  (UnitExp Name Name) -- ^ The amount of time to simulate
+data Duration = IterationsTime Double (UnitExp Name Name) -- ^ The number of steps to take
+              | TotalTime Double  (UnitExp Name Name) -- ^ The amount of time to simulate
               deriving (Eq, Show)
 
 data RunFn = RFn Identifier Identifier
@@ -69,12 +68,12 @@ data MeshFileTy = MeshFile Identifier Identifier
 --   total @Duration@
 data Config =
   Config { getTimeDomain :: TimeDomainTy
-         , getGlobalStep :: (Integer, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
+         , getGlobalStep :: (Double, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
          , getCouplingIterations :: Integer
-         , getConsts :: Map Identifier (Integer, UnitExp Name Name)
+         , getConsts :: Map Identifier (Double, UnitExp Name Name)
          , getRunFn :: RunFn
-         , getMesh :: MeshFileTy
+         -- , getMesh :: MeshFileTy
          , getBackendConfig ::BackendConfig
          } deriving (Show)
 
@@ -90,7 +89,7 @@ data Coupling =
            , model1 :: Identifier
            , model2 :: Identifier
            , input :: Identifier
-           , output :: Identifier
+           , output :: [Identifier]
            , coupledSurfaces :: CoupledSurfacesTy
            , getVars :: Map Identifier (UnitExp Name Name)
            , getEqs :: [Eqn.Equation] -- ^ The equations governing the model

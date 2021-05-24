@@ -23,6 +23,7 @@ module Data.Math
 import Data.Generics.Uniplate.Direct
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.List(intercalate)
 
 import Data.Link.Identifier
 
@@ -44,7 +45,7 @@ data Exp = Laplacian Exp
          | CrossProduct Exp Exp
          | InnerProduct Exp Exp
          | OuterProduct Exp Exp
-         | FnApp Identifier Identifier
+         | FnApp Identifier [Identifier]
          | IntE Integer
          | Var String
 
@@ -66,7 +67,7 @@ instance Show Exp where
   show (CrossProduct e1 e2) = "(" ++ show e1 ++ "×" ++ show e2 ++ ")"
   show (InnerProduct e1 e2) = "(" ++ show e1++"•" ++ show e2 ++ ")"
   show (OuterProduct e1 e2) = "(" ++ show e1++"⊗" ++ show e2 ++ ")"
-  show (FnApp f arg) = show f ++"(" ++ show arg ++ ")"
+  show (FnApp f args) = show f ++"(" ++ intercalate ", "  (show <$> args) ++ ")"
   show (IntE i) = show i
   show (Var v) = v
 

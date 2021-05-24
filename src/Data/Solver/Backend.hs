@@ -32,7 +32,7 @@ newtype PlotMarkers = PlotMarkers [Identifier] deriving (Show)
 
 data BackendConfig = Su2 { format ::Identifier
                          , sharedParams ::Identifier
-                         , plotting :: PlotMarkers
+                         , gridDeform :: Identifier
                          }
                    | OpenFoam
                    deriving (Show)

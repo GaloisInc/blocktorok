@@ -29,12 +29,13 @@ module Data.Backends.SU2
   , Objective(..)
   , Preconditioner(..)
   , SU2Config(..)
+  , SU2Prog(..)
   , SU2RHS(..)
   , SU2Solver(..)
   , TabFormat(..)
   ) where
 
-import Data.Aeson (FromJSON, Value(..), parseJSON, withText)
+import Data.Aeson (FromJSON, Value(..), parseJSON)
 
 import Data.Class.Render (Render, render)
 import qualified Data.HashMap.Strict as HMap
@@ -51,6 +52,7 @@ data SU2Solver = Euler
                | Heat
                | ElasticityFEM
                | Poisson
+               | Multi
 instance Render SU2Solver where
   render Euler         = "EULER"
   render NS            = "NAVIER_STOKES"
@@ -58,6 +60,7 @@ instance Render SU2Solver where
   render Heat          = "HEAT_EQUATION"
   render ElasticityFEM = "FEM_ELASTICITY"
   render Poisson       = "POISSON_EQUATION"
+  render Multi         = "MULTIPHYSICS"
 
 data Objective = Drag
                | Lift
@@ -104,32 +107,6 @@ instance Render Objective where
   render SurfMassFlow     = "SURFACE_MASSFLOW"
   render SurfStatPressure = "SURFACE_STATIC_PRESSURE"
   render SurfMach         = "SURFACE_MACH"
-
-instance FromJSON Objective where
-  parseJSON = withText "Objective" $ \case
-    "Drag" -> pure Drag
-    "Lift" -> pure Lift
-    "Sideforce" -> pure Sideforce
-    "X Moment" -> pure XMoment
-    "Y Moment" -> pure YMoment
-    "Z Moment" -> pure ZMoment
-    "Efficiency" -> pure Efficiency
-    "Equivalent Area" -> pure EquivArea
-    "Nearfield Pressure" -> pure NearPressure
-    "X Force" -> pure XForce
-    "Y Force" -> pure YForce
-    "Z Force" -> pure ZForce
-    "Thrust" -> pure Thrust
-    "Torque" -> pure Torque
-    "Total Heat Flux" -> pure TotalHeatFlux
-    "Max Heat Flux" -> pure MaxHeatFlux
-    "Inverse Design Pressure" -> pure InvDesPressure
-    "Inverse Design Heat Flux" -> pure InvDesHeatFlux
-    "Surface Total Pressure" -> pure SurfTotPressure
-    "Surface Mass Flow" -> pure SurfMassFlow
-    "Surface Static Pressure" -> pure SurfStatPressure
-    "Surface Mach" -> pure SurfMach
-    _ -> fail "Unrecognized SU2 objective"
 
 data MathProb = Direct
               | ContAdjoint
@@ -209,6 +186,22 @@ instance Render TabFormat where
   render TECPLOT = "TECPLOT"
   render CSV     = "CSV"
 
+data ConvectiveMethod = ROE
+instance Render ConvectiveMethod where
+  render ROE = "ROE"
+
+data SlopeLimiter = None
+                  | Venkatakrishnan
+                  | VenkatakrishnanWang
+                  | BarthJespersen
+                  | VanAlbadaEdge
+instance Render SlopeLimiter where
+  render None = "NONE"
+  render Venkatakrishnan = "VENKATAKRISHNAN"
+  render VenkatakrishnanWang = "VENKATAKRISHNAN_WANG"
+  render BarthJespersen = "BARTH_JESPERSEN"
+  render VanAlbadaEdge = "VAN_ALBADA_EDGE"
+
 data SU2RHS = Solver SU2Solver
             | Boolean Bool
             | ObjectiveFns [Objective]
@@ -220,7 +213,7 @@ data SU2RHS = Solver SU2Solver
             | Markers (Maybe [String])
             | IncompressibleScheme IncScheme
             | GradientMethod GradMethod
-            | CFLAdaptParam Double Double Double Double Double
+            | CFLAdaptParam Double Double Double Double (Maybe Double)
             | RKCoefficient Double Double Double
             | LinearSolver LinearSolver
             | Preconditioner Preconditioner
@@ -229,6 +222,9 @@ data SU2RHS = Solver SU2Solver
             | MeshFormat MeshFormat
             | TabularFormat TabFormat
             | Stiffness Stiffness
+            | InletData String Double Double Double Double Double
+            | ConvectiveMethod ConvectiveMethod
+            | SlopeLimiter SlopeLimiter
 instance Render SU2RHS where
   render (Solver s)                           = render s
   render (Boolean True)                       = "YES"
@@ -243,7 +239,7 @@ instance Render SU2RHS where
   render (Markers (Just ms))                  = "(" ++ intercalate ", " ms ++ ")"
   render (IncompressibleScheme is)            = render is
   render (GradientMethod gm)                  = render gm
-  render (CFLAdaptParam fd fu minV maxV conv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV, conv]) ++ ")"
+  render (CFLAdaptParam fd fu minV maxV mconv) = "(" ++ intercalate ", " (show <$> [fd, fu, minV, maxV]) ++ maybe "" (\c -> ", " ++ show c) mconv ++ ")"
   render (RKCoefficient x y z)                = "(" ++ intercalate ", " (show <$> [x, y, z]) ++ ")"
   render (LinearSolver ls)                    = render ls
   render (Preconditioner p)                   = render p
@@ -252,6 +248,9 @@ instance Render SU2RHS where
   render (MeshFormat mf)                      = render mf
   render (TabularFormat tf)                   = render tf
   render (Stiffness s)                        = render s
+  render (InletData m t p vx vy vz)           = "(" ++ m ++ ", " ++ intercalate ", " (show <$> [t, p, vx, vy, vz]) ++ ")"
+  render (ConvectiveMethod c)                 = render c
+  render (SlopeLimiter sl)                    = render sl
 
 instance FromJSON SU2RHS where
   parseJSON (Object v)                          =
@@ -260,15 +259,20 @@ instance FromJSON SU2RHS where
                                          Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ RKCoefficient (head nums) (nums !! 1) (nums !! 2)
                                                  | otherwise -> fail "Non-numbers provided as RK Coefficients"
                                          Nothing -> fail "Expected fields 'x', 'y', 'z'"
-      Just (String "CFLAdaptParam") -> case traverse (v HMap.!?) ["fd", "fu", "minV", "maxV", "conv"] of
-                                         Just ns | all isNumber ns -> let nums = toRF <$> ns in pure $ CFLAdaptParam (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
-                                                 | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
-                                         Nothing -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
+      Just (String "CFLAdaptParam") -> case (traverse (v HMap.!?) ["fd", "fu", "minV", "maxV"], v HMap.!? "conv") of
+                                         (Just ns, Nothing) | all isNumber ns -> let [fd, fu, minV, maxV] = toRF <$> ns in pure $ CFLAdaptParam fd fu minV maxV Nothing
+                                                            | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         (Just ns, Just conv) | all isNumber ns && isNumber conv -> let [fd, fu, minV, maxV] = toRF <$> ns in pure $ CFLAdaptParam fd fu minV maxV (Just $ toRF conv)
+                                                              | otherwise -> fail "Non-numbers provided as CFL Adapt Parameters"
+                                         (Nothing, _) -> fail "Expected fields 'fd', 'fu', 'minV', 'maxV', 'conv'"
+      Just (String "SupersonicInlet") -> case traverse (v HMap.!?) ["marker", "temp", "pressure", "vx", "vy", "vz"] of
+                                           Just (m:rest) | isString m && all isNumber rest -> let nums = toRF <$> rest in pure $ InletData (unpack $ toText m) (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
+                                           _ -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
       _ -> fail "Unknown object type"
   parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
                       | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
                                                     Just objectives -> pure $ ObjectiveFns $ V.toList objectives
-                                                    Nothing -> fail "Unrecognized objective function"
+                                                    Nothing -> pure $ Markers $ sequence $ V.toList $ (Just . unpack . toText) <$> v
                       | otherwise               = fail "Unrecognized array format"
   parseJSON (String "Euler")                    = pure (Solver Euler)
   parseJSON (String "Navier Stokes")            = pure (Solver NS)
@@ -305,6 +309,9 @@ instance FromJSON SU2RHS where
   parseJSON (String "SU2")                      = pure (MeshFormat SU2)
   parseJSON (String "TECPlot")                  = pure (TabularFormat TECPLOT)
   parseJSON (String "CSV")                      = pure (TabularFormat CSV)
+  parseJSON (String "ROE")                      = pure (ConvectiveMethod ROE)
+  parseJSON (String "None")                     = pure (SlopeLimiter None)
+  parseJSON (String "Venkatakrishnan")          = pure (SlopeLimiter Venkatakrishnan)
   parseJSON (String fname)                      = pure $ Filename $ unpack fname
   parseJSON (Number x)                          =
     case floatingOrInteger x of
@@ -320,6 +327,12 @@ instance Render SU2Config where
     where
       renderOpt :: String -> SU2RHS -> String
       renderOpt opt val = opt ++ " = " ++ render val ++ "\n"
+
+-- | The type of multi-file SU2 programs.
+data SU2Prog =
+  SU2Prog { getTop :: SU2Config
+          , getDomains :: [SU2Config]
+          }
 
 -- Some private helpers
 objectiveMap :: Map Text Objective

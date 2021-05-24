@@ -23,17 +23,15 @@ import Control.Monad.Trans.Except (except)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
-import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), MeshFileTy(..), TimeDomainTy(..), CoupledSurfacesTy(..))
+import Data.Link.AST (Config(..), Coupling(..), Duration(..), Prog(..), RunFn(..), TimeDomainTy(..), CoupledSurfacesTy(..))
 import Data.Link.Identifier (Identifier(..))
 import Text.Lexer (llex)
 import qualified Text.Parse.Units as UP
-import Text.Token ( Parser, tok, tok', number, variable )
+import Text.Token ( Parser, tok, tok', floating, integer, variable )
 import Text.TokenClass
 import Data.Math
 import Data.Physics.Model
   ( Boundary(..)
-  , BoundaryField(..)
-  , BoundaryType(..)
   , Model
   , PhysicsType(..)
   , VarSolve(..)
@@ -49,7 +47,6 @@ import Data.Solver.Backend
   -- , DerivKind(..)
   -- , Ddt(..)
   -- , NumericalScheme(..)
-  , PlotMarkers(..)
   -- , Preconditioner(..)
   -- , Solver(..)
   -- , SolvingTechnique(..)
@@ -304,21 +301,15 @@ parseRunFn =
      tok' TokenSemi
      return $ RFn f arg
 
-parseMesh :: Parser MeshFileTy
+parseMesh :: Parser Identifier
 parseMesh =
   do tok' TokenMesh
      tok' TokenColon
-     name <- parseIdentifier
+     Identifier name <- parseIdentifier
      tok' TokenDot
-     src <- parseIdentifier
+     Identifier ext <- parseIdentifier
      tok' TokenSemi
-     return $ MeshFile name src
-
-parsePlotting :: Parser PlotMarkers
-parsePlotting = PlotMarkers <$> inParens markerList
-  where
-    inParens = Parsec.between (tok' TokenLParen) (tok' TokenRParen)
-    markerList = Parsec.sepBy1 parseIdentifier (tok' TokenComma)
+     return $ Identifier $ name ++ "." ++ ext
 
 parseBackendSu2 :: Parser BackendConfig
 parseBackendSu2 =
@@ -333,12 +324,12 @@ parseBackendSu2 =
      tok' TokenColon
      sp <- parseIdentifier
      tok' TokenComma
-     tok' TokenPlotting
+     tok' TokenGridDeform
      tok' TokenColon
-     p <- parsePlotting
+     gridD <- parseIdentifier
      tok' TokenRCurl
      tok' TokenSemi
-     return $ Su2 f sp p
+     return $ Su2 f sp gridD
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
@@ -359,7 +350,7 @@ parseCouplingIterations =
   do
     tok' TokenIterationsCoupling
     tok' TokenColon
-    n <- number
+    n <- integer
     tok' TokenSemi
     return n
 
@@ -368,7 +359,7 @@ parseInnerIterations =
   do
     tok' TokenIterationsInner
     tok' TokenColon
-    n <- number
+    n <- integer
     tok' TokenSemi
     return n
 
@@ -382,15 +373,15 @@ parseConfig =
      couplingIterations <- parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
-     mesh <- parseMesh
+     -- mesh <- parseMesh
      backend <- parseBackend
      tok' TokenRCurl
-     return $ Config timeDomain timeStep duration couplingIterations consts runfn mesh backend
+     return $ Config timeDomain timeStep duration couplingIterations consts runfn backend
   where
     parseTimeStepConfig =
       do tok' TokenTimeStep
          tok' TokenColon
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return (n,u)
@@ -398,7 +389,7 @@ parseConfig =
     parseDurationConfig =
       do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
          tok' TokenColon
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return $ case mode of
@@ -429,6 +420,7 @@ parseModels =
       do tok' TokenLCurl
          technique <- parseSettingTechnique
          innerIterations <- parseInnerIterations
+         mesh <- parseMesh
          boundaryDecl <- parseBoundaryDecl
          physType <- parsePhysicsType
          consts <- parseConstDecls
@@ -438,18 +430,16 @@ parseModels =
          varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique  innerIterations boundaryDecl physType consts libs vs eqs varSolve
+         return $ mkModel inputDecl outputDecl technique  innerIterations mesh boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
   do Identifier <$> variable
 
-parseReturnDecl :: Parser Identifier
+parseReturnDecl :: Parser [Identifier]
 parseReturnDecl =
    do tok' TokenReturn
-      var <- variable
-      tok' TokenSemi
-      return $ Identifier var
+      Parsec.sepBy parseIdentifier (tok' TokenComma) <* tok' TokenSemi
 
 parseVarSolveDecl :: Parser VarSolve
 parseVarSolveDecl =
@@ -457,13 +447,10 @@ parseVarSolveDecl =
       var <- variable
       tok' TokenWith
       tok' TokenLCurl
-      s <- variable
-      tok' TokenComma
-      n <- variable
+      s <- Parsec.sepBy parseIdentifier (tok' TokenComma)
       tok' TokenRCurl
       tok' TokenSemi
-      return $ VarSolve (Identifier var) (Identifier s) (Identifier n)
-
+      return $ VarSolve (Identifier var) s
 parseSettingTechnique :: Parser Technique
 parseSettingTechnique =
   do tok' TokenTechnique
@@ -475,50 +462,10 @@ parseSettingTechnique =
                 TokenFVM -> FVM
                 _ -> error "This can't happen"
 
-parseBoundaryType :: Parser BoundaryType
-parseBoundaryType =
-  do methodTok <- tok TokenDirichlet <|> tok TokenNeumann
-     return $ case methodTok of
-             TokenDirichlet -> Dirichlet
-             TokenNeumann -> Neumann
-             _ -> error "This can't happen"
-
-parseBoundaryTypeDecl :: Parser Boundary
-parseBoundaryTypeDecl =
- do tok' TokenBoundary
-    tok' TokenColon
-    method <- parseBoundaryType
-    tok' TokenLParen
-    ident <- parseIdentifier
-    tok' TokenRParen
-    tok' TokenSemi
-    return (T method ident)
-
-
-parseBoundaryField :: Parser BoundaryField
-parseBoundaryField =
-  do tok' TokenLParen
-     ident <- parseIdentifier
-     tok' TokenComma
-     method <- parseBoundaryType
-     tok' TokenComma
-     n <- number
-     tok' TokenRParen
-     tok' TokenSemi
-     return (BoundaryField ident method  n)
-
-parseBoundaryFieldsDecl :: Parser Boundary
-parseBoundaryFieldsDecl =
-  do
-    tok' TokenBoundaryField
-    tok' TokenColon
-    x <- (many parseBoundaryField)
-    return (F x)
-
 parseBoundaryDecl :: Parser Boundary
 parseBoundaryDecl =
-  do
-    parseBoundaryFieldsDecl <|> parseBoundaryTypeDecl
+  do  tok' TokenBoundaryField >> tok' TokenColon
+      BoundaryLibs <$> (Parsec.sepBy1 parseIdentifier (tok' TokenComma) <* tok' TokenSemi)
 
 parsePhysicsType :: Parser PhysicsType
 parsePhysicsType =
@@ -539,7 +486,7 @@ parsePhysicsType =
                     TokenHeatConduction -> HeatConduction n
                     _ -> error "This can't happen"
 
-parseConstDecls :: Parser (Map Identifier (Integer, U.UnitExp Name Name))
+parseConstDecls :: Parser (Map Identifier (Double, U.UnitExp Name Name))
 parseConstDecls =
   do decls <- many parseConstDecl
      return $ Map.fromList decls
@@ -548,7 +495,7 @@ parseConstDecls =
       do tok' TokenConst
          i <- parseIdentifier
          tok' TokenEq
-         n <- number
+         n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
          return (i, (n, u))
@@ -661,7 +608,7 @@ parseExp = parseExp1 `chainl1` pAddOp
              f <$> parseExp5
 
     parseExp6 :: Parser Exp
-    parseExp6 = (IntE <$> number)
+    parseExp6 = (IntE <$> integer)
              <|> try parseFnApp
              <|> (Var <$> variable)
              <|> parseNeg
@@ -670,7 +617,7 @@ parseExp = parseExp1 `chainl1` pAddOp
         parseFnApp =
           do f <- parseIdentifier
              tok' TokenLParen
-             arg <- parseIdentifier
+             arg <- Parsec.sepBy parseIdentifier (tok' TokenComma)
              tok' TokenRParen
              return $ FnApp f arg
 
@@ -695,6 +642,7 @@ parseCoupledSurfaces =
     tok' TokenComma
     y <- parseIdentifier
     tok' TokenRParen
+    tok' TokenSemi
     return $(CoupledSurfaces name x y)
 
 

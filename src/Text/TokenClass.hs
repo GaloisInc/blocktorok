@@ -19,7 +19,8 @@ module Text.TokenClass
 
 -- | The type of LINK tokens
 data TokenClass =
-    TokenInt Integer
+    TokenFloat Double
+  | TokenInt Integer
   | TokenVar String
   | TokenConfig
   | TokenRun
@@ -76,7 +77,7 @@ data TokenClass =
   | TokenSu2
   | TokenFormat
   | TokenSharedParams
-  | TokenPlotting
+  | TokenGridDeform
   | TokenPow
   | TokenColon
   | TokenSemi
@@ -117,6 +118,7 @@ data TokenLatex =
 
 -- | Given a @TokenClass@, return a string for use in error messages.
 unLex :: TokenClass -> String
+unLex (TokenFloat d) = show d
 unLex (TokenInt i) = show i
 unLex (TokenVar s) = show s
 unLex TokenConfig = "config"
@@ -192,7 +194,7 @@ unLex TokenOpenFoam = "OpenFoam"
 unLex TokenSu2 = "Su2"
 unLex TokenFormat = "format"
 unLex TokenSharedParams ="shared params"
-unLex TokenPlotting = "plotting"
+unLex TokenGridDeform = "gridDeform"
 unLex TokenWith = "with"
 unLex TokenComma = ","
 unLex TokenLParen = "("
