@@ -1,8 +1,9 @@
-*.dat
 *.idea
 *.DS_Store
 *.ipynb
 *.vtu
 *.vtk
 *.csv
+*.su2
+*.dat
 dist-newstyle/

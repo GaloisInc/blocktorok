@@ -1,8 +1,4 @@
 {
-    "SOLVER": "Heat Equation",
-    "MATH_PROBLEM": "Direct",
-    "RESTART_SO": false,
-    "OBJECTIVE_FUNCTION": ["Total Heat Flux"],
     "INC_NONDIM": "Dimensional",
     "SOLID_DENSITY": 19300.0,
     "SPECIFIC_HEAT_CP": 130.0,

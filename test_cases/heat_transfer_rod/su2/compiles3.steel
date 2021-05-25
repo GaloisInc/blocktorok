@@ -1,0 +1,24 @@
+config {
+  timeDomain: transient; -- steady state or transient simulation
+  timeStep : 0.005 s;-- size of the time step
+  timeIterations : 200; -- total number of time steps
+  const Temp = 273.0 K; -- SOLID_TEMPERATURE_INIT
+  run: m1(Temp);
+  backend : Su2 {
+      format : LIB_InputOutput
+  };
+}
+
+model m1(qw) {
+  technique : FVM;
+  innerIterations: 200;
+  mesh: mesh_solid_rod.su2;
+  boundaryField : LIB_BoundaryCondition;
+  physics : HeatConduction{LIB_SolvingTechnique};
+  const k = 318 W/(mK);
+  const c = 130 J/(kgK);
+  const rho = 19300 kg/m^3;
+  dT/dt - k/(c*rho)*△T = 0
+  solve Tw with {LIB_NumericalScheme, LIB_PhysicsParameters};
+  return Tw;
+}

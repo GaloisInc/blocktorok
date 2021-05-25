@@ -1,10 +1,9 @@
 {
-    "MESH_FILENAME": "mesh_solid_rod.su2",
     "MESH_FORMAT": "SU2",
     "TABULAR_FORMAT": "CSV",
     "CONV_FILENAME": "history",
     "VOLUME_FILENAME": "flow",
     "SURFACE_FILENAME": "surface_flow",
-    "OUTPUT_WRT_FREQ": 250,
+    "OUTPUT_WRT_FREQ": 40,
     "SCREEN_WRT_FREQ_TIME": 1
 }
