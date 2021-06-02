@@ -1,8 +1,8 @@
 {
-    "NUM_METHOD_GRAD": "Green-Gauss"
+    "NUM_METHOD_GRAD": "Green-Gauss",
     "LINEAR_SOLVER": "FGMRes",
     "LINEAR_SOLVER_PREC": "ILU",
-    "LINEAR_SOLVER_ILU_FILL_IN"= 0,
+    "LINEAR_SOLVER_ILU_FILL_IN": 0,
     "LINEAR_SOLVER_ERROR": 1e-15,
     "LINEAR_SOLVER_ITER": 5
 }
