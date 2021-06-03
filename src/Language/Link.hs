@@ -48,8 +48,10 @@ link []     = throwError NoPrograms
 link [p]    = return p
 link (p:ps) =
   do -- Destructure the first program to support the various checks
-     let Prog { getConfig = Config { getGlobalStep = gs
+     let Prog { getConfig = Config { getTimeDomain = td
+                                   , getGlobalStep = gs
                                    , getDuration = dur
+                                   , getCouplingIterations = ci
                                    , getConsts = consts
                                    , getRunFn = rfn
                                    , getBackendConfig = bcConfig
@@ -63,8 +65,10 @@ link (p:ps) =
 
      -- Unify config constants
      allConsts <- linkCfgConsts consts constss
-     return Prog { getConfig = Config { getGlobalStep = gs
+     return Prog { getConfig = Config { getTimeDomain = td
+                                      , getGlobalStep = gs
                                       , getDuration = dur
+                                      , getCouplingIterations = ci
                                       , getConsts = allConsts
                                       , getRunFn = rfn
                                       , getBackendConfig = bcConfig
