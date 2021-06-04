@@ -321,16 +321,24 @@ parseBackendSu2 =
      tok' TokenColon
      f <- parseIdentifier
      tok' TokenComma
-     tok' TokenSharedParams
-     tok' TokenColon
-     sp <- optionMaybe parseIdentifier
-     tok' TokenComma
-     tok' TokenGridDeform
-     tok' TokenColon
-     gridD <- optionMaybe parseIdentifier
+     sp <- optionMaybe parseSP
+     gridD <- optionMaybe parseGridD
      tok' TokenRCurl
      tok' TokenSemi
      return $ Su2 f sp gridD
+  where
+    parseSP =
+      do tok' TokenSharedParams
+         tok' TokenColon
+         sp <- parseIdentifier
+         tok' TokenComma
+         return sp
+
+    parseGridD =
+      do tok' TokenGridDeform
+         tok' TokenColon
+         parseIdentifier
+
 
 parseBackendOpenFoam :: Parser BackendConfig
 parseBackendOpenFoam =
