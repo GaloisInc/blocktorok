@@ -323,11 +323,11 @@ parseBackendSu2 =
      tok' TokenComma
      tok' TokenSharedParams
      tok' TokenColon
-     sp <- parseIdentifier
+     sp <- optionMaybe parseIdentifier
      tok' TokenComma
      tok' TokenGridDeform
      tok' TokenColon
-     gridD <- parseIdentifier
+     gridD <- optionMaybe parseIdentifier
      tok' TokenRCurl
      tok' TokenSemi
      return $ Su2 f sp gridD

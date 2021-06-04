@@ -65,8 +65,8 @@ compile libs (Prog (Config td (step, _) timeIter mci _ _ (Su2 fmt shared gridD))
                        Just ci -> Map.insert "OUTER_ITER" (Integral ci) opts
          put $ SU2Prog (SU2Config $ Map.union topCfg opts') rest
          compileTopLib fmt
-         compileTopLib shared
-         compileTopLib gridD
+         maybe (return ()) compileTopLib shared
+         maybe (return ()) compileTopLib gridD
 
     compileTopLib :: Identifier -> SU2Compiler ()
     compileTopLib (Identifier i) =

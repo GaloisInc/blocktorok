@@ -30,9 +30,9 @@ import Data.Link.Identifier (Identifier)
 
 newtype PlotMarkers = PlotMarkers [Identifier] deriving (Show)
 
-data BackendConfig = Su2 { format ::Identifier
-                         , sharedParams ::Identifier
-                         , gridDeform :: Identifier
+data BackendConfig = Su2 { format :: Identifier
+                         , sharedParams :: Maybe Identifier
+                         , gridDeform :: Maybe Identifier
                          }
                    | OpenFoam
                    deriving (Show)
