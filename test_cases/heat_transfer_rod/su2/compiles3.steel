@@ -15,10 +15,10 @@ model m1(qw) {
   mesh: mesh_solid_rod.su2;
   boundaryField : LIB_BoundaryCondition;
   physics : HeatConduction{LIB_SolvingTechnique};
-  const k = 318 W/(mK);
-  const c = 130 J/(kgK);
-  const rho = 19300 kg/m^3;
-  dT/dt - k/(c*rho)*△T = 0
+  const k = 318.0 W/(m*K);
+  const c = 130.0 J/(kg*K);
+  const rho = 19300.0 kg/m^3;
+  dT/dt - k/(c*rho)*△T = 0;
   solve Tw with {LIB_NumericalScheme, LIB_PhysicsParameters};
   return Tw;
 }

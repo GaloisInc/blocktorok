@@ -1,7 +1,7 @@
 {
     "SOLVER": "Heat Equation",
     "MATH_PROBLEM": "Direct",
-    "RESTART_SOL"= "NO",
+    "RESTART_SOL": false,
     "CONV_RESIDUAL_MINVAL": -19,
     "CONV_STARTITER": 10,
     "CONV_CAUCHY_ELEMS": 100,

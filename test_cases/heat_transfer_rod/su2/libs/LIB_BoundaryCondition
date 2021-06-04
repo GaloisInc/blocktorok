@@ -1,5 +1,17 @@
 {
-    "MARKER_ISOTHERMAL": [ "left", 573.0, "right", 273.0 ],
-    "MARKER_HEATFLUX": [ "top", 0, "bottom", 0 ],
+    "MARKER_ISOTHERMAL": [ { "marker": "left"
+                           , "value": 573.0
+                           },
+                           { "marker": "right"
+                           , "value": 273.0
+                           }
+                         ],
+    "MARKER_HEATFLUX": [ { "marker": "top"
+                         , "value": 0
+                         },
+                         { "marker": "bottom"
+                         , "value": 0
+                         }
+                       ],
     "MARKER_PLOTTING": [ "left", "right", "top", "bottom" ]
 }

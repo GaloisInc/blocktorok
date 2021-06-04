@@ -273,6 +273,7 @@ instance FromJSON SU2RHS where
                       | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of
                                                     Just objectives -> pure $ ObjectiveFns $ V.toList objectives
                                                     Nothing -> pure $ Markers $ sequence $ V.toList $ (Just . unpack . toText) <$> v
+                      | all isMarkerData v      = pure $ MarkerData $ V.toList $ extractMarkerData <$> v
                       | otherwise               = fail "Unrecognized array format"
   parseJSON (String "Euler")                    = pure (Solver Euler)
   parseJSON (String "Navier Stokes")            = pure (Solver NS)
@@ -368,6 +369,21 @@ isNumber _          = False
 isString :: Value -> Bool
 isString (String _) = True
 isString _          = False
+
+isMarkerData :: Value -> Bool
+isMarkerData (Object o) =
+  case (HMap.lookup "marker" o, HMap.lookup "value" o) of
+    (Just m, Just v) -> isString m && isNumber v
+    _ -> False
+isMarkerData _ = False
+
+-- Note: Use assumes value Value provided as arg
+extractMarkerData :: Value -> (String, Double)
+extractMarkerData (Object o) =
+  case (HMap.lookup "marker" o, HMap.lookup "value" o) of
+    (Just (String m), Just v) -> (unpack m, toRF v)
+    _ -> error "This can't happen"
+extractMarkerData _ = error "This can't happen"
 
 toRF :: RealFloat a => Value -> a
 toRF (Number x) = toRealFloat x
