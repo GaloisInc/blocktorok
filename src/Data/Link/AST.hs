@@ -70,7 +70,7 @@ data Config =
   Config { getTimeDomain :: TimeDomainTy
          , getGlobalStep :: (Double, UnitExp Name Name) -- ^ The global solving step size TODO: This should have units
          , getDuration :: Duration  -- ^ The duration of the simulation, in time or in #iterations
-         , getCouplingIterations :: Integer
+         , getCouplingIterations :: Maybe Integer
          , getConsts :: Map Identifier (Double, UnitExp Name Name)
          , getRunFn :: RunFn
          -- , getMesh :: MeshFileTy

@@ -43,7 +43,7 @@ type SU2Compiler a = StateT SU2Prog (Except LinkError) a
 -- an error on non-SU2 - In other words, the decision to call this or another compiler function
 -- should be determined earlier. Maybe some type-level magic?
 compile :: Map String SU2Config -> Prog -> Except LinkError SU2Prog
-compile libs (Prog (Config td (step, _) timeIter ci _ _ (Su2 fmt shared gridD)) models _) =
+compile libs (Prog (Config td (step, _) timeIter mci _ _ (Su2 fmt shared gridD)) models _) =
   execStateT compile' $ SU2Prog (SU2Config Map.empty) []
   where
     compile' :: SU2Compiler ()
@@ -58,9 +58,12 @@ compile libs (Prog (Config td (step, _) timeIter ci _ _ (Su2 fmt shared gridD)) 
     compileTopLevel =
       do SU2Prog (SU2Config topCfg) rest <- get
          let iters = case timeIter of {IterationsTime d _ -> round d; TotalTime d _ -> round d}
-             opts = Map.fromList $ zip ["TIME_DOMAIN", "TIME_STEP", "TIME_ITER", "OUTER_ITER", "SOLVER"]
-                                       [Boolean $ case td of { Transient -> True; Steady -> False }, Floating step, Integral iters, Integral ci, Solver Multi]
-         put $ SU2Prog (SU2Config $ Map.union topCfg opts) rest
+             opts = Map.fromList $ zip ["TIME_DOMAIN", "TIME_STEP", "TIME_ITER", "SOLVER"]
+                                       [Boolean $ case td of { Transient -> True; Steady -> False }, Floating step, Integral iters, Solver Multi]
+             opts' = case mci of
+                       Nothing -> opts
+                       Just ci -> Map.insert "OUTER_ITER" (Integral ci) opts
+         put $ SU2Prog (SU2Config $ Map.union topCfg opts') rest
          compileTopLib fmt
          compileTopLib shared
          compileTopLib gridD

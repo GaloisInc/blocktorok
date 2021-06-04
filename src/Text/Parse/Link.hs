@@ -61,6 +61,7 @@ import Text.Parsec
   , choice
   , many
   , many1
+  , optionMaybe
   , runParserT
   , try
   )
@@ -370,7 +371,7 @@ parseConfig =
      timeDomain <- parseTimeDomain
      timeStep <- parseTimeStepConfig
      duration <- parseDurationConfig
-     couplingIterations <- parseCouplingIterations
+     couplingIterations <- optionMaybe parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
      -- mesh <- parseMesh
