@@ -55,7 +55,7 @@ data TimeDomainTy = Transient | Steady
 -- | A @Duration@ specifies how long a simulation should run, either as an
 --   explicit number of iterations or as an elapsed time.
 --   TODO: We need units, and probably shouldn't wait terribly long to do them
-data Duration = IterationsTime Double (UnitExp Name Name) -- ^ The number of steps to take
+data Duration = IterationsTime Integer -- ^ The number of steps to take
               | TotalTime Double  (UnitExp Name Name) -- ^ The amount of time to simulate
               deriving (Eq, Show)
 

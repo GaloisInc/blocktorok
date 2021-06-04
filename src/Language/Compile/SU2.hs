@@ -57,9 +57,9 @@ compile libs (Prog (Config td (step, _) timeIter mci _ _ (Su2 fmt shared gridD))
     compileTopLevel :: SU2Compiler ()
     compileTopLevel =
       do SU2Prog (SU2Config topCfg) rest <- get
-         let iters = case timeIter of {IterationsTime d _ -> round d; TotalTime d _ -> round d}
+         let iters = case timeIter of {IterationsTime d -> Integral d; TotalTime d _ -> Floating d}
              opts = Map.fromList $ zip ["TIME_DOMAIN", "TIME_STEP", "TIME_ITER", "SOLVER"]
-                                       [Boolean $ case td of { Transient -> True; Steady -> False }, Floating step, Integral iters, Solver Multi]
+                                       [Boolean $ case td of { Transient -> True; Steady -> False }, Floating step, iters, Solver Multi]
              opts' = case mci of
                        Nothing -> opts
                        Just ci -> Map.insert "OUTER_ITER" (Integral ci) opts

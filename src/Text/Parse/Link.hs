@@ -378,7 +378,7 @@ parseConfig =
      tok' TokenLCurl
      timeDomain <- parseTimeDomain
      timeStep <- parseTimeStepConfig
-     duration <- parseDurationConfig
+     duration <- parseIterationsTime <|> parseTotalTime
      couplingIterations <- optionMaybe parseCouplingIterations
      consts <- parseConstDecls
      runfn <- parseRunFn
@@ -395,16 +395,31 @@ parseConfig =
          tok' TokenSemi
          return (n,u)
 
-    parseDurationConfig =
-      do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
+    -- parseDurationConfig =
+    --   do mode <- tok TokenIterationsTime <|> tok TokenTotalTime
+    --      tok' TokenColon
+    --      n <- floating
+    --      u <- UP.parseUnit
+    --      tok' TokenSemi
+    --      return $ case mode of
+    --                 TokenIterationsTime -> IterationsTime n u
+    --                 TokenTotalTime -> TotalTime n u
+    --                 _ -> error "This can't happen"
+
+    parseIterationsTime =
+      do tok' TokenIterationsTime
+         tok' TokenColon
+         n <- integer
+         tok' TokenSemi
+         return $ IterationsTime n
+
+    parseTotalTime =
+      do tok' TokenTotalTime
          tok' TokenColon
          n <- floating
          u <- UP.parseUnit
          tok' TokenSemi
-         return $ case mode of
-                    TokenIterationsTime -> IterationsTime n u
-                    TokenTotalTime -> TotalTime n u
-                    _ -> error "This can't happen"
+         return $ TotalTime n u
 parseSingleArg :: Parser Identifier
 parseSingleArg =
   do

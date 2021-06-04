@@ -1,7 +1,7 @@
 config {
   timeDomain: transient; -- steady state or transient simulation
   timeStep : 0.005 s;-- size of the time step
-  timeIterations : 200.0; -- total number of time steps
+  timeIterations : 200; -- total number of time steps
   couplingIterations: 1000;
   const Temp = 300.0 K; -- SOLID_TEMPERATURE_INIT
   run: coupleModels1(Temp);
