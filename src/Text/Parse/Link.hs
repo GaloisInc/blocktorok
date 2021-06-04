@@ -61,6 +61,7 @@ import Text.Parsec
   , choice
   , many
   , many1
+  , optional
   , optionMaybe
   , runParserT
   , try
@@ -320,7 +321,7 @@ parseBackendSu2 =
      tok' TokenFormat
      tok' TokenColon
      f <- parseIdentifier
-     tok' TokenComma
+     optional $ tok' TokenComma
      sp <- optionMaybe parseSP
      gridD <- optionMaybe parseGridD
      tok' TokenRCurl
@@ -331,7 +332,7 @@ parseBackendSu2 =
       do tok' TokenSharedParams
          tok' TokenColon
          sp <- parseIdentifier
-         tok' TokenComma
+         optional $ tok' TokenComma
          return sp
 
     parseGridD =
