@@ -1,11 +1,11 @@
 config {
   timeDomain: transient; -- steady state or transient simulation
   timeStep : 0.005 s;-- size of the time step
-  timeIterations : 200; -- total number of time steps
+  timeIterations : 200.0; -- total number of time steps
   const Temp = 273.0 K; -- SOLID_TEMPERATURE_INIT
   run: m1(Temp);
   backend : Su2 {
-      format : LIB_InputOutput
+      format : LIB_InputOutput,
   };
 }
 
