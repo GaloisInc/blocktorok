@@ -1,0 +1,5 @@
+{
+    "MARKER_ISOTHERMAL": [ "core1", 350.0 ],
+    "MARKER_PLOTTING": [ "cylinder_inner2" ],
+    "MARKER_MONITORING": [ "NONE" ]
+}
