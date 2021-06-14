@@ -268,6 +268,9 @@ instance FromJSON SU2RHS where
       Just (String "SupersonicInlet") -> case traverse (v HMap.!?) ["marker", "temp", "pressure", "vx", "vy", "vz"] of
                                            Just (m:rest) | isString m && all isNumber rest -> let nums = toRF <$> rest in pure $ InletData (unpack $ toText m) (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
                                            _ -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
+      Just (String "Inlet") -> case traverse (v HMap.!?) ["marker", "total temp", "total pressure", "vx", "vy", "vz"] of
+                                           Just (m:rest) | isString m && all isNumber rest -> let nums = toRF <$> rest in pure $ InletData (unpack $ toText m) (head nums) (nums !! 1) (nums !! 2) (nums !! 3) (nums !! 4)
+                                           _ -> fail "Expected fields 'marker', 'temp', 'pressure', 'vx', 'vy', 'vz'"
       _ -> fail "Unknown object type"
   parseJSON (Array v) | all isNumber v          = let nums = toRF <$> v in pure $ ObjectiveWts $ V.toList nums
                       | all isString v          = case traverse (objectiveMap Map.!?) (toText <$> v) of

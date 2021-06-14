@@ -1,10 +1,10 @@
 {
-    "MARKER_ISOTHERMAL": [ None ],
+    "MARKER_ISOTHERMAL": null,
     "MARKER_HEATFLUX": [ { "marker": "wall"
                          , "value": 0.0
                          }
                        ],
-    "MARKER_INLET": { "type": "inlet"
+    "MARKER_INLET": { "type": "Inlet"
                            , "marker": "inlet"
                            , "total temp": 300.0
                            , "total pressure": 100000.0
