@@ -46,6 +46,7 @@ library
                      , units-defs
                      , prettyprinter
                      , text
+                     , scientific
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     Data.Backends.SU2
@@ -64,7 +65,9 @@ library
                        Language.Compile.SU2
                        Language.Error
                        Language.Link
-                       Language.Link.Blocktorok
+                       Language.Link.Blocktorok.Syntax
+                       Language.Link.Blocktorok.Parser
+                       Language.Link.Blocktorok.BlockM
                        Options
                        Text.Lexer
                        Text.Parse.Link
