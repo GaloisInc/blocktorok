@@ -298,10 +298,10 @@ parseRunFn =
      tok' TokenColon
      f <- parseIdentifier
      tok' TokenLParen
-     arg <- parseIdentifier
+     marg <- optionMaybe parseIdentifier
      tok' TokenRParen
      tok' TokenSemi
-     return $ RFn f arg
+     return $ RFn f marg
 
 parseMesh :: Parser Identifier
 parseMesh =

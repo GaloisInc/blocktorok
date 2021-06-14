@@ -59,7 +59,7 @@ data Duration = IterationsTime Integer -- ^ The number of steps to take
               | TotalTime Double  (UnitExp Name Name) -- ^ The amount of time to simulate
               deriving (Eq, Show)
 
-data RunFn = RFn Identifier Identifier
+data RunFn = RFn Identifier (Maybe Identifier)
               deriving (Show)
 data MeshFileTy = MeshFile Identifier Identifier
               deriving (Show)
