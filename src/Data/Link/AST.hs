@@ -88,7 +88,7 @@ data Coupling =
   Coupling { name :: Identifier
            , model1 :: Identifier
            , model2 :: Identifier
-           , input :: Identifier
+           , input :: Maybe Identifier
            , output :: [Identifier]
            , coupledSurfaces :: CoupledSurfacesTy
            , getVars :: Map Identifier (UnitExp Name Name)

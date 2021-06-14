@@ -421,13 +421,13 @@ parseConfig =
          u <- UP.parseUnit
          tok' TokenSemi
          return $ TotalTime n u
-parseSingleArg :: Parser Identifier
+parseSingleArg :: Parser (Maybe Identifier)
 parseSingleArg =
   do
     tok' TokenLParen
-    j <-  parseIdentifier
+    mj <- optionMaybe parseIdentifier
     tok' TokenRParen
-    return j
+    return mj
 
 parseModels :: Parser (Map Identifier Model)
 parseModels =
@@ -437,11 +437,11 @@ parseModels =
     parseModel =
       do tok' TokenModel
          nm <- parseIdentifier
-         i <- parseSingleArg
-         model <- parseModelBody i
+         mi <- parseSingleArg
+         model <- parseModelBody mi
          return (nm, model)
 
-    parseModelBody inputDecl =
+    parseModelBody minputDecl =
       do tok' TokenLCurl
          technique <- parseSettingTechnique
          innerIterations <- parseInnerIterations
@@ -455,7 +455,7 @@ parseModels =
          varSolve <- parseVarSolveDecl
          outputDecl <- parseReturnDecl
          tok' TokenRCurl
-         return $ mkModel inputDecl outputDecl technique  innerIterations mesh boundaryDecl physType consts libs vs eqs varSolve
+         return $ mkModel minputDecl outputDecl technique  innerIterations mesh boundaryDecl physType consts libs vs eqs varSolve
 
 parseIdentifier :: Parser Identifier
 parseIdentifier =
@@ -679,11 +679,11 @@ parseCouplings = many parseCoupling
          mname <- parseIdentifier
          ma <- parseIdentifier
          mb <- parseIdentifier
-         i <- parseSingleArg
+         mi <- parseSingleArg
          tok' TokenLCurl
          cs <- parseCoupledSurfaces
          vs <- parseVarDecls
          eqs <- parseEqs
          o <- parseReturnDecl
          tok' TokenRCurl
-         return $ Coupling mname ma mb i o cs vs eqs
+         return $ Coupling mname ma mb mi o cs vs eqs

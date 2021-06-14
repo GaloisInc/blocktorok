@@ -48,7 +48,7 @@ data VarSolve = VarSolve
 -- | The type of a physical model; this will be computed with and eventually
 --   compiled to structures allowing easy production of backend code (e.g. SU2)
 data Model =
-  Model { getInput :: Identifier
+  Model { getInput :: Maybe Identifier
         , getOutput :: [Identifier]
         , getTechnique :: Technique -- ^ What solving technique should be used
         , getInnerIterations :: Integer
@@ -77,7 +77,7 @@ instance Show Model where
         ++ mkIndent "solvingvariables" s
 
 -- | Construct a new @Model@ from its basic components
-mkModel :: Identifier -> [Identifier]
+mkModel :: Maybe Identifier -> [Identifier]
         -> Technique
         -> Integer
         -> Identifier
