@@ -1,0 +1,97 @@
+
+monsters {
+  orc: [ ... ]
+  orc Jarvis {
+    name: "Jarvis the Orc"
+    age: 12
+    hobbies: ["crochet", "romantic poetry", "cybernetics"]
+  }
+
+  orc Leopold {
+    name: "Leopold"
+    hobbies: ["macrame", "french cooking", "control theory"]
+  }
+}
+
+Jarvis the Orc (Age 12)
+  Likes: crochet, romantic poetry, cybernetics
+
+Jarvis the Orc (Age 12)
+  Likes: crochet, romantic poetry, cybernetics
+
+---------------------------------------
+
+orcs = file("orcs.dat")
+
+uruk_schema =
+  schema
+    .name: string
+    .age: option int
+    .hobbies: list string
+    .yucky_pit_name: string
+
+
+orc_schema =
+  schema
+    .name: string
+    .age: option int
+    .hobbies: list string
+
+monster_schema =
+  schema monster
+    .orc: orc_schema*
+
+
+monster : monster_schema = root
+
+
+require monsters.orc.age > 0 "orcs cannot have negative age"
+
+for monsters.orc
+  require age > 0 "orcs cannot have negative age"
+
+
+
+
+
+validate monsters.orc orc_schema
+
+schema monsters
+
+for monsters.orc
+  for friend
+    ...
+  age <- aga as int
+
+
+
+
+
+ms = map monsters.orc {
+  age <- age as int
+
+  out = file("${!!block_name!!}.dat")
+  n = !!block_name!!
+  age_desc = if exists(age) then "(Age ${age})" else ""
+
+  out <<
+    |${name} ${age_desc}
+    |   Likes: ${ join(hobbies, ", ") }
+}
+
+orcs << join(ms, "\n")
+
+
+
+experiment K {
+  model S {
+    domain Y {
+
+    }
+
+    domain Z {
+
+    }
+  }
+}
+
