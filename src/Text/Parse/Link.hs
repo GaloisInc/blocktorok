@@ -278,9 +278,12 @@ parseTimeDomain :: Parser TimeDomainTy
 parseTimeDomain =
   do tok' TokenTimeDomain
      tok' TokenColon
-     tok' TokenTransient
+     domain <- tok TokenTransient <|> tok TokenSteady
      tok' TokenSemi
-     return $ Transient
+     return $ case domain of
+                TokenTransient -> Transient
+                TokenSteady -> Steady
+                _ -> error "This can't happen"
 
 
 parseProg :: Parser Prog
