@@ -1,0 +1,69 @@
+\begin{document}
+
+\title{Chapter 5: The Terrible Battle of Phrobald and the Minotaur}
+
+\begin{code}{chapter5.blok}
+battle {
+\end{code}
+
+As he crested the incline, Phrobald wiped his brow and began to
+regret his decision to undertake this cursed errand.  His eyes
+narrowed as he surveyed the green vale from his newly taken
+vantage.  The gentle roll of verdant hills, shadowless in
+the noonday sun, stretched as far as the eye could see.
+
+\begin{code}{chapter5.blok}
+  hero {
+    name: "Phrobald the Halfling"
+    hp: Fixed { amount = 50 }
+    damage: Dice { sides = 6, number = 2 }
+  }
+\end{code}
+
+A dandelion seed, caressed by a whimsical air current,
+drifted by Phrobald's nose.  His thoughts turned to home and
+the equations that goverened it.
+
+\begin{eqnarray}
+  \rho\frac{D\mathbf{u}}{Dt} & = & - \nabla p + \nabla \cdot \boldsymbol \tau + \rho\,\mathbf{g} \\
+  \frac {\partial}{\partial t} (\rho\,\mathbf{u})
+   + \nabla \cdot (\rho\,\mathbf{u} \otimes \mathbf{u})
+ & = & - \nabla p + \nabla \cdot \boldsymbol \tau + \rho\,\mathbf{g}
+\end{eqnarray}
+
+While lost in his reverie, Phrobald almost did not notice
+the hostile footsteps behind him.  With a sigh he wheeled about to
+face his foes: three ragged-looking orcs.
+\textit{The fools grow bolder by the day,} thought Phrobald
+before noticing the huge minotaur flanking him.
+
+\begin{code}{chapter5.blok}
+  orc {
+    hp: Dice { number = 1, sides = 6 }
+    damage: Fixed { amount = 2 }
+  }
+
+  orc {
+    hp: Dice { number = 1, sides = 6 }
+    damage: Fixed { amount = 2 }
+  }
+
+  orc {
+    hp: Dice { number = 1, sides = 6 }
+    damage: Fixed { amount = 2 }
+  }
+
+  minotaur {
+    hp: Dice { number = 4, sides = 8 }
+    damage: Dice { number = 1, sides = 8}
+  }
+\end{code}
+
+Fear gripped Phrobald, but not enough that he failed to ready
+his bec-de-corbin.
+
+\begin{code}{chapter5.blok}
+}
+\end{code}
+
+\end{document}

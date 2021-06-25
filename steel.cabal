@@ -68,6 +68,7 @@ library
                        Language.Link.Blocktorok.Syntax
                        Language.Link.Blocktorok.Parser
                        Language.Link.Blocktorok.BlockM
+                       Language.Link.Blocktorok.PPDemo
                        Options
                        Text.Lexer
                        Text.Parse.Link
