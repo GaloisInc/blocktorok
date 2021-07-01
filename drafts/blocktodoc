@@ -63,7 +63,7 @@ block hero {
 -- could also be expressed as:
 
 block hero extends creature {
-    [-- The hero's bold name --]
+  [-- The hero's bold name --]
   .name: string
 }
 
@@ -71,16 +71,17 @@ block battle {
   [-- The dauntless heroes in the battle --]
   .hero: hero*
 
-  [-- The fell orcs opposing the hero --]
+  [-- The fell orcs opposing the heroes --]
   .orc: creature*
 
-  [-- The forbidding minotaurs opposing the hero --]
+  [-- The forbidding minotaurs opposing the heroes --]
   .minotaur: creature*
 }
 
 root {
   .battle: battle
 }
+
 ```
 
 
@@ -111,7 +112,7 @@ output << battle
 
 Output:
 
-```
+```python
 from battle import *
 heroes = [Creature("Phrobald the Halfling", Fixed(50.0), Roll(6.0, 2.0))]
 orcs = [Creature("Orc", Roll(6.0, 1.0), Fixed(2.0)), Creature("Orc",
