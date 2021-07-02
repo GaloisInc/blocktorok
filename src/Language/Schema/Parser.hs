@@ -81,38 +81,56 @@ brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
 typeP :: Parser SType
-typeP = int <|> float <|> string <|> list <|> union
+typeP = int <|> float <|> string <|> list <|> named
   where
     int    = symbol' "int"    *> pure SInt
     float  = symbol' "float"  *> pure SFloat
     string = symbol' "string" *> pure SString
     list   = symbol' "list"   *> (SList <$> typeP)
-    union  = SUnion <$> ident
+    named  = SNamed <$> ident
 
-decl :: Parser Decl
-decl = Decl <$> (located ident <* symbol' ":") <*> located typeP
+unionDecl :: Parser UDecl
+unionDecl = UDecl <$> (located ident <* symbol' ":") <*> located typeP
 
 docAnn :: Parser Text
 docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
 
 variant :: Parser Variant
 variant =
-  Variant <$> optional docAnn
+  Variant <$> optional (located docAnn)
           <*> located ident
-          <*> (brackets (MP.sepBy decl (symbol' ",")) <* symbol' ";")
+          <*> (brackets (MP.sepBy unionDecl (symbol' ",")) <* symbol' ";")
 
 union :: Parser Union
 union =
   Union <$> (symbol' "union" *> located ident)
         <*> brackets (MP.some variant)
 
+globbed :: Parser a -> Parser (Globbed a)
+globbed p = opt p <|> some p <|> many p <|> (One <$> p)
+  where
+    opt p  = Optional <$> MP.try (p <* symbol "?")
+    some p = Some     <$> MP.try (p <* symbol "+")
+    many p = Many     <$> MP.try (p <* symbol "*")
+
+blockDecl :: Parser BDecl
+blockDecl =
+  BDecl <$> optional (located docAnn)
+        <*> (symbol' "." *> located ident <* symbol' ":")
+        <*> located typeP
+
+blockS :: Parser BlockS
+blockS =
+  BlockS <$> (symbol' "block" *> located ident)
+         <*> brackets (MP.many $ globbed blockDecl)
+
 -------------------------------------------------------------------------------
 
-parseSchema :: Text -> Either Text Union
+parseSchema :: Text -> Either Text BlockS
 parseSchema t =
-  case MP.runParser union "-input-" t of
+  case MP.runParser blockS "-input-" t of
     Right u -> Right u
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
-schemaFromFile :: FilePath -> IO (Either Text Union)
+schemaFromFile :: FilePath -> IO (Either Text BlockS)
 schemaFromFile fp = parseSchema <$> TIO.readFile fp
