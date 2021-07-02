@@ -113,12 +113,18 @@ union =
   Union <$> (symbol' "union" *> located ident)
         <*> brackets (MP.some variant)
 
-globbed :: Parser a -> Parser (Globbed a)
-globbed p = opt p <|> some p <|> many p <|> (One <$> p)
+glob :: Parser (a -> Globbed a)
+glob = MP.option One $ MP.choice [opt, some, many]
   where
-    opt p  = Optional <$> MP.try (p <* symbol "?")
-    some p = Some     <$> MP.try (p <* symbol "+")
-    many p = Many     <$> MP.try (p <* symbol "*")
+    opt  = symbol' "?" *> pure Optional
+    some = symbol' "+" *> pure Some
+    many = symbol' "*" *> pure Many
+
+globbed :: Parser a -> Parser (Globbed a)
+globbed p =
+  do a <- p
+     g <- glob
+     pure $ g a
 
 annDecl :: Parser AnnDecl
 annDecl =
