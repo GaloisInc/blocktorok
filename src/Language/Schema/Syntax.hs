@@ -24,7 +24,8 @@ import Language.Common (Located)
 -- | Identifiers
 type Ident = Text
 
--- | The types fields may be declared to have in block schemas
+-- | The types fields may be declared to have in block schemas and constructor
+-- variants
 data SType
   = SInt
   | SFloat
