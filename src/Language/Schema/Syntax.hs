@@ -71,3 +71,19 @@ data BlockS = BlockS
   { blockType :: Located Ident
   , blockFields :: [Globbed AnnDecl]
   } deriving (Show)
+
+-- | Root definition; this defines the top-level structure of input files
+data Root = Root { rootFields :: [Globbed AnnDecl] } deriving (Show)
+
+-- | Elements comprising schemas (other than the root)
+data SchemaDef
+  = UnionDef Union
+  | BlockDef BlockS
+  deriving (Show)
+
+-- | A complete schema is a mix of union definitions and block layouts, and a
+-- single root specification
+data Schema = Schema
+  { schemaDefs :: [SchemaDef]
+  , schemaRoot :: Root
+  } deriving (Show)

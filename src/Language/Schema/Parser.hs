@@ -136,13 +136,26 @@ blockS =
   BlockS <$> (symbol' "block" *> located ident)
          <*> brackets (MP.many $ globbed annDecl)
 
+root :: Parser Root
+root =
+  Root <$> (symbol' "root" *> brackets (MP.some $ globbed annDecl))
+
+schemaDefsP :: Parser SchemaDef
+schemaDefsP =  UnionDef <$> union
+           <|> BlockDef <$> blockS
+
+schema :: Parser Schema
+schema =
+  Schema <$> MP.many schemaDefsP
+         <*> root
+
 -------------------------------------------------------------------------------
 
-parseSchema :: Text -> Either Text BlockS
+parseSchema :: Text -> Either Text Schema
 parseSchema t =
-  case MP.runParser blockS "-input-" t of
+  case MP.runParser schema "-input-" t of
     Right u -> Right u
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
-schemaFromFile :: FilePath -> IO (Either Text BlockS)
+schemaFromFile :: FilePath -> IO (Either Text Schema)
 schemaFromFile fp = parseSchema <$> TIO.readFile fp
