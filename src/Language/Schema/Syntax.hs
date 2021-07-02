@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 {-|
 Module      : Language.Schema.Syntax
 Description : The abstract syntax of the LINK schema language
