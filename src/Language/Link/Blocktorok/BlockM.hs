@@ -11,16 +11,15 @@ import qualified Control.Monad.Except as Except
 import Control.Applicative(Alternative(..))
 import Data.Text(Text)
 import qualified Data.Text as Text
-import Language.Link.Blocktorok.Parser(parseBlocktorok)
 
+import Language.Common (Located(..), ppRange)
+import Language.Link.Blocktorok.Parser(parseBlocktorok)
 import Language.Link.Blocktorok.Syntax
     ( Value,
       BlockElement(..),
       Block(..),
       Value(..),
-      Located(..),
       Constructor(..),
-      ppRange,
       locateValue,
       Ident )
 
