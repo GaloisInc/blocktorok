@@ -34,16 +34,16 @@ data SType
   deriving (Show)
 
 -- | Union constructor field declarations
-data UDecl = UDecl
-  { udeclName :: Located Ident
-  , udeclType :: Located SType
+data Decl = Decl
+  { declName :: Located Ident
+  , declType :: Located SType
   } deriving (Show)
 
 -- | Union variant definition
 data Variant = Variant
   { variantDoc :: Maybe (Located Text)
   , variantTag :: Located Ident
-  , variantFields :: [UDecl]
+  , variantFields :: [Decl]
   } deriving (Show)
 
 -- | Union-type definition
@@ -60,16 +60,15 @@ data Globbed a
   | Many a
   deriving (Show)
 
--- | Block field declarations
-data BDecl = BDecl
-  { bdeclDoc :: Maybe (Located Text)
-  , bdeclName :: Located Ident
-  , bdeclType :: Located SType
+-- | Annotated declarations (for block layout definitions)
+data AnnDecl = AnnDecl
+  { ann :: Maybe (Located Text)
+  , decl :: Decl
   }
   deriving (Show)
 
 -- | Block layout definition
 data BlockS = BlockS
   { blockType :: Located Ident
-  , blockFields :: [Globbed BDecl]
+  , blockFields :: [Globbed AnnDecl]
   } deriving (Show)

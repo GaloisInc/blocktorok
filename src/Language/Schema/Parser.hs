@@ -89,8 +89,8 @@ typeP = int <|> float <|> string <|> list <|> named
     list   = symbol' "list"   *> (SList <$> typeP)
     named  = SNamed <$> ident
 
-unionDecl :: Parser UDecl
-unionDecl = UDecl <$> (located ident <* symbol' ":") <*> located typeP
+declP :: Parser Decl
+declP = Decl <$> (located ident <* symbol' ":") <*> located typeP
 
 docAnn :: Parser Text
 docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
@@ -99,7 +99,7 @@ variant :: Parser Variant
 variant =
   Variant <$> optional (located docAnn)
           <*> located ident
-          <*> (brackets (MP.sepBy unionDecl (symbol' ",")) <* symbol' ";")
+          <*> (brackets (MP.sepBy declP (symbol' ",")) <* symbol' ";")
 
 union :: Parser Union
 union =
@@ -113,16 +113,15 @@ globbed p = opt p <|> some p <|> many p <|> (One <$> p)
     some p = Some     <$> MP.try (p <* symbol "+")
     many p = Many     <$> MP.try (p <* symbol "*")
 
-blockDecl :: Parser BDecl
-blockDecl =
-  BDecl <$> optional (located docAnn)
-        <*> (symbol' "." *> located ident <* symbol' ":")
-        <*> located typeP
+annDecl :: Parser AnnDecl
+annDecl =
+  AnnDecl <$> optional (located docAnn)
+          <*> (symbol' "." *> declP)
 
 blockS :: Parser BlockS
 blockS =
   BlockS <$> (symbol' "block" *> located ident)
-         <*> brackets (MP.many $ globbed blockDecl)
+         <*> brackets (MP.many $ globbed annDecl)
 
 -------------------------------------------------------------------------------
 
