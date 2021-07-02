@@ -19,7 +19,7 @@ module Language.Schema.Parser
 
 import Control.Monad (void)
 
-import Data.Char (isAlpha, isDigit)
+import Data.Char (isAlpha, isDigit, isUpper)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TIO
@@ -77,6 +77,13 @@ ident =
     identFirstChar c = isAlpha c || c == '_'
     identRestChar c = identFirstChar c || isDigit c
 
+tag :: Parser Text
+tag =
+  lexeme .MP.try $
+    do c0 <- MP.satisfy isUpper
+       cr <- MP.takeWhileP Nothing isAlpha
+       pure (c0 `Text.cons` cr)
+
 brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
@@ -98,7 +105,7 @@ docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "-
 variant :: Parser Variant
 variant =
   Variant <$> optional (located docAnn)
-          <*> located ident
+          <*> located tag
           <*> (brackets (MP.sepBy declP (symbol' ",")) <* symbol' ";")
 
 union :: Parser Union
