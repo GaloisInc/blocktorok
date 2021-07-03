@@ -59,8 +59,8 @@ data Globbed a
   | Many a
   deriving (Show)
 
--- | Annotated declarations (for block layout definitions)
-data AnnDecl = AnnDecl
+-- | Annotated declarations for block layout definitions
+data BlockDecl = BlockDecl
   { ann :: Maybe (Located Text)
   , decl :: Decl
   }
@@ -69,11 +69,11 @@ data AnnDecl = AnnDecl
 -- | Block layout definition
 data BlockS = BlockS
   { blockType :: Located Ident
-  , blockFields :: [Globbed AnnDecl]
+  , blockFields :: [Globbed BlockDecl]
   } deriving (Show)
 
 -- | Root definition; this defines the top-level structure of input files
-data Root = Root { rootFields :: [Globbed AnnDecl] } deriving (Show)
+data Root = Root { rootFields :: [Globbed BlockDecl] } deriving (Show)
 
 -- | Elements comprising schemas (other than the root)
 data SchemaDef

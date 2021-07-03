@@ -126,19 +126,19 @@ globbed p =
      g <- glob
      pure $ g a
 
-annDecl :: Parser AnnDecl
-annDecl =
-  AnnDecl <$> optional (located docAnn)
-          <*> (symbol' "." *> declP)
+blockDecl :: Parser BlockDecl
+blockDecl =
+  BlockDecl <$> optional (located docAnn)
+          <*> (MPC.char '.' *> declP)
 
 blockS :: Parser BlockS
 blockS =
   BlockS <$> (symbol' "block" *> located ident)
-         <*> brackets (MP.many $ globbed annDecl)
+         <*> brackets (MP.many $ globbed blockDecl)
 
 root :: Parser Root
 root =
-  Root <$> (symbol' "root" *> brackets (MP.some $ globbed annDecl))
+  Root <$> (symbol' "root" *> brackets (MP.some $ globbed blockDecl))
 
 schemaDefsP :: Parser SchemaDef
 schemaDefsP =  UnionDef <$> union
