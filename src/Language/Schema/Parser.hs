@@ -106,7 +106,7 @@ variant :: Parser Variant
 variant =
   Variant <$> optional (located docAnn)
           <*> located tag
-          <*> (brackets (MP.sepBy declP (symbol' ",")) <* symbol' ";")
+          <*> brackets (MP.sepBy declP (symbol' ",")) <* symbol' ";"
 
 union :: Parser Union
 union =
