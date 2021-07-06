@@ -129,7 +129,7 @@ globbed p =
 blockDecl :: Parser BlockDecl
 blockDecl =
   BlockDecl <$> optional (located docAnn)
-          <*> (MPC.char '.' *> declP)
+            <*> (MPC.char '.' *> declP)
 
 blockS :: Parser BlockS
 blockS =
