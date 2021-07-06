@@ -27,6 +27,7 @@ type Ident = Text
 data SType
   = SInt
   | SFloat
+  | SIdent
   | SString
   | SList SType
   | SNamed Ident

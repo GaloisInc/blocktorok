@@ -88,10 +88,11 @@ brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
-stype = int <|> float <|> string <|> list <|> named
+stype = int <|> float <|> i <|> string <|> list <|> named
   where
     int    = symbol' "int"    *> pure SInt
     float  = symbol' "float"  *> pure SFloat
+    i      = symbol' "ident"  *> pure SIdent
     string = symbol' "string" *> pure SString
     list   = symbol' "list"   *> (SList <$> stype)
     named  = SNamed <$> ident
