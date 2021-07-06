@@ -18,8 +18,12 @@ module Language.Schema.Parser
   ) where
 
 import Control.Monad (void)
+import Control.Monad.State (State)
+import qualified Control.Monad.State as State
 
 import Data.Char (isAlpha, isDigit, isUpper)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TIO
@@ -33,7 +37,15 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 import Language.Common (Located(..), SourceRange(..), withSameLocAs)
 import Language.Schema.Syntax
 
-type Parser a = MP.Parsec Void Text a
+data Env = Env
+  { envRootTypes :: Map Ident SType
+  , envTypeDefs :: Map Ident SchemaDef
+  }
+
+emptyEnv :: Env
+emptyEnv = Env Map.empty Map.empty
+
+type Parser a = MP.ParsecT Void Text (State Env) a
 
 spc :: Parser ()
 spc = Lexer.space MPC.space1
@@ -163,7 +175,7 @@ schema =
 
 parseSchema :: Text -> Either Text Schema
 parseSchema t =
-  case MP.runParser schema "-input-" t of
+  case State.evalState (MP.runParserT schema "-input-" t) emptyEnv of
     Right u -> Right u
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
