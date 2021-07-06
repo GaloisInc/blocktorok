@@ -113,21 +113,27 @@ stype = int <|> float <|> i <|> string <|> list <|> named
     named  = SNamed <$> ident
 
 decl :: Parser Ident -> Parser Decl
-decl p = Decl <$> (located p <* symbol' ":") <*> located stype
+decl p =
+  do i <- located p
+     symbol' ":"
+     t <- located stype
+     pure (i, t)
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
 
-variant :: Parser Variant
+variant :: Parser (Located Ident, Variant)
 variant =
-  Variant <$> optional (located doc)
-          <*> located tag
-          <*> brackets (MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
+  do d <- optional (located doc)
+     t <- located tag
+     fs <- brackets $ Map.fromList <$> MP.sepBy (decl ident) (symbol' ",")
+     symbol' ";"
+     pure $ (t, Variant d fs)
 
 union :: Parser Union
 union =
   Union <$> (symbol' "union" *> located ident)
-        <*> brackets (MP.some variant)
+        <*> brackets (Map.fromList <$> MP.some variant)
 
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
@@ -156,7 +162,7 @@ blockS =
     onlySelector :: Parser Decl
     onlySelector =
       do s <- located selector
-         pure $ Decl s (SIdent `withSameLocAs` s)
+         pure $ (s, SIdent `withSameLocAs` s)
 
 root :: Parser Root
 root =

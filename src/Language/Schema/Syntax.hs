@@ -16,6 +16,7 @@ input files should be rendered as output to one or more files.
 module Language.Schema.Syntax where
 
 import Data.Text (Text)
+import Data.Map.Strict (Map)
 
 import Language.Common (Located)
 
@@ -34,22 +35,18 @@ data SType
   deriving (Show)
 
 -- | Union constructor field declarations
-data Decl = Decl
-  { declName :: Located Ident
-  , declType :: Located SType
-  } deriving (Show)
+type Decl = (Located Ident, Located SType)
 
 -- | Union variant definition
 data Variant = Variant
   { variantDoc :: Maybe (Located Text)
-  , variantTag :: Located Ident
-  , variantFields :: [Decl]
+  , variantFields :: Map (Located Ident) (Located SType)
   } deriving (Show)
 
 -- | Union-type definition
 data Union = Union
   { unionName :: Located Ident
-  , unionVariants :: [Variant]
+  , unionVariants :: Map (Located Ident) Variant
   } deriving (Show)
 
 -- | Globs for block layout definitions
