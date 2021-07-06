@@ -173,11 +173,11 @@ schema =
 
 -------------------------------------------------------------------------------
 
-parseSchema :: Text -> Either Text Schema
-parseSchema t =
-  case State.evalState (MP.runParserT schema "-input-" t) emptyEnv of
+parseSchema :: FilePath -> Text -> Either Text Schema
+parseSchema fp t =
+  case State.evalState (MP.runParserT schema fp t) emptyEnv of
     Right u -> Right u
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
 schemaFromFile :: FilePath -> IO (Either Text Schema)
-schemaFromFile fp = parseSchema <$> TIO.readFile fp
+schemaFromFile fp = parseSchema fp <$> TIO.readFile fp
