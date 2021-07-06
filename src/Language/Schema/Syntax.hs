@@ -70,6 +70,7 @@ data BlockDecl = BlockDecl
 -- | Block layout definition
 data BlockS = BlockS
   { blockSType :: Located Ident
+  , blockSName :: Maybe Decl
   , blockSFields :: [Globbed BlockDecl]
   } deriving (Show)
 

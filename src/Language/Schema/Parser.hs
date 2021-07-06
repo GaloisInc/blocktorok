@@ -30,7 +30,7 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common (Located(..), SourceRange(..))
+import Language.Common (Located(..), SourceRange(..), withSameLocAs)
 import Language.Schema.Syntax
 
 type Parser a = MP.Parsec Void Text a
@@ -66,7 +66,7 @@ located p =
 optional :: Parser a -> Parser (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
 
-ident :: Parser Text
+ident :: Parser Ident
 ident =
   lexeme . MP.try $
     do c0 <- MP.satisfy identFirstChar
@@ -77,7 +77,10 @@ ident =
     identFirstChar c = isAlpha c || c == '_'
     identRestChar c = identFirstChar c || isDigit c
 
-tag :: Parser Text
+selector :: Parser Ident
+selector = MPC.char '.' *> ident
+
+tag :: Parser Ident
 tag =
   lexeme .MP.try $
     do c0 <- MP.satisfy isUpper
@@ -97,8 +100,8 @@ stype = int <|> float <|> i <|> string <|> list <|> named
     list   = symbol' "list"   *> (SList <$> stype)
     named  = SNamed <$> ident
 
-decl :: Parser Decl
-decl = Decl <$> (located ident <* symbol' ":") <*> located stype
+decl :: Parser Ident -> Parser Decl
+decl p = Decl <$> (located p <* symbol' ":") <*> located stype
 
 docAnn :: Parser Text
 docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
@@ -107,7 +110,7 @@ variant :: Parser Variant
 variant =
   Variant <$> optional (located docAnn)
           <*> located tag
-          <*> brackets (MP.sepBy decl (symbol' ",")) <* symbol' ";"
+          <*> brackets (MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
 
 union :: Parser Union
 union =
@@ -130,12 +133,18 @@ globbed p =
 blockDecl :: Parser BlockDecl
 blockDecl =
   BlockDecl <$> optional (located docAnn)
-            <*> (MPC.char '.' *> decl)
+            <*> decl selector
 
 blockS :: Parser BlockS
 blockS =
   BlockS <$> (symbol' "block" *> located ident)
+         <*> optional (MP.try (decl selector) <|> onlySelector)
          <*> brackets (MP.many $ globbed blockDecl)
+  where
+    onlySelector :: Parser Decl
+    onlySelector =
+      do s <- located selector
+         pure $ Decl s (SIdent `withSameLocAs` s)
 
 root :: Parser Root
 root =
