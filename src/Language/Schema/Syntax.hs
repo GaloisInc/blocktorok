@@ -61,15 +61,15 @@ data Globbed a
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
-  { ann :: Maybe (Located Text)
-  , decl :: Decl
+  { blockDeclAnn :: Maybe (Located Text)
+  , blockDeclDecl :: Decl
   }
   deriving (Show)
 
 -- | Block layout definition
 data BlockS = BlockS
-  { blockType :: Located Ident
-  , blockFields :: [Globbed BlockDecl]
+  { blockSType :: Located Ident
+  , blockSFields :: [Globbed BlockDecl]
   } deriving (Show)
 
 -- | Root definition; this defines the top-level structure of input files

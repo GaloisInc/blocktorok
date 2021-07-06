@@ -87,17 +87,17 @@ tag =
 brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
-typeP :: Parser SType
-typeP = int <|> float <|> string <|> list <|> named
+stype :: Parser SType
+stype = int <|> float <|> string <|> list <|> named
   where
     int    = symbol' "int"    *> pure SInt
     float  = symbol' "float"  *> pure SFloat
     string = symbol' "string" *> pure SString
-    list   = symbol' "list"   *> (SList <$> typeP)
+    list   = symbol' "list"   *> (SList <$> stype)
     named  = SNamed <$> ident
 
-declP :: Parser Decl
-declP = Decl <$> (located ident <* symbol' ":") <*> located typeP
+decl :: Parser Decl
+decl = Decl <$> (located ident <* symbol' ":") <*> located stype
 
 docAnn :: Parser Text
 docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
@@ -106,7 +106,7 @@ variant :: Parser Variant
 variant =
   Variant <$> optional (located docAnn)
           <*> located tag
-          <*> brackets (MP.sepBy declP (symbol' ",")) <* symbol' ";"
+          <*> brackets (MP.sepBy decl (symbol' ",")) <* symbol' ";"
 
 union :: Parser Union
 union =
@@ -129,7 +129,7 @@ globbed p =
 blockDecl :: Parser BlockDecl
 blockDecl =
   BlockDecl <$> optional (located docAnn)
-            <*> (MPC.char '.' *> declP)
+            <*> (MPC.char '.' *> decl)
 
 blockS :: Parser BlockS
 blockS =
