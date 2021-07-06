@@ -115,12 +115,12 @@ stype = int <|> float <|> i <|> string <|> list <|> named
 decl :: Parser Ident -> Parser Decl
 decl p = Decl <$> (located p <* symbol' ":") <*> located stype
 
-docAnn :: Parser Text
-docAnn = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
+doc :: Parser Text
+doc = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
 
 variant :: Parser Variant
 variant =
-  Variant <$> optional (located docAnn)
+  Variant <$> optional (located doc)
           <*> located tag
           <*> brackets (MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
 
@@ -144,7 +144,7 @@ globbed p =
 
 blockDecl :: Parser BlockDecl
 blockDecl =
-  BlockDecl <$> optional (located docAnn)
+  BlockDecl <$> optional (located doc)
             <*> decl selector
 
 blockS :: Parser BlockS

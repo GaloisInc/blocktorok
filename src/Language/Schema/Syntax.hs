@@ -62,7 +62,7 @@ data Globbed a
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
-  { blockDeclAnn :: Maybe (Located Text)
+  { blockDeclDoc :: Maybe (Located Text)
   , blockDeclDecl :: Decl
   }
   deriving (Show)
