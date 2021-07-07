@@ -98,12 +98,12 @@ variant :: Parser Variant
 variant =
   Variant <$> optional doc
           <*> tag
-          <*> brackets (MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
+          <*> brackets (declsMap <$> MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
 
 union :: Parser Union
 union =
   Union <$> (symbol' "union" *> ident)
-        <*> brackets (MP.some variant)
+        <*> brackets (variantsMap <$> MP.some variant)
 
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
@@ -127,7 +127,7 @@ blockS :: Parser BlockS
 blockS =
   BlockS <$> (symbol' "block" *> ident)
          <*> optional (MP.try (decl selector) <|> onlySelector)
-         <*> brackets (MP.many $ globbed blockDecl)
+         <*> brackets (globbedDeclsMap <$> (MP.many $ globbed blockDecl))
   where
     onlySelector :: Parser Decl
     onlySelector =
@@ -136,7 +136,7 @@ blockS =
 
 root :: Parser Root
 root =
-  Root <$> (symbol' "root" *> brackets (MP.some $ globbed blockDecl))
+  Root <$> (symbol' "root" *> brackets (globbedDeclsMap <$> (MP.some $ globbed blockDecl)))
 
 schemaDefsP :: Parser SchemaDef
 schemaDefsP =  UnionDef <$> union
@@ -144,7 +144,7 @@ schemaDefsP =  UnionDef <$> union
 
 schema :: Parser Schema
 schema =
-  Schema <$> MP.many schemaDefsP
+  Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
          <*> root
 
 -------------------------------------------------------------------------------
