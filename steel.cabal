@@ -71,6 +71,7 @@ library
                        Language.Link.Blocktorok.BlockM
                        Language.Link.Blocktorok.PPDemo
                        Language.Schema.Demo
+                       Language.Schema.Env
                        Language.Schema.Parser
                        Language.Schema.Syntax
                        Options
