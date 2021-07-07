@@ -116,7 +116,7 @@ decl :: Parser Ident -> Parser Decl
 decl p = Decl <$> (located p <* symbol' ":") <*> located stype
 
 doc :: Parser Text
-doc = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
+doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
 
 variant :: Parser Variant
 variant =
