@@ -120,7 +120,7 @@ decl p =
      pure (i, t)
 
 doc :: Parser Text
-doc = Text.pack <$> (symbol "[--" *> MP.manyTill Lexer.charLiteral (symbol "--]"))
+doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
 
 variant :: Parser (Located Ident, Variant)
 variant =
