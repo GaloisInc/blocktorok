@@ -19,19 +19,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 
--- | Identifiers
-type Ident = Text
-
--- | The types fields may be declared to have in block schemas and constructor
--- variants
-data SType
-  = SInt
-  | SFloat
-  | SIdent
-  | SString
-  | SList SType
-  | SNamed Ident
-  deriving (Show)
+import Language.Schema.Type (Ident, Globbed, SType, unGlob)
 
 -- | Union constructor field declarations
 data Decl = Decl
@@ -51,14 +39,6 @@ data Union = Union
   { unionName :: Ident
   , unionVariants :: Map Ident Variant
   } deriving (Show)
-
--- | Globs for block layout definitions
-data Globbed a
-  = One a
-  | Optional a
-  | Some a
-  | Many a
-  deriving (Show)
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
@@ -93,14 +73,6 @@ data Schema = Schema
   } deriving (Show)
 
 -------------------------------------------------------------------------------
-
-unGlob :: Globbed a -> a
-unGlob glob =
-  case glob of
-    One a      -> a
-    Optional a -> a
-    Some a     -> a
-    Many a     -> a
 
 declsMap :: [Decl] -> Map Ident SType
 declsMap = Map.fromList . fmap (\d -> (declName d, declType d))

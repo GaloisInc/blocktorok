@@ -34,6 +34,7 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import Language.Schema.Env (Env, emptyEnv)
 import Language.Schema.Syntax
+import Language.Schema.Type (Ident, SType(..), Globbed(..))
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 

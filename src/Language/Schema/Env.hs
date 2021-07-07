@@ -21,6 +21,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 import Language.Schema.Syntax
+import Language.Schema.Type (Ident, SType)
 
 -- | The typing environment
 data Env = Env
