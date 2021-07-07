@@ -17,8 +17,6 @@ module Language.Schema.Syntax where
 
 import Data.Text (Text)
 
-import Language.Common (Located)
-
 -- | Identifiers
 type Ident = Text
 
@@ -35,20 +33,20 @@ data SType
 
 -- | Union constructor field declarations
 data Decl = Decl
-  { declName :: Located Ident
-  , declType :: Located SType
+  { declName :: Ident
+  , declType :: SType
   } deriving (Show)
 
 -- | Union variant definition
 data Variant = Variant
-  { variantDoc :: Maybe (Located Text)
-  , variantTag :: Located Ident
+  { variantDoc :: Maybe Text
+  , variantTag :: Ident
   , variantFields :: [Decl]
   } deriving (Show)
 
 -- | Union-type definition
 data Union = Union
-  { unionName :: Located Ident
+  { unionName :: Ident
   , unionVariants :: [Variant]
   } deriving (Show)
 
@@ -62,14 +60,14 @@ data Globbed a
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
-  { blockDeclDoc :: Maybe (Located Text)
+  { blockDeclDoc :: Maybe Text
   , blockDeclDecl :: Decl
   }
   deriving (Show)
 
 -- | Block layout definition
 data BlockS = BlockS
-  { blockSType :: Located Ident
+  { blockSType :: Ident
   , blockSName :: Maybe Decl
   , blockSFields :: [Globbed BlockDecl]
   } deriving (Show)
