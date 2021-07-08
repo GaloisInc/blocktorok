@@ -43,6 +43,7 @@ data Globbed a
 
 -------------------------------------------------------------------------------
 
+-- | Extract a 'Globbed' value
 unGlob :: Globbed a -> a
 unGlob glob =
   case glob of
@@ -50,3 +51,9 @@ unGlob glob =
     Optional a -> a
     Some a     -> a
     Many a     -> a
+
+-- | Return true iff the type contains a named type
+containsNamed :: SType -> Bool
+containsNamed (SNamed _) = True
+containsNamed (SList t)  = containsNamed t
+containsNamed _          = False
