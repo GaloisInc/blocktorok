@@ -32,6 +32,7 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
+import Language.Common (Located(..), SourceRange(..), withSameLocAs)
 import Language.Schema.Env (Env, emptyEnv)
 import Language.Schema.Syntax
 import Language.Schema.Type (Ident, SType(..), Globbed(..))
@@ -51,6 +52,20 @@ symbol = Lexer.symbol spc
 
 symbol' :: Text -> Parser ()
 symbol' t = void $ symbol t
+
+mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
+mkRange s e =
+  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
+  where
+    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
+
+located :: Parser a -> Parser (Located a)
+located p =
+  lexeme $
+    do  start <- MP.getSourcePos
+        a <- p
+        end <- MP.getSourcePos
+        pure $ Located (mkRange start end) a
 
 optional :: Parser a -> Parser (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
@@ -90,20 +105,20 @@ stype = int <|> float <|> i <|> string <|> list <|> named
     named  = SNamed <$> ident
 
 decl :: Parser Ident -> Parser Decl
-decl p = Decl <$> (p <* symbol' ":") <*> stype
+decl p = Decl <$> (located p <* symbol' ":") <*> located stype
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
 
 variant :: Parser Variant
 variant =
-  Variant <$> optional doc
-          <*> tag
+  Variant <$> optional (located doc)
+          <*> located tag
           <*> brackets (declsMap <$> MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
 
 union :: Parser Union
 union =
-  Union <$> (symbol' "union" *> ident)
+  Union <$> (symbol' "union" *> located ident)
         <*> brackets (variantsMap <$> MP.some variant)
 
 glob :: Parser (a -> Globbed a)
@@ -121,19 +136,19 @@ globbed p =
 
 blockDecl :: Parser BlockDecl
 blockDecl =
-  BlockDecl <$> optional doc
+  BlockDecl <$> optional (located doc)
             <*> decl selector
 
 blockS :: Parser BlockS
 blockS =
-  BlockS <$> (symbol' "block" *> ident)
+  BlockS <$> (symbol' "block" *> located ident)
          <*> optional (MP.try (decl selector) <|> onlySelector)
          <*> brackets (globbedDeclsMap <$> (MP.many $ globbed blockDecl))
   where
     onlySelector :: Parser Decl
     onlySelector =
-      do s <- selector
-         pure $ Decl s SIdent
+      do s <- located selector
+         pure $ Decl s (SIdent `withSameLocAs` s)
 
 root :: Parser Root
 root =

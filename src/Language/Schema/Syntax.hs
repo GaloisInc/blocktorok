@@ -19,37 +19,38 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 
+import Language.Common (Located(..))
 import Language.Schema.Type (Ident, Globbed, SType, unGlob)
 
 -- | Union constructor field declarations
 data Decl = Decl
-  { declName :: Ident
-  , declType :: SType
+  { declName :: Located Ident
+  , declType :: Located SType
   } deriving (Show)
 
 -- | Union variant definition
 data Variant = Variant
-  { variantDoc :: Maybe Text
-  , variantTag :: Ident
+  { variantDoc :: Maybe (Located Text)
+  , variantTag :: Located Ident
   , variantFields :: Map Ident SType
   } deriving (Show)
 
 -- | Union-type definition
 data Union = Union
-  { unionName :: Ident
+  { unionName :: Located Ident
   , unionVariants :: Map Ident Variant
   } deriving (Show)
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
-  { blockDeclDoc :: Maybe Text
+  { blockDeclDoc :: Maybe (Located Text)
   , blockDeclDecl :: Decl
   }
   deriving (Show)
 
 -- | Block layout definition
 data BlockS = BlockS
-  { blockSType :: Ident
+  { blockSType :: Located Ident
   , blockSName :: Maybe Decl
   , blockSFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
@@ -75,16 +76,16 @@ data Schema = Schema
 -------------------------------------------------------------------------------
 
 declsMap :: [Decl] -> Map Ident SType
-declsMap = Map.fromList . fmap (\d -> (declName d, declType d))
+declsMap = Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
 
 variantsMap :: [Variant] -> Map Ident Variant
-variantsMap = Map.fromList . fmap (\v -> (variantTag v, v))
+variantsMap = Map.fromList . fmap (\v -> (locValue (variantTag v), v))
 
 globbedDeclsMap :: [Globbed BlockDecl] -> Map Ident (Globbed BlockDecl)
 globbedDeclsMap = Map.fromList . fmap getDecl
   where
     getDecl :: Globbed BlockDecl -> (Ident, Globbed BlockDecl)
-    getDecl g = ((declName . blockDeclDecl . unGlob) g, g)
+    getDecl g = ((locValue . declName . blockDeclDecl . unGlob) g, g)
 
 schemaDefMap :: [SchemaDef] -> Map Ident SchemaDef
 schemaDefMap = Map.fromList . fmap getDef
@@ -93,5 +94,5 @@ schemaDefMap = Map.fromList . fmap getDef
     getDef s = (defName s, s)
 
     defName :: SchemaDef -> Ident
-    defName (UnionDef u) = unionName u
-    defName (BlockDef b) = blockSType b
+    defName (UnionDef u) = locValue (unionName u)
+    defName (BlockDef b) = locValue (blockSType b)
