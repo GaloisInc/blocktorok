@@ -1,1 +1,4 @@
 dist-newstyle/
+
+# OSX nonsense
+.DS_Store

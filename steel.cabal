@@ -20,7 +20,7 @@ executable steel
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >= 4.11 && < 4.14
+  build-depends:       base >= 3 && < 5
                      , mtl
                      , optparse-applicative
                      , steel
@@ -62,6 +62,7 @@ library
                        Data.Units.SymbolTable
                        Data.Units.UnitExp
                        Language.Check
+                       Language.Common
                        Language.Compile.SU2
                        Language.Error
                        Language.Link
@@ -69,6 +70,11 @@ library
                        Language.Link.Blocktorok.Parser
                        Language.Link.Blocktorok.BlockM
                        Language.Link.Blocktorok.PPDemo
+                       Language.Schema.Demo
+                       Language.Schema.Env
+                       Language.Schema.Parser
+                       Language.Schema.Syntax
+                       Language.Schema.Type
                        Options
                        Text.Lexer
                        Text.Parse.Link

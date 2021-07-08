@@ -1,38 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Link.Blocktorok.Syntax where
 
-import Data.Text(Text, pack)
+import Data.Text(Text)
+
+import Language.Common(Located, withSameLocAs)
 
 
 -------------------------------------------------------------------------------
 -- AST
 
 type Ident = Text
-
-data SourceRange = SourceRange
-  { sourceRangeFile :: FilePath
-  , sourceRangeStart :: (Int, Int)
-  , sourceRangeEnd :: (Int, Int)
-  }
-  deriving(Show, Eq, Ord)
-
-data Located a = Located
-  { locRange :: SourceRange
-  , locValue :: a
-  }
-  deriving(Show, Eq, Ord)
-
-withSameLocAs :: b -> Located a -> Located b
-withSameLocAs b a = Located (locRange a) b
-
-ppRange :: SourceRange -> Text
-ppRange (SourceRange path (startLn, startCol) (endLn, endCol)) =
-  pack $
-    path ++ ":" ++ show startLn ++ ":" ++ show startCol ++ "-"
-                ++ show endLn ++ ":" ++ show endCol
-
-instance Functor Located where
-  fmap f a = a { locValue = f (locValue a) }
 
 data Block = Block
   { blockTypeName :: Located Ident
@@ -60,7 +37,6 @@ data Constructor = Constructor
   }
   deriving(Show, Eq, Ord)
 
-
 locateValue :: Value -> Located Value
 locateValue v =
   case v of
@@ -69,6 +45,3 @@ locateValue v =
     List l -> v `withSameLocAs` l
     Construct c -> v `withSameLocAs` c
     String s -> v `withSameLocAs` s
-
-
-
