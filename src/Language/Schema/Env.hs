@@ -32,3 +32,9 @@ data Env = Env
 -- | Construct an empty environment (used as initial parse state)
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty
+
+addRootType :: Ident -> SType -> Map Ident SType -> Map Ident SType
+addRootType = Map.insert
+
+addTypeDef :: Ident -> SchemaDef -> Map Ident SchemaDef -> Map Ident SchemaDef
+addTypeDef = Map.insert
