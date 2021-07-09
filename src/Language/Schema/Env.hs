@@ -21,11 +21,11 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 import Language.Schema.Syntax
-import Language.Schema.Type (Ident, SType)
+import Language.Schema.Type (Ident, Globbed)
 
 -- | The typing environment
 data Env = Env
-  { envRootTypes :: Map Ident SType
+  { envRootTypes :: Map Ident (Globbed BlockDecl)
   , envTypeDefs :: Map Ident SchemaDef
   }
 
@@ -33,8 +33,14 @@ data Env = Env
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty
 
-addRootType :: Ident -> SType -> Map Ident SType -> Map Ident SType
+addRootType :: Ident
+            -> Globbed BlockDecl
+            -> Map Ident (Globbed BlockDecl)
+            -> Map Ident (Globbed BlockDecl)
 addRootType = Map.insert
 
-addTypeDef :: Ident -> SchemaDef -> Map Ident SchemaDef -> Map Ident SchemaDef
+addTypeDef :: Ident
+           -> SchemaDef
+           -> Map Ident SchemaDef
+           -> Map Ident SchemaDef
 addTypeDef = Map.insert
