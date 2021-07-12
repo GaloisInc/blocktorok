@@ -23,9 +23,10 @@ import Control.Monad.State
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Text (unpack)
 
 import Language.Schema.Syntax
-import Language.Schema.Type (Ident, Globbed)
+import Language.Schema.Type (Ident, Globbed, ppGlob)
 
 -- | The typing environment
 data Env = Env
@@ -37,6 +38,7 @@ data Env = Env
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty
 
+-- | TODO: Better use of location info in error messaging
 addRootType :: (MonadState Env m, MonadFail m)
             => Ident
             -> Globbed BlockDecl
@@ -44,9 +46,13 @@ addRootType :: (MonadState Env m, MonadFail m)
 addRootType i d =
   do e <- get
      case Map.lookup i (envRootTypes e) of
-       Just d' -> fail "Placeholder"
+       Just d' ->
+         fail $ "Cannot add root type " ++ ppGlob d ++
+                " since the definition " ++ ppGlob d' ++
+                " already exists in the root specification."
        Nothing -> put $ e { envRootTypes = Map.insert i d $ envRootTypes e }
 
+-- | TODO: Better use of location info in error messaging
 addTypeDef :: (MonadState Env m, MonadFail m)
            => Ident
            -> SchemaDef
@@ -54,5 +60,6 @@ addTypeDef :: (MonadState Env m, MonadFail m)
 addTypeDef i s =
   do e <- get
      case Map.lookup i (envTypeDefs e) of
-       Just s' -> fail "Placeholder"
+       Just _ ->
+         fail $ "Multiple definitions for " ++ unpack i ++ "provided"
        Nothing -> put $ e { envTypeDefs = Map.insert i s $ envTypeDefs e }
