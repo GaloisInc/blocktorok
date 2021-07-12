@@ -70,11 +70,16 @@ library
                        Language.Link.Blocktorok.Parser
                        Language.Link.Blocktorok.BlockM
                        Language.Link.Blocktorok.PPDemo
+
                        Language.Schema.Demo
                        Language.Schema.Env
                        Language.Schema.Parser
                        Language.Schema.Syntax
                        Language.Schema.Type
+
+                       Language.Transform.Syntax
+                       Language.Transform.Parser
+
                        Options
                        Text.Lexer
                        Text.Parse.Link
