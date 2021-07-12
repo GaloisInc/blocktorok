@@ -17,7 +17,7 @@ module Language.Schema.Syntax where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 
 import Language.Common (Located(..))
 import Language.Schema.Type (Ident, Globbed, SType, unGlob)
@@ -26,7 +26,10 @@ import Language.Schema.Type (Ident, Globbed, SType, unGlob)
 data Decl = Decl
   { declName :: Located Ident
   , declType :: Located SType
-  } deriving (Show)
+  }
+
+instance Show Decl where
+  show (Decl n t) = unpack (locValue n) ++ ":" ++ show (locValue t)
 
 -- | Union variant definition
 data Variant = Variant
@@ -46,12 +49,14 @@ data BlockDecl = BlockDecl
   { blockDeclDoc :: Maybe (Located Text)
   , blockDeclDecl :: Decl
   }
-  deriving (Show)
+
+instance Show BlockDecl where
+  show (BlockDecl _ d) = show d
 
 -- | Block layout definition
 data BlockS = BlockS
   { blockSType :: Located Ident
-  , blockSName :: Maybe Decl
+  , blockSName :: Maybe (Located Ident)
   , blockSFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
 
@@ -76,7 +81,8 @@ data Schema = Schema
 -------------------------------------------------------------------------------
 
 declsMap :: [Decl] -> Map Ident SType
-declsMap = Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
+declsMap =
+  Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
 
 variantsMap :: [Variant] -> Map Ident Variant
 variantsMap = Map.fromList . fmap (\v -> (locValue (variantTag v), v))

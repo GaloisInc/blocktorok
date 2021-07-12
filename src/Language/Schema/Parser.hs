@@ -22,6 +22,7 @@ import Control.Monad.State (State)
 import qualified Control.Monad.State as State
 
 import Data.Char (isAlpha, isDigit, isUpper)
+import qualified Data.List as List
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TIO
@@ -32,10 +33,23 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common (Located(..), SourceRange(..), withSameLocAs)
-import Language.Schema.Env (Env, emptyEnv)
+import Language.Common (Located(..), SourceRange(..))
+import Language.Schema.Env
+  ( Env
+  , addRootType
+  , addTypeDef
+  , emptyEnv
+  , lookupTypeDef
+  )
 import Language.Schema.Syntax
-import Language.Schema.Type (Ident, SType(..), Globbed(..))
+import Language.Schema.Type
+  ( Ident
+  , SType(..)
+  , Globbed(..)
+  , containedName
+  , containsNamed
+  , unGlob
+  )
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -105,21 +119,49 @@ stype = int <|> float <|> i <|> string <|> list <|> named
     named  = SNamed <$> ident
 
 decl :: Parser Ident -> Parser Decl
-decl p = Decl <$> (located p <* symbol' ":") <*> located stype
+decl p =
+  do n <- located p
+     symbol' ":"
+     t <- located stype
+     if containsNamed (locValue t) then
+       do let nm = containedName (locValue t)
+          env <- State.get
+          case lookupTypeDef nm env of
+            Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
+            Just _ -> pure $ Decl n t
+     else pure $ Decl n t
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
 
+-- | TODO: Better detection of / error for duplicate fields?
 variant :: Parser Variant
 variant =
-  Variant <$> optional (located doc)
-          <*> located tag
-          <*> brackets (declsMap <$> MP.sepBy (decl ident) (symbol' ",")) <* symbol' ";"
+  do ann   <- optional (located doc)
+     t     <- located tag
+     decls <- brackets $ MP.sepBy (decl ident) (symbol' ",")
+     symbol' ";"
+     if length (declNames decls) /= length (List.nub (declNames decls)) then
+       fail "The preceding union variant contains duplicated field names."
+     else
+       pure $ Variant ann t (declsMap decls)
+  where
+    declNames = fmap (locValue . declName)
 
+-- | TODO: Better detection of / error for duplicate tags?
 union :: Parser Union
 union =
-  Union <$> (symbol' "union" *> located ident)
-        <*> brackets (variantsMap <$> MP.some variant)
+  do symbol' "union"
+     nm   <- located ident
+     vars <- brackets $ MP.some variant
+     if length (varNames vars) /= length (List.nub (varNames vars)) then
+       fail "The preceding union definition contains duplicated variant tags."
+     else
+       do let u = Union nm (variantsMap vars)
+          addTypeDef (locValue nm) (UnionDef u)
+          pure u
+  where
+    varNames = fmap (locValue . variantTag)
 
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
@@ -141,18 +183,40 @@ blockDecl =
 
 blockS :: Parser BlockS
 blockS =
-  BlockS <$> (symbol' "block" *> located ident)
-         <*> optional (MP.try (decl selector) <|> onlySelector)
-         <*> brackets (globbedDeclsMap <$> (MP.many $ globbed blockDecl))
+  do symbol' "block"
+     t  <- located ident
+     nm <- optional (located selector)
+     fs <- brackets $ MP.many $ globbed blockDecl
+     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
+       fail "The preceding block definition contains duplicated field names."
+     else
+       do let b = BlockS t nm (globbedDeclsMap fs)
+          addTypeDef (locValue t) (BlockDef b)
+          pure b
   where
-    onlySelector :: Parser Decl
-    onlySelector =
-      do s <- located selector
-         pure $ Decl s (SIdent `withSameLocAs` s)
+    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
+
+-- blockExt :: Parser BlockS
+-- blockExt =
+--   do symbol' "block"
+--      new <- located ident
+--      symbol' "extends"
+--      old <- located ident
+--      fs <- brackets $ MP.many $ globbed blockDecl
+
 
 root :: Parser Root
 root =
-  Root <$> (symbol' "root" *> brackets (globbedDeclsMap <$> (MP.some $ globbed blockDecl)))
+  do symbol' "root"
+     fs <- brackets $ MP.some $ globbed blockDecl
+     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
+       fail "The root specifiation contains duplicated field names."
+     else
+       do sequence_ (addRootType <$> fs)
+          pure $ Root $ globbedDeclsMap fs
+  where
+    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
+  -- Root <$> (symbol' "root" *> brackets (globbedDeclsMap <$> (MP.some $ globbed blockDecl)))
 
 schemaDefsP :: Parser SchemaDef
 schemaDefsP =  UnionDef <$> union
