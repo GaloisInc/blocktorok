@@ -196,6 +196,15 @@ blockS =
   where
     fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
 
+-- blockExt :: Parser BlockS
+-- blockExt =
+--   do symbol' "block"
+--      new <- located ident
+--      symbol' "extends"
+--      old <- located ident
+--      fs <- brackets $ MP.many $ globbed blockDecl
+
+
 root :: Parser Root
 root =
   do symbol' "root"
