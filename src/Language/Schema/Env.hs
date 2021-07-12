@@ -16,6 +16,8 @@ selectors / know their types.
 
 module Language.Schema.Env
   ( Env(..)
+  , addRootType
+  , addTypeDef
   , emptyEnv
   ) where
 
@@ -61,5 +63,5 @@ addTypeDef i s =
   do e <- get
      case Map.lookup i (envTypeDefs e) of
        Just _ ->
-         fail $ "Multiple definitions for " ++ unpack i ++ "provided"
+         fail $ "The type " ++ unpack i ++ " is already defined."
        Nothing -> put $ e { envTypeDefs = Map.insert i s $ envTypeDefs e }
