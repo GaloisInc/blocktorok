@@ -81,7 +81,8 @@ data Schema = Schema
 -------------------------------------------------------------------------------
 
 declsMap :: [Decl] -> Map Ident SType
-declsMap = Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
+declsMap =
+  Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
 
 variantsMap :: [Variant] -> Map Ident Variant
 variantsMap = Map.fromList . fmap (\v -> (locValue (variantTag v), v))
