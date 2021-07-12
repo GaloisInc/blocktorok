@@ -27,8 +27,9 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (unpack)
 
+import Language.Common (locValue)
 import Language.Schema.Syntax
-import Language.Schema.Type (Ident, Globbed, ppGlob)
+import Language.Schema.Type (Ident, Globbed, ppGlob, unGlob)
 
 -- | The typing environment
 data Env = Env
@@ -42,10 +43,9 @@ emptyEnv = Env Map.empty Map.empty
 
 -- | TODO: Better use of location info in error messaging
 addRootType :: (MonadState Env m, MonadFail m)
-            => Ident
-            -> Globbed BlockDecl
+            => Globbed BlockDecl
             -> m ()
-addRootType i d =
+addRootType d =
   do e <- get
      case Map.lookup i (envRootTypes e) of
        Just d' ->
@@ -53,6 +53,7 @@ addRootType i d =
                 " since the definition " ++ ppGlob d' ++
                 " already exists in the root specification."
        Nothing -> put $ e { envRootTypes = Map.insert i d $ envRootTypes e }
+  where i =  (locValue . declName . blockDeclDecl . unGlob) d
 
 -- | TODO: Better use of location info in error messaging
 addTypeDef :: (MonadState Env m, MonadFail m)
@@ -63,5 +64,5 @@ addTypeDef i s =
   do e <- get
      case Map.lookup i (envTypeDefs e) of
        Just _ ->
-         fail $ "The type " ++ unpack i ++ " is already defined."
+         fail $ "The type " ++ show (unpack i) ++ " is already defined."
        Nothing -> put $ e { envTypeDefs = Map.insert i s $ envTypeDefs e }
