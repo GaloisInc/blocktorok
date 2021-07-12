@@ -51,7 +51,7 @@ data BlockDecl = BlockDecl
 -- | Block layout definition
 data BlockS = BlockS
   { blockSType :: Located Ident
-  , blockSName :: Maybe Decl
+  , blockSName :: Maybe (Located Ident)
   , blockSFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
 

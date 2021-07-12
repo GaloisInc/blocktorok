@@ -32,7 +32,7 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common (Located(..), SourceRange(..), withSameLocAs)
+import Language.Common (Located(..), SourceRange(..))
 import Language.Schema.Env (Env, emptyEnv)
 import Language.Schema.Syntax
 import Language.Schema.Type (Ident, SType(..), Globbed(..))
@@ -142,13 +142,8 @@ blockDecl =
 blockS :: Parser BlockS
 blockS =
   BlockS <$> (symbol' "block" *> located ident)
-         <*> optional (MP.try (decl selector) <|> onlySelector)
+         <*> optional (located selector)
          <*> brackets (globbedDeclsMap <$> (MP.many $ globbed blockDecl))
-  where
-    onlySelector :: Parser Decl
-    onlySelector =
-      do s <- located selector
-         pure $ Decl s (SIdent `withSameLocAs` s)
 
 root :: Parser Root
 root =
