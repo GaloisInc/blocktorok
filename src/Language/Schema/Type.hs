@@ -16,6 +16,8 @@ module Language.Schema.Type
   ( Ident
   , Globbed(..)
   , SType(..)
+  , containedName
+  , containsNamed
   , ppGlob
   , unGlob
   ) where
@@ -76,3 +78,11 @@ containsNamed :: SType -> Bool
 containsNamed (SNamed _) = True
 containsNamed (SList t)  = containsNamed t
 containsNamed _          = False
+
+-- | If the type @t@ contains a named type (i.e. @containsNamed t@ returns
+-- @True@), return that type's name. This function errors on types that
+-- fail to return true when passed to 'containsName'.
+containedName :: SType -> Ident
+containedName (SNamed i) = i
+containedName (SList t)  = containedName t
+containedName _          = error "Type contains no named type"

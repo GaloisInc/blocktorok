@@ -19,6 +19,7 @@ module Language.Schema.Env
   , addRootType
   , addTypeDef
   , emptyEnv
+  , lookupTypeDef
   ) where
 
 import Control.Monad.State
@@ -66,3 +67,6 @@ addTypeDef i s =
        Just _ ->
          fail $ "The type " ++ show (unpack i) ++ " is already defined."
        Nothing -> put $ e { envTypeDefs = Map.insert i s $ envTypeDefs e }
+
+lookupTypeDef :: Ident -> Env -> Maybe SchemaDef
+lookupTypeDef i e = Map.lookup i (envTypeDefs e)

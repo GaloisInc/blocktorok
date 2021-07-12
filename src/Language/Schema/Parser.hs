@@ -34,9 +34,22 @@ import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import Language.Common (Located(..), SourceRange(..))
-import Language.Schema.Env (Env, addRootType, addTypeDef, emptyEnv)
+import Language.Schema.Env
+  ( Env
+  , addRootType
+  , addTypeDef
+  , emptyEnv
+  , lookupTypeDef
+  )
 import Language.Schema.Syntax
-import Language.Schema.Type (Ident, SType(..), Globbed(..), unGlob)
+import Language.Schema.Type
+  ( Ident
+  , SType(..)
+  , Globbed(..)
+  , containedName
+  , containsNamed
+  , unGlob
+  )
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -106,7 +119,17 @@ stype = int <|> float <|> i <|> string <|> list <|> named
     named  = SNamed <$> ident
 
 decl :: Parser Ident -> Parser Decl
-decl p = Decl <$> (located p <* symbol' ":") <*> located stype
+decl p =
+  do n <- located p
+     symbol' ":"
+     t <- located stype
+     if containsNamed (locValue t) then
+       do let nm = containedName (locValue t)
+          env <- State.get
+          case lookupTypeDef nm env of
+            Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
+            Just _ -> pure $ Decl n t
+     else pure $ Decl n t
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
