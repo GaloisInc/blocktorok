@@ -21,9 +21,9 @@ domain {
     mesh_format: SU2
   }
 
-  time: transient { dt = 0.005, 
-                    max_time = 3, 
-                    start_time = 0, 
+  time: transient { dt = 0.005 s, 
+                    max_time = 3 s, 
+                    start_time = 0 s, 
                     inner_iter = 200, 
                     outer_iter = 600
   }
