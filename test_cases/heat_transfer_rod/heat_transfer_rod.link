@@ -1,16 +1,18 @@
 domain {
   physics {
     governing_equation: heat equation
-    physical_models: components { density = 19300 kg/m^3, 
-                                  heat_capcity = 130 J/kg*K, 
-                                  thermal_conductivity = 318 W/m*K
-                                }
+    physical_models: components { 
+      density = 19300 kg/m^3, 
+      heat_capcity = 130 J/kg*K, 
+      thermal_conductivity = 318 W/m*K
+      }
   }
 
-  convergence: criterion { min_value = -19, 
-                           start_iter = 10, 
-                           cauchy_elements = 100, 
-                           cauchy_epsilon = 1E-6
+  convergence: criterion { 
+    min_value = -19, 
+    start_iter = 10, 
+    cauchy_elements = 100, 
+    cauchy_epsilon = 1E-6
   }
 
   input_output {
@@ -21,12 +23,23 @@ domain {
     mesh_format: SU2
   }
 
-  time: transient { dt = 0.005 s, 
-                    max_time = 3 s, 
-                    start_time = 0 s, 
-                    inner_iter = 200, 
-                    outer_iter = 600
+  time: transient { 
+    dt = 0.005 s, 
+    max_time = 3 s, 
+    start_time = 0 s, 
+    inner_iter = 200, 
+    outer_iter = 600
   }
+
+block cold_end {
+  .field_type: uniform
+  .value: 273
+}
+
+block hot_end {
+  .field_type: uniform
+  .value: 573
+}
 
   boundary_conditions {
     variable: temperature
@@ -44,13 +57,13 @@ domain {
     variable: temperature
     marker: right
     type: fixedValue
-    value: uniform 273
+    value: cold_end
   }
 
   boundary_conditions {
     variable: temperature
     marker: left
     type: fixedValue
-    value: uniform 573
+    value: hot_end
   }
 }

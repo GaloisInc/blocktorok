@@ -11,7 +11,7 @@ union convergence {
   max_iterations { iter: int };
 
   [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
-  criterion { field: string?, min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
+  criterion { field: optional string, min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
 }
 
 union time {
@@ -19,7 +19,7 @@ union time {
   steady_state { outer_iter: int };
 
   [-- Transient simulation --]
-  transient { dt: float, max_time: float, start_time: float?, inner_iter: int, outer_iter: int };
+  transient { dt: float, max_time: float, start_time: optional float, inner_iter: int, outer_iter: int };
 }
 
 block input_output {
@@ -27,16 +27,16 @@ block input_output {
   .write_interval: float
 
   [-- Name of output file is optional (OpenFoam does not have one) --]
-  .output_file: string?
+  .output_file: optional string
 
   [-- Output file format --]
   .output_format: string
 
   [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
-  .mesh_filename: string?
+  .mesh_filename: optional string
 
   [-- The format of the mesh file --]
-  .mesh_format: string?
+  .mesh_format: optional string
 }
 
 block physics {
@@ -45,6 +45,14 @@ block physics {
 
   [-- Parameters for physical models such as turbulence and thermophysical models are defined here --]
   .physical_models: thermal_diffusivity
+}
+
+block boundary_condition_value {
+  [-- Field type: e.g. Uniform --]
+  .field_type: string
+
+  [-- Value for the field: e.g. 273]
+  .value: float
 }
 
 block boundary_conditions {
@@ -58,7 +66,7 @@ block boundary_conditions {
   .type: string
 
   [-- Value being applied to the boundary: e.g. uniform 273 --]
-  .value: list string int
+  .value: boundary_condition_value
 }
 
 block domain {
