@@ -3,7 +3,8 @@ domain {
     governing_equation: heat equation
     physical_models: components { density = 19300 kg/m^3, 
                                   heat_capcity = 130 J/kg*K, 
-                                  thermal_conductivity = 318 W/m*K }
+                                  thermal_conductivity = 318 W/m*K
+                                }
   }
 
   convergence: criterion { min_value = -19, 
