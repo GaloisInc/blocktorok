@@ -47,7 +47,7 @@ block physics {
   .physical_models: thermal_diffusivity
 }
 
-block boundary_condition_value {
+block boundary_condition_value .name {
   [-- Field type: e.g. Uniform --]
   .field_type: string
 
