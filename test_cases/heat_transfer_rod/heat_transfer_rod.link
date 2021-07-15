@@ -32,13 +32,13 @@ domain {
   }
 
 block cold_end {
-  .field_type: uniform
-  .value: 273
+  field_type: uniform
+  value: 273
 }
 
 block hot_end {
-  .field_type: uniform
-  .value: 573
+  field_type: uniform
+  value: 573
 }
 
   boundary_conditions {
