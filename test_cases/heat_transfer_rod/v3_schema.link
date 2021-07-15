@@ -66,7 +66,7 @@ block boundary_conditions {
   .type: string
 
   [-- Value being applied to the boundary: e.g. uniform 273 --]
-  .value: boundary_condition_value
+  .value: ident
 }
 
 block domain {
@@ -81,6 +81,9 @@ block domain {
 
   [-- Time dependency: transient or steady state parameters are defined here --]
   .time: time
+
+  [-- Values for boundary conditions --]
+  .bc_value: boundary_condition_value*
 
   [-- Boundary conditions --]
   .boundary_conditions: boundary_conditions*
