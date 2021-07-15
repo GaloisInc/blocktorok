@@ -31,15 +31,15 @@ domain {
     outer_iter = 600
   }
 
-block cold_end {
-  field_type: uniform
-  value: 273
-}
+  bc_value cold_end {
+    field_type: uniform
+    value: 273
+  }
 
-block hot_end {
-  field_type: uniform
-  value: 573
-}
+  bc_value hot_end {
+    field_type: uniform
+    value: 573
+  }
 
   boundary_conditions {
     variable: temperature
