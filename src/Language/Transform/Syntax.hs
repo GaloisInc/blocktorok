@@ -20,8 +20,8 @@ data Expr =
 -- TODO: units
 data Lit =
     LitString (Located Text)
-  | LitInt (Located Int)
-  | LitFloat (Located Float)
+  | LitInt (Located Integer)
+  | LitFloat (Located Double)
   deriving(Show, Eq)
 
 data FName =

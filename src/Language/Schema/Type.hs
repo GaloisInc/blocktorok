@@ -53,6 +53,15 @@ data Globbed a
   | Many a
   deriving (Show)
 
+instance Functor Globbed where
+  fmap f globbed =
+    case globbed of
+      One a -> One $ f a
+      Optional a -> Optional $ f a
+      Some a -> Some $ f a
+      Many a -> Many $ f a
+
+
 -------------------------------------------------------------------------------
 
 -- | Extract a 'Globbed' value

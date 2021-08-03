@@ -15,6 +15,7 @@ module Language.Common
   , Located(..)
   , withSameLocAs
   , ppRange
+  , locUnknown
   ) where
 
 import Data.Text(Text, pack)
@@ -34,6 +35,7 @@ data Located a = Located
   }
   deriving(Show, Eq, Ord)
 
+
 -- | @withSameLocAs b a@ returns @b@ annotated with the same location
 -- information as @a@
 withSameLocAs :: b -> Located a -> Located b
@@ -48,3 +50,6 @@ ppRange (SourceRange path (startLn, startCol) (endLn, endCol)) =
 
 instance Functor Located where
   fmap f a = a { locValue = f (locValue a) }
+
+locUnknown :: a -> Located a
+locUnknown = Located (SourceRange "unknown!" (0, 0) (0, 0))
