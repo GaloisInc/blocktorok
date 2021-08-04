@@ -11,16 +11,7 @@ The representation of the factors a unit is composed of. Useful for
 mathematical manipulation.
 -}
 
-module Language.Common.Units.Factor
-  ( ($=)
-  , (@@+)
-  , (@+)
-  , (@@-)
-  , (@-)
-  , extract
-  , normalize
-  , reorder
-  ) where
+module Language.Common.Units.Factor where
 
 import Language.Common.Units.SI
 
@@ -82,6 +73,23 @@ infixl 6 @-
 (@-) :: [Factor] -> [Factor] -> [Factor]
 fs1 @- fs2 | fs1 == fs2 = []
            | otherwise  = fs1 @@- reorder fs2 fs1
+
+infixl 7 @*
+-- Multiply the exponents in a @[Factor]@ by a scalar
+(@*) :: [Factor] -> Integer -> [Factor]
+[]          @* _     = []
+(F u e : t) @* power = F u (e * power) : (t @* power)
+
+infixl 7 @/
+-- Divide the exponents in a @[Factor]@ by a scalar
+(@/) :: [Factor] -> Integer -> [Factor]
+[]          @/ _     = []
+(F u e : t) @/ power = F u (e `div` power) : (t @/ power)
+
+infix 4 @~
+-- | Check if two @[Factor]@s should be considered equal
+(@~) :: [Factor] -> [Factor] -> Bool
+fs1 @~ fs2 = normalize (fs1 @- fs2) == []
 
 -- | Negate a single 'Factor'
 negDim :: Factor -> Factor
