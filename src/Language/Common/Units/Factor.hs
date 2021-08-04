@@ -27,8 +27,8 @@ import Language.Common.Units.SI
 -- | A unit factor (unit & exponent)
 data Factor = F Unit Integer deriving (Eq)
 
--- | Return true iff the two given factors represent the same dimension
 infix 4 $=
+-- | Return true iff the two given factors represent the same dimension
 ($=) :: Factor -> Factor -> Bool
 (F u1 _) $= (F u2 _) = u1 == u2
 
@@ -56,29 +56,29 @@ normalize []          = []
 normalize (F _ 0 : t) = normalize t
 normalize (h : t)     = h : normalize t
 
--- | Add corresponding exponents, assuming similar ordering
 infixl 6 @@+
+-- | Add corresponding exponents, assuming similar ordering
 (@@+) :: [Factor] -> [Factor] -> [Factor]
 []             @@+ fs2                       = fs2
 fs1            @@+ []                        = fs1
 (F u1 e1 : t1) @@+ (F u2 e2 : t2) | u1 == u2 = F u1 (e1 + e2) : t1 @@+ t2
 (h : t)        @@+ fs2                       = h : (t @@+ fs2)
 
--- | Add corresponding exponents, preserving order
 infixl 6 @+
+-- | Add corresponding exponents, preserving order
 (@+) :: [Factor] -> [Factor] -> [Factor]
 fs1 @+ fs2 = fs1 @@+ reorder fs2 fs1
 
--- | Subtract corresponding exponents, assuming similar ordering
 infixl 6 @@-
+-- | Subtract corresponding exponents, assuming similar ordering
 (@@-) :: [Factor] -> [Factor] -> [Factor]
 []             @@- fs2                       = negDim <$> fs2
 fs1            @@- []                        = fs1
 (F u1 e1 : t1) @@- (F u2 e2 : t2) | u1 == u2 = F u1 (e1 - e2) : t1 @@- t2
 (h : t)        @@- fs2                       = h : (t @@- fs2)
 
--- | Subtract corresponing exponents, preserving order
 infixl 6 @-
+-- | Subtract corresponing exponents, preserving order
 (@-) :: [Factor] -> [Factor] -> [Factor]
 fs1 @- fs2 | fs1 == fs2 = []
            | otherwise  = fs1 @@- reorder fs2 fs1
