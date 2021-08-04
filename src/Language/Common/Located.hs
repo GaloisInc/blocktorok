@@ -1,6 +1,6 @@
 {-|
 Module      : Language.Common.Located
-Description : Common types / functions for languages
+Description : Syntactic location information for languages
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
 Maintainer  : cphifer@galois.com
