@@ -33,7 +33,7 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common (Located(..), SourceRange(..))
+import Language.Common.Located (Located(..), SourceRange(..))
 import Language.Schema.Env
   ( Env
   , addRootType

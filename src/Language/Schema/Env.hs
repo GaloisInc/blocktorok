@@ -28,7 +28,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (unpack)
 
-import Language.Common (locValue)
+import Language.Common.Located (locValue)
 import Language.Schema.Syntax
 import Language.Schema.Type (Ident, Globbed, ppGlob, unGlob)
 

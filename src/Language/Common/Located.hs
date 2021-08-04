@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Common
+Module      : Language.Common.Located
 Description : Common types / functions for languages
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
@@ -10,7 +10,7 @@ Portability : N/A
 Common types and functions used for various language syntaxes, parsers, etc.
 -}
 
-module Language.Common
+module Language.Common.Located
   ( SourceRange(..)
   , Located(..)
   , withSameLocAs

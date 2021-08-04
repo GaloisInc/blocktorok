@@ -11,7 +11,7 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import Control.Applicative(many, some, (<|>))
-import Language.Common
+import Language.Common.Located
     ( SourceRange(SourceRange), Located(..) )
 import Language.Transform.Syntax
 

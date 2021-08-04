@@ -3,7 +3,7 @@ module Language.Link.Blocktorok.Syntax where
 
 import Data.Text(Text)
 
-import Language.Common(Located, withSameLocAs)
+import Language.Common.Located(Located, withSameLocAs)
 
 
 -------------------------------------------------------------------------------

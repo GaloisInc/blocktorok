@@ -14,7 +14,7 @@ import Data.Char(isAlpha, isDigit)
 import Data.Void(Void)
 import qualified Data.Scientific as SciN
 
-import Language.Common (Located(..), SourceRange(..))
+import Language.Common.Located (Located(..), SourceRange(..))
 import Language.Link.Blocktorok.Syntax
     ( Value(..), BlockElement(..), Block(Block), Constructor(..) )
 

@@ -1,7 +1,7 @@
 module Language.Transform.Syntax where
 
 import Data.Text(Text)
-import Language.Common(Located(..))
+import Language.Common.Located(Located(..))
 
 type Ident = Located Text
 

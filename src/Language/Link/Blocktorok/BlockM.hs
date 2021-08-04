@@ -12,7 +12,7 @@ import Control.Applicative(Alternative(..))
 import Data.Text(Text)
 import qualified Data.Text as Text
 
-import Language.Common (Located(..), ppRange)
+import Language.Common.Located (Located(..), ppRange)
 import Language.Link.Blocktorok.Parser(parseBlocktorok)
 import Language.Link.Blocktorok.Syntax
     ( Value,

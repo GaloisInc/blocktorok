@@ -19,7 +19,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text, unpack)
 
-import Language.Common (Located(..))
+import Language.Common.Located (Located(..))
 import Language.Schema.Type (Ident, Globbed, SType, unGlob)
 
 -- | Union constructor field declarations

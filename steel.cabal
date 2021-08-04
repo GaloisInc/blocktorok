@@ -62,7 +62,9 @@ library
                        Data.Units.SymbolTable
                        Data.Units.UnitExp
                        Language.Check
-                       Language.Common
+
+                       Language.Common.Located
+
                        Language.Compile.SU2
                        Language.Error
                        Language.Link
