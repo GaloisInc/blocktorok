@@ -7,7 +7,8 @@ Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
 
-Common types and functions used for various language syntaxes, parsers, etc.
+Types and associated functions/instances for storing source location
+data for error reporting.
 -}
 
 module Language.Common.Located
