@@ -17,6 +17,7 @@ module Language.Common.Units.Units where
 import Data.Text (Text, unpack)
 
 import Language.Common.Units.Dimensions
+import Language.Common.Units.Factor
 
 -- | The type of units
 data Unit = Unit
@@ -31,13 +32,16 @@ data Unit = Unit
     -- | Conversion ratio from the base unit to this unit. If this is a
     -- canonical unit, this must be 1.
   , unitConversionRatio :: Rational
+    -- | Conversion ration from the underlying canonical unit to this one.
+    -- Computed by multiplying all the ratios.
+  , unitCanonicalConvRatio :: Rational
   }
 
 instance Show Unit where
   show Unit { unitName = nm, unitShowName = showNm } =
     case showNm of
       Nothing -> unpack nm
-      Just showNm -> unpack showNm
+      Just showNm' -> unpack showNm'
 
 -- | Create a new canonical unit
 mkCanonicalUnit :: Text -> Dimension -> Maybe Text -> Unit
@@ -47,6 +51,7 @@ mkCanonicalUnit nm dim showNm = Unit
   , unitBaseUnit = Nothing
   , unitDimension = dim
   , unitConversionRatio = 1
+  , unitCanonicalConvRatio = 1
   }
 
 -- | Create a new derived unit
@@ -57,4 +62,19 @@ mkDerivedUnit nm baseUnit ratio showNm = Unit
   , unitBaseUnit = Just baseUnit
   , unitDimension = unitDimension baseUnit
   , unitConversionRatio = ratio
+  , unitCanonicalConvRatio = ratio * unitCanonicalConvRatio baseUnit
   }
+
+-- | A list of factors representing the unit.
+unitFactorsOf :: Unit -> [Factor Unit]
+unitFactorsOf u =
+  case unitBaseUnit u of
+    Nothing -> [F u 1]
+    Just baseUnit -> unitFactorsOf baseUnit
+
+-- | Compute the canonical unit of the given unit
+canonicalUnit :: Unit -> Unit
+canonicalUnit u@Unit { unitBaseUnit = mbaseUnit } =
+  case mbaseUnit of
+    Nothing -> u
+    Just baseUnit -> canonicalUnit baseUnit
