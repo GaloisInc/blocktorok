@@ -64,6 +64,7 @@ library
                        Language.Check
 
                        Language.Common.Located
+                       Language.Common.Units.Combinators
                        Language.Common.Units.Dimensions
                        Language.Common.Units.Factor
                        Language.Common.Units.Units
