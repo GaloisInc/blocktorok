@@ -64,8 +64,9 @@ library
                        Language.Check
 
                        Language.Common.Located
+                       Language.Common.Units.Dimensions
                        Language.Common.Units.Factor
-                       Language.Common.Units.SI
+                       Language.Common.Units.Units
 
                        Language.Compile.SU2
                        Language.Error
