@@ -99,10 +99,10 @@ u ||^ power = Unit
   , unitCanonicalConvRatio = unitCanonicalConvRatio u ^^ power
   }
 
-infixr 9 |@
+infixr 9 ||@
 -- Multiply a unit by a prefix
-(|@) :: Rational -> Unit -> Unit
-prefix |@ u =
+(||@) :: Rational -> Unit -> Unit
+prefix ||@ u =
   mkDerivedUnit (T.concat ["<prefix> ", " :@ ", unitName u])
                 u
                 prefix
