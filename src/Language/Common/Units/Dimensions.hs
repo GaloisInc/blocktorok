@@ -17,9 +17,14 @@ import Data.Text (Text)
 import Language.Common.Units.Factor
 
 -- | The type of abstract dimensions, stored simply as their name
-newtype Dimension = Dimension { unDimension :: Text }
+data Dimension = Dimension
+  { dimensionName :: Text
+  , dimensionFactors :: [Factor]
+  }
 
--- | A list of factors representing the dimension. Trivial as dimensions are
--- abstract entities; the list is always a singleton
-dimFactorsOf :: Dimension -> [Factor Dimension]
-dimFactorsOf d = [F d 1]
+-- | Create a new @Dimension@
+mkDimension :: Text -> Dimension
+mkDimension nm = Dimension
+  { dimensionName = nm
+  , dimensionFactors = [F nm 1]
+  }

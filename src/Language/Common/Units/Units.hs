@@ -32,6 +32,8 @@ data Unit = Unit
     -- | Conversion ratio from the base unit to this unit. If this is a
     -- canonical unit, this must be 1.
   , unitConversionRatio :: Rational
+    -- | The canonical factors comprising this unit.
+  , unitFactors :: [Factor]
     -- | Conversion ration from the underlying canonical unit to this one.
     -- Computed by multiplying all the ratios.
   , unitCanonicalConvRatio :: Rational
@@ -51,6 +53,7 @@ mkCanonicalUnit nm dim showNm = Unit
   , unitBaseUnit = Nothing
   , unitDimension = dim
   , unitConversionRatio = 1
+  , unitFactors = [F nm 1]
   , unitCanonicalConvRatio = 1
   }
 
@@ -62,15 +65,9 @@ mkDerivedUnit nm baseUnit ratio showNm = Unit
   , unitBaseUnit = Just baseUnit
   , unitDimension = unitDimension baseUnit
   , unitConversionRatio = ratio
+  , unitFactors = unitFactors baseUnit
   , unitCanonicalConvRatio = ratio * unitCanonicalConvRatio baseUnit
   }
-
--- | A list of factors representing the unit.
-unitFactorsOf :: Unit -> [Factor Unit]
-unitFactorsOf u =
-  case unitBaseUnit u of
-    Nothing -> [F u 1]
-    Just baseUnit -> unitFactorsOf baseUnit
 
 -- | Compute the canonical unit of the given unit
 canonicalUnit :: Unit -> Unit
