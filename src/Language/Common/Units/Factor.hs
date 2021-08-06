@@ -16,7 +16,7 @@ module Language.Common.Units.Factor where
 import Data.Text (Text)
 
 -- | A unit factor (unit & exponent)
-data Factor = F Text Integer deriving (Eq)
+data Factor = F Text Integer deriving (Eq, Show)
 
 infix 4 $=
 -- | Return true iff the two given factors represent the same dimension

@@ -12,7 +12,7 @@ Definitions relating to the representation of abstract dimensions.
 
 module Language.Common.Units.Dimensions where
 
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 
 import Language.Common.Units.Factor
 
@@ -21,6 +21,9 @@ data Dimension = Dimension
   { dimensionName :: Text
   , dimensionFactors :: [Factor]
   }
+
+instance Show Dimension where
+  show Dimension { dimensionName = nm } = unpack nm
 
 -- | Create a new @Dimension@
 mkDimension :: Text -> Dimension
