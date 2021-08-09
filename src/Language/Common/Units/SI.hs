@@ -20,6 +20,48 @@ import Language.Common.Units.Combinators
 import Language.Common.Units.Dimensions
 import Language.Common.Units.Units
 
+-- Prefixes
+deca :: Rational
+deca = 1e1
+hecto :: Rational
+hecto = 1e2
+kilo :: Rational
+kilo = 1e3
+mega :: Rational
+mega = 1e6
+giga :: Rational
+giga = 1e9
+tera :: Rational
+tera = 1e12
+peta :: Rational
+peta = 1e15
+exa :: Rational
+exa = 1e18
+zetta :: Rational
+zetta = 1e21
+yotta :: Rational
+yotta = 1e24
+deci :: Rational
+deci = 1e-1
+centi :: Rational
+centi = 1e-2
+milli :: Rational
+milli = 1e-3
+micro :: Rational
+micro = 1e-6
+nano :: Rational
+nano = 1e-9
+pico :: Rational
+pico = 1e-12
+femto :: Rational
+femto = 1e-15
+atto :: Rational
+atto = 1e-18
+zepto :: Rational
+zepto = 1e-21
+yocto :: Rational
+yocto = 1e-24
+
 -- Base dimensions
 length :: Dimension
 length = mkDimension "Length"
@@ -123,8 +165,8 @@ hour :: Unit
 hour = mkDerivedUnit "Hour" minute 60 (Just "h")
 -- hertz :: Unit
 -- hertz = mkDerivedUnit "Hertz" (number ||/ second) 1 (Just "Hz")
--- liter :: Unit
--- liter = mkDerivedUnit "Liter" ((centi ||@ meter) ||^ 3) 1000 (Just "L")
+liter :: Unit
+liter = mkDerivedUnit "Liter" ((centi ||@ meter) ||^ 3) 1000 (Just "L")
 newton :: Unit
 newton = mkDerivedUnit "Newton" (gram ||* meter ||/ (second ||^ 2)) 1000 (Just "N")
 pascal :: Unit
@@ -165,5 +207,5 @@ katal = mkDerivedUnit "Katal" (mole ||/ second) 1 (Just "kat")
 hectare :: Unit
 hectare = mkDerivedUnit "Hectare" (meter ||^ 2) 10000 (Just "ha")
 
--- ton :: Unit
--- ton = mkDerivedUnit "Ton" (kilo ||@ gram) 1000 (Just "t")
+ton :: Unit
+ton = mkDerivedUnit "Ton" (kilo ||@ gram) 1000 (Just "t")
