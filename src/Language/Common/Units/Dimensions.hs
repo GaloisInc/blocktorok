@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Language.Common.Units.Dimensions
 Description : Representation of abstract dimensions
@@ -30,4 +32,11 @@ mkDimension :: Text -> Dimension
 mkDimension nm = Dimension
   { dimensionName = nm
   , dimensionFactors = [F nm 1]
+  }
+
+-- | Special dimension: Dimensionless
+dimensionless :: Dimension
+dimensionless = Dimension
+  { dimensionName = "Dimensionless"
+  , dimensionFactors = []
   }

@@ -163,8 +163,8 @@ minute :: Unit
 minute = mkDerivedUnit "Minute" second 60 (Just "min")
 hour :: Unit
 hour = mkDerivedUnit "Hour" minute 60 (Just "h")
--- hertz :: Unit
--- hertz = mkDerivedUnit "Hertz" (number ||/ second) 1 (Just "Hz")
+hertz :: Unit
+hertz = mkDerivedUnit "Hertz" (number ||/ second) 1 (Just "Hz")
 liter :: Unit
 liter = mkDerivedUnit "Liter" ((centi ||@ meter) ||^ 3) 1000 (Just "L")
 newton :: Unit
@@ -195,8 +195,8 @@ lumen :: Unit
 lumen = mkDerivedUnit "Lumen" candela 1 (Just "lm")
 lux :: Unit
 lux = mkDerivedUnit "Lux" (lumen ||/ (meter ||^ 2)) 1 (Just "lx")
--- becquerel :: Unit
--- becquerel = mkDerivedUnit "Becquerel" (number ||/ second) 1 (Just "Bq")
+becquerel :: Unit
+becquerel = mkDerivedUnit "Becquerel" (number ||/ second) 1 (Just "Bq")
 gray :: Unit
 gray = mkDerivedUnit "Gray" ((meter ||^ 2) ||/ (second ||^ 2)) 1 (Just "Gy")
 sievert :: Unit

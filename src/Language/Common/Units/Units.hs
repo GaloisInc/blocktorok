@@ -75,3 +75,15 @@ canonicalUnit u@Unit { unitBaseUnit = mbaseUnit } =
   case mbaseUnit of
     Nothing -> u
     Just baseUnit -> canonicalUnit baseUnit
+
+-- | Special unit: Number
+number :: Unit
+number = Unit
+  { unitName = "Number"
+  , unitShowName = Nothing
+  , unitBaseUnit = Nothing
+  , unitDimension = dimensionless
+  , unitConversionRatio = 1
+  , unitFactors = []
+  , unitCanonicalConvRatio = 1
+  }
