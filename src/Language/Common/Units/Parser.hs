@@ -144,3 +144,15 @@ unitFactorP =
      return u
   <|>
   (foldl1 (||*) <$> MP.some unitP)
+
+opP :: Monad m => Parser m (Unit -> Unit -> Unit)
+opP =
+  do op <- MP.choice [symbol "*", symbol "/"]
+     case op of
+       "*" -> return (||*)
+       "/" -> return (||/)
+       _ -> fail "Unrecognized operator"
+
+-- TODO: Deal with chainl
+-- parseUnit :: Monad m => Parser m Unit
+-- parseUnit = MP.chainl unitFactorP opP number
