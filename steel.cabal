@@ -69,6 +69,7 @@ library
                        Language.Common.Units.Factor
                        Language.Common.Units.Parser
                        Language.Common.Units.SI
+                       Language.Common.Units.SymbolTable
                        Language.Common.Units.Units
 
                        Language.Compile.SU2
