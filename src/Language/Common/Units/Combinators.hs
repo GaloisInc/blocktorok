@@ -24,7 +24,7 @@ infixl 7 |*
 -- | Multiply two dimensions to get another dimension
 (|*) :: Dimension -> Dimension -> Dimension
 d1 |* d2 = Dimension
-  { dimensionName = T.concat [nm1, " :* ", nm2]
+  { dimensionName = T.concat ["(", nm1, " :* ", nm2, ")"]
   , dimensionFactors = normalize $ fs1 @+ fs2
   }
   where
@@ -35,7 +35,7 @@ infixl 7 ||*
 -- | Multiply two units to get another unit
 (||*) :: Unit -> Unit -> Unit
 u1 ||* u2 = Unit
-  { unitName = T.concat [nm1, " :* ", nm2]
+  { unitName = T.concat ["(", nm1, " :* ", nm2, ")"]
   , unitShowName = Nothing
   , unitBaseUnit = Nothing -- Treat as canonical
   , unitDimension = dim1 |* dim2
@@ -53,7 +53,7 @@ infixl 7 |/
 -- | Divide two dimensions to get another dimension
 (|/) :: Dimension -> Dimension -> Dimension
 d1 |/ d2 = Dimension
-  { dimensionName = T.concat [nm1, " :/ ", nm2]
+  { dimensionName = T.concat ["(", nm1, " :/ ", nm2, ")"]
   , dimensionFactors = normalize $ fs1 @- fs2
   }
   where
@@ -64,7 +64,7 @@ infixl 7 ||/
 -- | Divide two units to get another unit
 (||/) :: Unit -> Unit -> Unit
 u1 ||/ u2 = Unit
-  { unitName = T.concat [nm1, " :/ ", nm2]
+  { unitName = T.concat ["(", nm1, " :/ ", nm2, ")"]
   , unitShowName = Nothing
   , unitBaseUnit = Nothing
   , unitDimension = dim1 |/ dim2
