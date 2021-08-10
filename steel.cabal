@@ -67,6 +67,7 @@ library
                        Language.Common.Units.Combinators
                        Language.Common.Units.Dimensions
                        Language.Common.Units.Factor
+                       Language.Common.Units.Parser
                        Language.Common.Units.SI
                        Language.Common.Units.Units
 
