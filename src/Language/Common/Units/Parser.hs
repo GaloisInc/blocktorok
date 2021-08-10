@@ -26,20 +26,20 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import Language.Common.Located (Located(..), SourceRange(..))
 
-type Parser a = MP.Parsec Void Text a
+type Parser m a = MP.ParsecT Void Text m a
 
-spc :: Parser ()
+spc :: Monad m => Parser m ()
 spc = Lexer.space MPC.space1
                   MP.empty
                   MP.empty
 
-lexeme :: Parser a -> Parser a
+lexeme :: Monad m => Parser m a -> Parser m a
 lexeme = Lexer.lexeme spc
 
-symbol :: Text -> Parser Text
+symbol :: Monad m => Text -> Parser m Text
 symbol = Lexer.symbol spc
 
-symbol' :: Text -> Parser ()
+symbol' :: Monad m => Text -> Parser m ()
 symbol' t = void $ symbol t
 
 mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
@@ -48,7 +48,7 @@ mkRange s e =
   where
     asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
 
-located :: Parser a -> Parser (Located a)
+located :: Monad m => Parser m a -> Parser m (Located a)
 located p =
   lexeme $
     do start <- MP.getSourcePos
@@ -56,5 +56,5 @@ located p =
        end <- MP.getSourcePos
        pure $ Located (mkRange start end) a
 
-optional :: Parser a -> Parser (Maybe a)
+optional :: Monad m => Parser m a -> Parser m (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
