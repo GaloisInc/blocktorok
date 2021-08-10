@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Language.Common.Units.Parser
 Description : Parsing of SI units
@@ -12,8 +14,10 @@ Parsers for units to be used in the schema/transformer languages.
 
 module Language.Common.Units.Parser where
 
-import Control.Monad (void)
+import Control.Monad.Reader (ReaderT, ask, asks, liftM, runReaderT, void)
 
+import qualified Data.Map.Strict as Map
+import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TIO
@@ -25,8 +29,11 @@ import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import Language.Common.Located (Located(..), SourceRange(..))
+import Language.Common.Units.Combinators
+import Language.Common.Units.SymbolTable
+import Language.Common.Units.Units
 
-type Parser m a = MP.ParsecT Void Text m a
+type Parser m a = MP.ParsecT Void Text (ReaderT SymbolTable m) a
 
 spc :: Monad m => Parser m ()
 spc = Lexer.space MPC.space1
@@ -58,3 +65,82 @@ located p =
 
 optional :: Monad m => Parser m a -> Parser m (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
+
+experiment :: Monad m => Parser m a -> Parser m (Maybe a)
+experiment = MP.lookAhead . MP.optional . MP.try
+
+justUnitP :: Monad m => Parser m Unit
+justUnitP =
+  do fullString <- Text.unpack <$> MP.getInput
+     units <- asks unitTable
+     case units fullString of
+       Nothing -> fail (fullString ++ " does not match any known unit")
+       Just u -> return u
+
+prefixUnitP :: Monad m => Parser m Unit
+prefixUnitP =
+  do prefixTab <- asks prefixTable
+     let assocs = Map.assocs prefixTab
+     results <- catMaybes `liftM` mapM (experiment . parseOne) assocs
+     fullString <- Text.unpack <$> MP.getInput
+     case results of
+       [] -> fail $ "No known interpretation for " ++ fullString
+       [(pre, u)] ->
+         return $ pre ||@ u
+       _ -> fail $ "Multiple possible interpretations for " ++ fullString
+  where
+    parseOne :: Monad m => (String, Rational) -> Parser m (Rational, Unit)
+    parseOne (preName, pre) =
+      do void $ MPC.string $ Text.pack preName
+         uName <- justUnitP
+         return (pre, uName)
+
+unitStringParser :: Monad m => Parser m Unit
+unitStringParser = MP.try (justUnitP) <|> prefixUnitP
+
+-- unitStringP :: Monad m => Text -> Parser m Unit
+-- unitStringP s =
+--   do symbolTable <- ask
+--      case flip runReaderT symbolTable $ MP.runParserT unitStringParser "" s of
+--        Left err -> fail err
+--        Right e -> case e of
+--                     Left err -> fail err
+--                     Right u -> return u
+
+numP :: Monad m => Parser m Integer
+numP =
+  do symbol' "("
+     n <- numP
+     symbol' ")"
+     return n
+  <|>
+  do symbol' "-"
+     negate <$> numP
+  <|>
+  undefined -- TODO: Need an int parser
+
+powP :: Monad m => Parser m (Unit -> Unit)
+powP = MP.option id $
+  do symbol' "^"
+     flip (||^) <$> numP
+
+unitP :: Monad m => Parser m Unit
+unitP =
+  do n <- numP
+     case n of
+       1 -> return number
+       _ -> fail $ "Unexpected number: " ++ show n
+  <|>
+  do unitStr <- undefined -- TODO: Need a valid variable parser
+     u <- undefined unitStr -- TODO: Need something like unitStringP from units
+     mPow <- powP
+     return $ mPow u
+
+unitFactorP :: Monad m => Parser m Unit
+unitFactorP =
+  do symbol' "("
+     u <- undefined -- TODO: parseUnit
+     symbol' ")"
+     return u
+  <|>
+  (foldl1 (||*) <$> MP.some unitP)
