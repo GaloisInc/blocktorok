@@ -20,7 +20,6 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Text.IO as TIO
 import Data.Void (Void)
 
 import Text.Megaparsec ((<|>))
@@ -69,6 +68,21 @@ optional p = (Just <$> MP.try p) <|> pure Nothing
 experiment :: Monad m => Parser m a -> Parser m (Maybe a)
 experiment = MP.lookAhead . MP.optional . MP.try
 
+chainl1 :: Monad m => Parser m a -> Parser m (a -> a -> a) -> Parser m a
+chainl1 p op =
+  do x <- p
+     rest x
+  where
+    rest x =
+      do f <- op
+         y <- p
+         rest (f x y)
+      <|>
+      return x
+
+chainl :: Monad m => Parser m a -> Parser m (a -> a -> a) -> a -> Parser m a
+chainl p op x = chainl1 p op <|> return x
+
 justUnitP :: Monad m => Parser m Unit
 justUnitP =
   do fullString <- Text.unpack <$> MP.getInput
@@ -98,14 +112,14 @@ prefixUnitP =
 unitStringParser :: Monad m => Parser m Unit
 unitStringParser = MP.try (justUnitP) <|> prefixUnitP
 
--- unitStringP :: Monad m => Text -> Parser m Unit
--- unitStringP s =
---   do symbolTable <- ask
---      case flip runReaderT symbolTable $ MP.runParserT unitStringParser "" s of
---        Left err -> fail err
---        Right e -> case e of
---                     Left err -> fail err
---                     Right u -> return u
+unitStringP :: Monad m => Text -> Parser m Unit
+unitStringP s =
+  do symbolTable <- ask
+     case flip runReaderT symbolTable $ MP.runParserT unitStringParser "" s of
+       Left err -> err
+       Right e -> case e of
+                    Left e' -> fail $ MP.errorBundlePretty e'
+                    Right u -> return u
 
 numP :: Monad m => Parser m Integer
 numP =
@@ -117,7 +131,7 @@ numP =
   do symbol' "-"
      negate <$> numP
   <|>
-  undefined -- TODO: Need an int parser
+  Lexer.signed (MP.empty) (lexeme Lexer.decimal)
 
 powP :: Monad m => Parser m (Unit -> Unit)
 powP = MP.option id $
@@ -131,15 +145,15 @@ unitP =
        1 -> return number
        _ -> fail $ "Unexpected number: " ++ show n
   <|>
-  do unitStr <- undefined -- TODO: Need a valid variable parser
-     u <- undefined unitStr -- TODO: Need something like unitStringP from units
+  do unitStr <- MP.some MPC.letterChar
+     u <- unitStringP $ Text.pack unitStr
      mPow <- powP
      return $ mPow u
 
 unitFactorP :: Monad m => Parser m Unit
 unitFactorP =
   do symbol' "("
-     u <- undefined -- TODO: parseUnit
+     u <- parseUnit
      symbol' ")"
      return u
   <|>
@@ -153,6 +167,5 @@ opP =
        "/" -> return (||/)
        _ -> fail "Unrecognized operator"
 
--- TODO: Deal with chainl
--- parseUnit :: Monad m => Parser m Unit
--- parseUnit = MP.chainl unitFactorP opP number
+parseUnit :: Monad m => Parser m Unit
+parseUnit = chainl unitFactorP opP number
