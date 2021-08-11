@@ -18,6 +18,7 @@ import Prelude hiding (length)
 
 import Language.Common.Units.Combinators
 import Language.Common.Units.Dimensions
+import Language.Common.Units.SymbolTable
 import Language.Common.Units.Units
 
 -- Prefixes
@@ -296,3 +297,71 @@ hectare = mkDerivedUnit "Hectare" (meter ||^ 2) 10000 (Just "ha")
 
 ton :: Unit
 ton = mkDerivedUnit "Ton" (kilo ||@ gram) 1000 (Just "t")
+
+siPrefixes :: [(String, Rational)]
+siPrefixes =
+  [ ("da", deca)
+  , ("h", hecto)
+  , ("k", kilo)
+  , ("M", mega)
+  , ("G", giga)
+  , ("T", tera)
+  , ("P", peta)
+  , ("E", exa)
+  , ("Z", zetta)
+  , ("Y", yotta)
+  , ("d", deci)
+  , ("c", centi)
+  , ("m", milli)
+  , ("μ", micro)
+  , ("n", nano)
+  , ("p", pico)
+  , ("f", femto)
+  , ("a", atto)
+  , ("z", zepto)
+  , ("y", yocto)
+  ]
+
+siUnits :: [(String, Unit)]
+siUnits =
+  [ ("m", meter)
+  , ("g", gram)
+  , ("s", second)
+  , ("A", ampere)
+  , ("K", kelvin)
+  , ("mol", mole)
+  , ("cd", candela)
+  , ("min", minute)
+  , ("h", hour)
+  , ("Hz", hertz)
+  , ("L", liter)
+  , ("N", newton)
+  , ("Pa", pascal)
+  , ("J", joule)
+  , ("W", watt)
+  , ("C", coulomb)
+  , ("V", volt)
+  , ("F", farad)
+  , ("Ω", ohm)
+  , ("S", siemens)
+  , ("Wb", weber)
+  , ("T", tesla)
+  , ("H", henry)
+  , ("lm", lumen)
+  , ("lx", lux)
+  , ("Bq", becquerel)
+  , ("Gy", gray)
+  , ("Sv", sievert)
+  , ("kat", katal)
+  , ("ha", hectare)
+  , ("t", ton)
+  ]
+
+siTable :: SymbolTable
+siTable =
+  case mkSymbolTable prefixes units of
+    Left e -> error e
+    Right st -> st
+  where
+    prefixes = siPrefixes
+    units = siUnits
