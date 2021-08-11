@@ -18,6 +18,7 @@ module Language.Schema.Parser
   ) where
 
 import Control.Monad (void)
+import Control.Monad.Reader (ReaderT, runReaderT)
 import Control.Monad.State (State)
 import qualified Control.Monad.State as State
 
@@ -34,6 +35,9 @@ import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import Language.Common.Located (Located(..), SourceRange(..))
+import Language.Common.Units.Parser
+import Language.Common.Units.SI
+import Language.Common.Units.SymbolTable
 import Language.Schema.Env
   ( Env
   , addRootType
@@ -51,7 +55,7 @@ import Language.Schema.Type
   , unGlob
   )
 
-type Parser a = MP.ParsecT Void Text (State Env) a
+type Parser a = MP.ParsecT Void Text (ReaderT SymbolTable (State Env)) a
 
 spc :: Parser ()
 spc = Lexer.space MPC.space1
@@ -111,8 +115,8 @@ brackets p = symbol' "{" *> p <* symbol' "}"
 stype :: Parser SType
 stype = int <|> float <|> i <|> string <|> list <|> named
   where
-    int    = symbol' "int"    *> pure SInt
-    float  = symbol' "float"  *> pure SFloat
+    int    = symbol' "int"    *> (SInt <$> parseUnit)
+    float  = symbol' "float"  *> (SFloat <$> parseUnit)
     i      = symbol' "ident"  *> pure SIdent
     string = symbol' "string" *> pure SString
     list   = symbol' "list"   *> (SList <$> stype)
@@ -231,7 +235,7 @@ schema =
 
 parseSchema :: FilePath -> Text -> Either Text Schema
 parseSchema fp t =
-  case State.evalState (MP.runParserT schema fp t) emptyEnv of
+  case State.evalState (flip runReaderT siTable $ MP.runParserT schema fp t) emptyEnv of
     Right u -> Right u
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 

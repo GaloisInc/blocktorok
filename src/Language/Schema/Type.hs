@@ -24,22 +24,24 @@ module Language.Schema.Type
 
 import Data.Text (Text, unpack)
 
+import Language.Common.Units.Units
+
 -- | Identifiers
 type Ident = Text
 
 -- | The types fields may be declared to have in block schemas and constructor
 -- variants
 data SType
-  = SInt
-  | SFloat
+  = SInt Unit
+  | SFloat Unit
   | SIdent
   | SString
   | SList SType
   | SNamed Ident
 
 instance Show SType where
-  show SInt = "int"
-  show SFloat = "float"
+  show (SInt u) = "int[" ++ show u ++ "]"
+  show (SFloat u) = "float[" ++ show u ++ "]"
   show SIdent = "ident"
   show SString = "string"
   show (SList t) = "list " ++ show t

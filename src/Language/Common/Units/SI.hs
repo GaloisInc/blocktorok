@@ -12,7 +12,9 @@ Portability : N/A
 SI units defined using the other machinery.
 -}
 
-module Language.Common.Units.SI where
+module Language.Common.Units.SI
+  ( siTable
+  ) where
 
 import Prelude hiding (length)
 
