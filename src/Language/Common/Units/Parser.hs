@@ -12,7 +12,9 @@ Portability : N/A
 Parsers for units to be used in the schema/transformer languages.
 -}
 
-module Language.Common.Units.Parser where
+module Language.Common.Units.Parser
+  ( parseUnit
+  ) where
 
 import Control.Monad.Reader (ReaderT, ask, asks, liftM, runReaderT, void)
 
@@ -27,7 +29,6 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common.Located (Located(..), SourceRange(..))
 import Language.Common.Units.Combinators
 import Language.Common.Units.SymbolTable
 import Language.Common.Units.Units
@@ -47,23 +48,6 @@ symbol = Lexer.symbol spc
 
 symbol' :: Monad m => Text -> Parser m ()
 symbol' t = void $ symbol t
-
-mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
-mkRange s e =
-  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
-  where
-    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
-
-located :: Monad m => Parser m a -> Parser m (Located a)
-located p =
-  lexeme $
-    do start <- MP.getSourcePos
-       a <- p
-       end <- MP.getSourcePos
-       pure $ Located (mkRange start end) a
-
-optional :: Monad m => Parser m a -> Parser m (Maybe a)
-optional p = (Just <$> MP.try p) <|> pure Nothing
 
 experiment :: Monad m => Parser m a -> Parser m (Maybe a)
 experiment = MP.lookAhead . MP.optional . MP.try
