@@ -229,11 +229,8 @@ schema =
 
 -------------------------------------------------------------------------------
 
-parseSchema :: FilePath -> Text -> Either Text Schema
-parseSchema fp t =
-  case State.evalState (MP.runParserT schema fp t) emptyEnv of
-    Right u -> Right u
-    Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
+parseSchema :: FilePath -> Text -> Env
+parseSchema fp t = State.execState (MP.runParserT schema fp t) emptyEnv
 
-schemaFromFile :: FilePath -> IO (Either Text Schema)
+schemaFromFile :: FilePath -> IO Env
 schemaFromFile fp = parseSchema fp <$> TIO.readFile fp
