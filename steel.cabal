@@ -49,8 +49,7 @@ library
                      , scientific
   hs-source-dirs:      src
   default-language:    Haskell2010
-  exposed-modules:     Data.Class.Render
-                       Data.Link.AST
+  exposed-modules:     Data.Link.AST
                        Data.Link.Identifier
                        Data.Math
                        Data.Equation
@@ -62,8 +61,6 @@ library
                        Data.Units.UnitExp
                        Language.Check
                        Language.Common
-                       Language.Error
-                       Language.Link
                        Language.Link.Blocktorok.Syntax
                        Language.Link.Blocktorok.Parser
                        Language.Link.Blocktorok.BlockM
@@ -80,7 +77,6 @@ library
 
                        Options
                        Text.Lexer
-                       Text.Parse.Link
                        Text.Parse.Units
                        Text.Parse.Latex
                        Text.Token
