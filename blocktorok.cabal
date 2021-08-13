@@ -13,10 +13,10 @@ executable bloctorok
   main-is:             Main.hs
   other-modules:       Language.Common
 
-                       Language.Link.Blocktorok.Syntax
-                       Language.Link.Blocktorok.Parser
-                       Language.Link.Blocktorok.BlockM
-                       Language.Link.Blocktorok.PPDemo
+                       Language.Blocktorok.Syntax
+                       Language.Blocktorok.Parser
+                       Language.Blocktorok.BlockM
+                       Language.Blocktorok.PPDemo
 
                        Language.Schema.Demo
                        Language.Schema.Env
