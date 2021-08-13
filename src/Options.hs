@@ -17,14 +17,14 @@ module Options
   , parseOpts
   ) where
 
-import Options.Applicative (Parser, argument, help, metavar, long, short, some, str, strOption)
+import Options.Applicative (Parser, argument, help, metavar, long, short, str, strOption)
 
-data Options =
-  Options { sources :: [String]
-          , target :: String
-          }
+data Options = Options
+  { transformer :: String
+  , blocktorok  :: String
+  }
 
 parseOpts :: Parser Options
 parseOpts =
-  Options <$> some (argument str (metavar "FILES..." <> help "The LINK sources to be compiled"))
-          <*> strOption (long "output" <> short 'o' <> metavar "FILE" <> help "The file to output to")
+  Options <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data.")
+          <*> argument str (metavar "FILE" <> help "The data to be transformed.")
