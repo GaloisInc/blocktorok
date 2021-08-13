@@ -26,5 +26,5 @@ data Options = Options
 
 parseOpts :: Parser Options
 parseOpts =
-  Options <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data.")
-          <*> argument str (metavar "FILE" <> help "The data to be transformed.")
+  Options <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data")
+          <*> argument str (metavar "FILE" <> help "The data to be transformed")
