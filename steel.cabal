@@ -47,9 +47,14 @@ library
                      , prettyprinter
                      , text
                      , scientific
+                     , filepath
+                     , directory
+                     , monad-validate
   hs-source-dirs:      src
   default-language:    Haskell2010
-  exposed-modules:     Data.Backends.SU2
+  exposed-modules:     Link
+
+                       Data.Backends.SU2
                        Data.Class.Render
                        Data.Link.AST
                        Data.Link.Identifier
@@ -79,6 +84,9 @@ library
 
                        Language.Transform.Syntax
                        Language.Transform.Parser
+                       Language.Transform.Evaluator
+                       Language.Transform.Value
+                       Language.Transform.Interpreter
 
                        Options
                        Text.Lexer
@@ -87,6 +95,7 @@ library
                        Text.Parse.Latex
                        Text.Token
                        Text.TokenClass
+
   ghc-options: -Wall
   build-tools: alex
 

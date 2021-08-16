@@ -103,11 +103,21 @@ value =
 
 -------------------------------------------------------------------------------
 
-parseBlocktorok :: Text -> Either Text Block
-parseBlocktorok t =
-  case MP.runParser block "-input-" t of
-    Right blk -> Right blk
+parse ::  Parser a -> FilePath -> Text -> Either Text a
+parse parser fp t =
+  case MP.runParser parser fp t of
+    Right a -> Right a
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
+parseBlocktorok :: Text -> Either Text Block
+parseBlocktorok = parse block "--input--"
+
 blockFromFile :: FilePath -> IO (Either Text Block)
-blockFromFile fp = parseBlocktorok <$> TextIO.readFile fp
+blockFromFile fp = parse block fp <$> TextIO.readFile fp
+
+blocksFromFile :: FilePath -> IO (Either Text [Block])
+blocksFromFile fp = parse (MP.many block) fp <$> TextIO.readFile fp
+
+elementsFromFile :: FilePath -> IO (Either Text [BlockElement])
+elementsFromFile f =
+  parse (MP.many (BlockSub <$> located block)) f <$> TextIO.readFile f

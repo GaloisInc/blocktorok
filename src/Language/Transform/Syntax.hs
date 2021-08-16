@@ -1,21 +1,36 @@
 module Language.Transform.Syntax where
 
 import Data.Text(Text)
-import Language.Common(Located(..))
+import Language.Common(HasLocation(..), Located(..), SourceRange, sourceRangeSpan')
 
-type Ident = Located Text
+type LIdent = Located Text
 
 data Selector =
-    SelName Ident
-  | SelMem  Selector Ident
+    SelName LIdent
+  | SelMem  Selector LIdent
   deriving(Show, Eq)
 
+instance HasLocation Selector where
+  location s =
+    case s of
+      SelName n -> location n
+      SelMem s' l -> sourceRangeSpan' s' l
+
 data Expr =
-    ExprFn FName [Located Expr]
- -- | ExprMkRecord (Map Ident (Located Expr))
+    ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
   deriving(Show, Eq)
+
+data Call = Call FName (Located [Expr])
+  deriving(Show, Eq)
+
+instance HasLocation Expr where
+  location e =
+    case e of
+      ExprFn c -> location c
+      ExprSelector s -> location s
+      ExprLit l -> location l
 
 -- TODO: units
 data Lit =
@@ -23,6 +38,14 @@ data Lit =
   | LitInt (Located Integer)
   | LitFloat (Located Double)
   deriving(Show, Eq)
+
+instance HasLocation Lit where
+  location l =
+    case l of
+      LitString r -> location r
+      LitInt r  -> location r
+      LitFloat r  -> location r
+
 
 data FName =
   -- | Horizontally concat docs
@@ -43,18 +66,25 @@ data FName =
 
 data Decl =
   -- | Describe how to render a selector
-    DeclRender Selector (Located Expr)
+    DeclRender Selector Expr
 
   -- | Declare a symbol
-  | DeclLet Ident (Located Expr)
+  | DeclLet LIdent Expr
 
   -- | Output to file
-  | DeclFileOut Ident (Located Expr)
+  | DeclFileOut LIdent Expr
   deriving(Show, Eq)
+
+instance HasLocation Decl where
+  location d =
+    case d of
+      DeclRender s e -> sourceRangeSpan' s e
+      DeclLet  l e -> sourceRangeSpan' l e
+      DeclFileOut f o -> sourceRangeSpan' f o
 
 data Transform = Transform
   { transformSchema :: Located Text
-  , transformDecls :: [Located Decl]
+  , transformDecls :: [Decl]
   }
   deriving(Show, Eq)
 

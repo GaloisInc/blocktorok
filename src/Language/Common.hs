@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : Language.Common
 Description : Common types / functions for languages
@@ -13,9 +14,14 @@ Common types and functions used for various language syntaxes, parsers, etc.
 module Language.Common
   ( SourceRange(..)
   , Located(..)
+  , HasLocation(..)
   , withSameLocAs
   , ppRange
   , locUnknown
+  , msgWithLoc
+  , unloc
+  , sourceRangeSpan
+  , sourceRangeSpan'
   ) where
 
 import Data.Text(Text, pack)
@@ -53,3 +59,30 @@ instance Functor Located where
 
 locUnknown :: a -> Located a
 locUnknown = Located (SourceRange "unknown!" (0, 0) (0, 0))
+
+class HasLocation a where
+  location :: a -> SourceRange
+
+instance HasLocation (Located a) where
+  location = locRange
+
+instance HasLocation SourceRange where
+  location = id
+
+msgWithLoc :: HasLocation a => a -> Text -> Text
+msgWithLoc why msg = ppRange (location why) <> ": " <> msg
+
+unloc :: Located a -> a
+unloc = locValue
+
+sourceRangeSpan :: SourceRange -> SourceRange -> SourceRange
+sourceRangeSpan (SourceRange f1 s1 e1) (SourceRange _ s2 e2) =
+    SourceRange f1 (fst $ sortRanges s1 s2) (snd $ sortRanges e1 e2)
+  where
+    sortRanges sr1@(r1, c1) sr2@(r2, c2) =
+      if r1 < r2 || (r1 == r2 && c1 < c2)
+        then (sr1, sr2)
+        else (sr2, sr1)
+
+sourceRangeSpan' :: (HasLocation a, HasLocation b) => a -> b -> SourceRange
+sourceRangeSpan' e1 e2 = sourceRangeSpan (location e1) (location e2)
