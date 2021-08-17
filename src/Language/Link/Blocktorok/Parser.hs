@@ -118,6 +118,6 @@ blockFromFile fp = parse block fp <$> TextIO.readFile fp
 blocksFromFile :: FilePath -> IO (Either Text [Block])
 blocksFromFile fp = parse (MP.many block) fp <$> TextIO.readFile fp
 
-elementsFromFile :: FilePath -> IO (Either Text [BlockElement])
+elementsFromFile :: FilePath -> IO (Either Text (Located [BlockElement]))
 elementsFromFile f =
-  parse (MP.many (BlockSub <$> located block)) f <$> TextIO.readFile f
+  parse (located $ MP.many (BlockSub <$> located block)) f <$> TextIO.readFile f

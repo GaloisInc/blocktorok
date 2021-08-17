@@ -15,8 +15,6 @@ import Language.Common
     ( SourceRange(SourceRange), Located(..), unloc, withSameLocAs)
 import Language.Transform.Syntax
 
-
-
 type Parser a = MP.Parsec Void Text a
 
 spc :: Parser ()
@@ -55,16 +53,6 @@ located' p =
         end <- MP.getSourcePos
         pure $ Located (mkRange start end) a
 
-withLoc' :: Parser (SourceRange -> a) -> Parser a
-withLoc' p =
-  do  start <- MP.getSourcePos
-      a <- p
-      end <- MP.getSourcePos
-      pure $ a (mkRange start end)
-
-withLoc :: Parser (SourceRange -> a) -> Parser a
-withLoc = lexeme . withLoc'
-
 optional :: Parser a -> Parser (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
 
@@ -97,7 +85,7 @@ selectorParser =
 
 barStringExprParser :: Parser Expr
 barStringExprParser =
-  do  ls <- located $ some line
+  do  ls <- located $ some (lexeme line)
       case unloc ls of
         [a] -> pure a
         _ -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
@@ -105,7 +93,9 @@ barStringExprParser =
     line =
         do  MP.try (symbol' "|")
             elts <- located' (many stringElt)
-            pure $ ExprFn (Call FHCat elts `withSameLocAs` elts)
+            case unloc elts of
+              [a] -> pure a
+              _ -> pure $ ExprFn (Call FHCat elts `withSameLocAs` elts)
     stringElt = MP.choice [stringChunk, embeddedExpr, escaped]
 
     sc =
@@ -116,11 +106,11 @@ barStringExprParser =
       do  _ <- MP.try (MP.chunk "${")
           expr <- exprParser
           symbol' "}"
-
           pure expr
+
     escaped =
       do  _ <- MP.try (MP.chunk "\\")
-          c <- located MP.anySingle
+          c <- located' MP.anySingle
           pure . ExprLit . LitString $ (Text.singleton <$> c)
 
 strLitParser :: Parser Text
@@ -205,3 +195,4 @@ parseTransform name input =
 transformFromFile :: FilePath -> IO (Either Text Transform)
 transformFromFile fp =
   parseTransform fp <$> TIO.readFile fp
+

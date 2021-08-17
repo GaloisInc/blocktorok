@@ -86,7 +86,6 @@ library
                        Language.Transform.Parser
                        Language.Transform.Evaluator
                        Language.Transform.Value
-                       Language.Transform.Interpreter
 
                        Options
                        Text.Lexer

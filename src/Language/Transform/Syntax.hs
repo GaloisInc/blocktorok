@@ -1,14 +1,14 @@
 module Language.Transform.Syntax where
 
 import Data.Text(Text)
-import Language.Common(HasLocation(..), Located(..), SourceRange, sourceRangeSpan')
+import Language.Common(HasLocation(..), Located(..), sourceRangeSpan')
 
 type LIdent = Located Text
 
 data Selector =
     SelName LIdent
   | SelMem  Selector LIdent
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 instance HasLocation Selector where
   location s =
@@ -20,10 +20,10 @@ data Expr =
     ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 data Call = Call FName (Located [Expr])
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 instance HasLocation Expr where
   location e =
@@ -37,7 +37,7 @@ data Lit =
     LitString (Located Text)
   | LitInt (Located Integer)
   | LitFloat (Located Double)
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 instance HasLocation Lit where
   location l =
@@ -62,7 +62,7 @@ data FName =
 
   -- | Open a file for output
   | FFile
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 data Decl =
   -- | Describe how to render a selector
@@ -73,7 +73,7 @@ data Decl =
 
   -- | Output to file
   | DeclFileOut LIdent Expr
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 instance HasLocation Decl where
   location d =
@@ -86,7 +86,7 @@ data Transform = Transform
   { transformSchema :: Located Text
   , transformDecls :: [Decl]
   }
-  deriving(Show, Eq)
+  deriving(Show, Eq, Ord)
 
 -------------------------------------------------------------------------------
 

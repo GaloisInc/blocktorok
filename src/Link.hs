@@ -11,6 +11,7 @@ import qualified System.Directory as Dir
 import Language.Transform.Parser(transformFromFile)
 import qualified Language.Transform.Syntax as Tx
 import qualified Language.Transform.Evaluator as TxEval
+import qualified Language.Transform.Value as TxValue
 import Language.Link.Blocktorok.Parser(elementsFromFile)
 import Language.Schema.Parser(schemaFromFile)
 import Language.Common(Located(..))
@@ -24,6 +25,9 @@ orThrow io mkC  =
       case eitherB of
         Left a -> Ex.throwIO (mkC a)
         Right b -> pure b
+
+orThrow' :: Ex.Exception c => Either a b -> (a -> c) -> IO b
+orThrow' e  = orThrow (pure e)
 
 newtype ParseError = ParseError Text
   deriving(Show)
@@ -48,8 +52,9 @@ runTransformIO txPath blokPath out =
       schemaEnv <- schemaFromFile schemaPath
 
       -- run transform
-      let eOutputs = TxEval.runTransform schemaEnv tx bloks
-      outputs <- pure eOutputs `orThrow` (EvalError . TxEval.showErr)
+      root <- TxValue.validateElts schemaEnv bloks `orThrow'` EvalError
+      let eOutputs = TxEval.runTransform tx root
+      outputs <- eOutputs `orThrow'` EvalError
       print outputs
 
       -- do output
