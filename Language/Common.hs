@@ -24,13 +24,13 @@ module Language.Common
   , sourceRangeSpan'
   ) where
 
-import Data.Text(Text, pack)
+import           Data.Text (Text, pack)
 
 -- | A line:column range in a source file used for error reporting
 data SourceRange = SourceRange
-  { sourceRangeFile :: FilePath
+  { sourceRangeFile  :: FilePath
   , sourceRangeStart :: (Int, Int)
-  , sourceRangeEnd :: (Int, Int)
+  , sourceRangeEnd   :: (Int, Int)
   }
   deriving(Show, Eq, Ord)
 
