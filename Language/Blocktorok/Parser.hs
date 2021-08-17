@@ -1,22 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Language.Blocktorok.Parser where
 
-import Data.Text(Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as TextIO
-import Control.Monad(void)
-import qualified Text.Megaparsec as MP
-import qualified Text.Megaparsec.Char as MPC
-import Text.Megaparsec((<|>))
+module Language.Blocktorok.Parser
+  ( blockFromFile
+  , blocksFromFile
+  , elementsFromFile
+  , parseBlocktorok
+  ) where
+
+import           Control.Monad              (void)
+
+import           Data.Char                  (isAlpha, isDigit)
+import qualified Data.Scientific            as SciN
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+import qualified Data.Text.IO               as TextIO
+import           Data.Void                  (Void)
+
+import           Text.Megaparsec            ((<|>))
+import qualified Text.Megaparsec            as MP
+import           Text.Megaparsec.Char       (char)
+import qualified Text.Megaparsec.Char       as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
-import Text.Megaparsec.Char(char)
-import Data.Char(isAlpha, isDigit)
-import Data.Void(Void)
-import qualified Data.Scientific as SciN
 
-import Language.Common (Located(..), SourceRange(..))
-import Language.Blocktorok.Syntax
-    ( Value(..), BlockElement(..), Block(Block), Constructor(..) )
+import           Language.Blocktorok.Syntax (Block (Block), BlockElement (..),
+                                             Constructor (..), Value (..))
+import           Language.Common            (Located (..), SourceRange (..))
 
 type Parser a = MP.Parsec Void Text a
 
@@ -106,7 +114,7 @@ value =
 parse ::  Parser a -> FilePath -> Text -> Either Text a
 parse parser fp t =
   case MP.runParser parser fp t of
-    Right a -> Right a
+    Right a   -> Right a
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
 parseBlocktorok :: Text -> Either Text Block

@@ -1,27 +1,23 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BlockArguments             #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 -- generate docs from this description?
 module Language.Blocktorok.BlockM where
 
-import qualified Control.Monad.Reader as Reader
-import qualified Control.Monad.Except as Except
-import Control.Applicative(Alternative(..))
-import Data.Text(Text)
-import qualified Data.Text as Text
+import           Control.Applicative        (Alternative (..))
+import qualified Control.Monad.Except       as Except
+import qualified Control.Monad.Reader       as Reader
 
-import Language.Common (Located(..), ppRange)
-import Language.Blocktorok.Parser(parseBlocktorok)
-import Language.Blocktorok.Syntax
-    ( Value,
-      BlockElement(..),
-      Block(..),
-      Value(..),
-      Constructor(..),
-      locateValue,
-      Ident )
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+
+import           Language.Blocktorok.Parser (parseBlocktorok)
+import           Language.Blocktorok.Syntax (Block (..), BlockElement (..),
+                                             Constructor (..), Ident,
+                                             Value (..), locateValue)
+import           Language.Common            (Located (..), ppRange)
 
 newtype BlockM a = BlockM { unBlockM :: Reader.ReaderT Block (Except.Except Text) a }
   deriving(Monad, Applicative, Functor)
@@ -35,9 +31,7 @@ instance Alternative BlockM where
   -- some way to combine errors?
   a <|> b =
     do  pa <- option a
-        case pa of
-          Just a' -> pure a'
-          Nothing -> b
+        maybe b pure pa
 
 runBlockM :: Block -> BlockM a -> Either Text a
 runBlockM blk cmp =
@@ -101,25 +95,25 @@ double :: ValueSpec Double
 double v =
   case v of
     Number n -> pure (locValue n)
-    _ -> err (locateValue v) "expecting numeric value here"
+    _        -> err (locateValue v) "expecting numeric value here"
 
 string :: ValueSpec Text
 string v =
   case v of
     String s -> pure (locValue s)
-    _ -> err (locateValue v) "expecting string value here"
+    _        -> err (locateValue v) "expecting string value here"
 
 list :: ValueSpec a -> ValueSpec [a]
 list spec v =
   case v of
     List l -> spec `traverse` locValue l
-    _ -> err (locateValue v) "expecting list value here"
+    _      -> err (locateValue v) "expecting list value here"
 
 ident :: ValueSpec Ident
 ident v =
   case v of
     Ident i -> pure (locValue i)
-    _ -> err (locateValue v) "expecting identifier here"
+    _       -> err (locateValue v) "expecting identifier here"
 
 
 cnsToBlock :: Constructor -> Block
@@ -135,7 +129,7 @@ constructor :: (Ident -> BlockM a) -> ValueSpec a
 constructor f v =
   case v of
     Construct c -> inBlock (cnsToBlock (locValue c)) (f (cnsName c))
-    _ -> err (locateValue v) "expecting constructor here"
+    _           -> err (locateValue v) "expecting constructor here"
 
 oneConstructorOf :: [(Ident, BlockM a)] -> ValueSpec a
 oneConstructorOf spec v =
@@ -143,7 +137,7 @@ oneConstructorOf spec v =
     Construct c ->
       case cnsName c `lookup` spec of
         Nothing -> expErr
-        Just b -> inBlock (cnsToBlock (locValue c)) b
+        Just b  -> inBlock (cnsToBlock (locValue c)) b
     _ -> expErr
   where
     cnames = Text.intercalate ", " (fst <$> spec)

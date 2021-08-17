@@ -1,13 +1,16 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments    #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module Language.Blocktorok.PPDemo where
 
-import qualified Prettyprinter as PP
-import Prettyprinter ( Pretty(pretty), Doc, (<+>) )
-import Data.Text(Text)
-import qualified Data.Text.IO as TIO
-import qualified Language.Blocktorok.Parser as BP
+import           Data.Text                  (Text)
+import qualified Data.Text.IO               as TIO
+
+import           Prettyprinter              (Doc, Pretty (pretty), (<+>))
+import qualified Prettyprinter              as PP
+
 import qualified Language.Blocktorok.BlockM as B
+import qualified Language.Blocktorok.Parser as BP
 
 battleFromFile :: FilePath -> FilePath -> IO ()
 battleFromFile inf outf =

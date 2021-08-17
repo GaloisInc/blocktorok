@@ -1,9 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Language.Blocktorok.Syntax where
 
-import Data.Text(Text)
+module Language.Blocktorok.Syntax
+  ( Block(..)
+  , BlockElement(..)
+  , Constructor(..)
+  , Ident
+  , Value(..)
+  , locateValue
+  ) where
 
-import Language.Common(Located, withSameLocAs)
+import           Data.Text       (Text)
+
+import           Language.Common (Located, withSameLocAs)
 
 
 -------------------------------------------------------------------------------
@@ -13,7 +21,7 @@ type Ident = Text
 
 data Block = Block
   { blockTypeName :: Located Ident
-  , blockName :: Maybe (Located Ident)
+  , blockName     :: Maybe (Located Ident)
   , blockContents :: [BlockElement]
   }
   deriving(Show, Eq, Ord)
@@ -32,7 +40,7 @@ data Value =
   deriving(Show, Eq, Ord)
 
 data Constructor = Constructor
-  { constructorName :: Located Ident
+  { constructorName   :: Located Ident
   , constructorFields :: [(Located Ident, Value)]
   }
   deriving(Show, Eq, Ord)
@@ -40,8 +48,8 @@ data Constructor = Constructor
 locateValue :: Value -> Located Value
 locateValue v =
   case v of
-    Number n -> v `withSameLocAs` n
-    Ident i -> v `withSameLocAs` i
-    List l -> v `withSameLocAs` l
+    Number n    -> v `withSameLocAs` n
+    Ident i     -> v `withSameLocAs` i
+    List l      -> v `withSameLocAs` l
     Construct c -> v `withSameLocAs` c
-    String s -> v `withSameLocAs` s
+    String s    -> v `withSameLocAs` s
