@@ -1,6 +1,8 @@
 {-# LANGUAGE BlockArguments    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# OPTIONS_HADDOCK hide       #-}
+
 module Language.Blocktorok.PPDemo where
 
 import           Data.Text                  (Text)

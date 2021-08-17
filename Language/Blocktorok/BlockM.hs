@@ -3,6 +3,8 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
+{-# OPTIONS_HADDOCK hide                #-}
+
 -- generate docs from this description?
 module Language.Blocktorok.BlockM where
 
