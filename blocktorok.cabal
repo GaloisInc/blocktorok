@@ -24,13 +24,19 @@ executable blocktorok
                        Language.Schema.Syntax
                        Language.Schema.Type
 
-                       Language.Transform.Syntax
+                       Language.Transform.Evaluator
                        Language.Transform.Parser
+                       Language.Transform.Syntax
+                       Language.Transform.Value
 
+                       Link
                        Options
   build-depends:       base >= 3 && < 5
                      , containers
+                     , directory
+                     , filepath
                      , megaparsec
+                     , monad-validate
                      , mtl
                      , optparse-applicative
                      , prettyprinter

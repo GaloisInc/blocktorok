@@ -1,440 +1,291 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Language.Transform.Evaluator where
 
-import qualified Control.Monad.State as State
-import qualified Control.Monad.Except as Except
-import Data.Map(Map)
-import qualified Data.Map as Map
 import Data.Text(Text)
 import qualified Data.Text as Text
+import Data.Map(Map)
+import qualified Data.Map as Map
+import qualified Control.Monad.Except as Except
+import qualified Control.Monad.State as State
+import Control.Applicative((<|>))
 import qualified Prettyprinter as PP
 
-import Language.Common(Located(..), withSameLocAs, locUnknown)
 import qualified Language.Transform.Syntax as Tx
-import qualified Language.Schema.Env as SchemaEnv
-import qualified Language.Schema.Syntax as Schema
-import qualified Language.Schema.Type as SchemaType
-import qualified Language.Link.Blocktorok.Syntax as Blok
+import Language.Transform.Value(Value(..))
+import qualified Language.Transform.Value as Value
+import Language.Common(Located(..), HasLocation(..), unloc, msgWithLoc, ppRange)
+import Data.Foldable(traverse_)
 
+data InterpEnv = InterpEnv
+  { envBindings :: Map Ident Value
+  , envBlockEnv :: Map Ident Value
+  , envOutputs :: Map FilePath Doc
+  }
 
--------------------------------------------------------------------------------
--- Types
 type Ident = Text
 type Doc = PP.Doc ()
 
-type Eval a = State.StateT EvalState (Except.Except Error) a
-
-data EvalState = EvalState
-  { evalStateSchema :: SchemaEnv.Env
-  , evalStateValueEnv :: Value
-  , evalOutput :: Map FilePath Doc
-  }
-
 -------------------------------------------------------------------------------
--- Monad API
+-- Eval monad
 
-data Error =
-    ErrLocated (Located Text)
-  | ErrLocUnknown Text
+type Eval a = Except.ExceptT Text (State.State InterpEnv) a
 
-runEval :: SchemaEnv.Env -> [Blok.BlockElement] -> Eval a -> Either Error a
-runEval env blok ev =
-    Except.runExcept $ State.evalStateT (loadRoot blok >> ev) initialState
+throw :: HasLocation why => why -> Text -> Eval a
+throw why msg = Except.throwError (msgWithLoc why msg)
 
-  where
-    initialState =
-      EvalState { evalStateSchema = env
-                , evalStateValueEnv = undefined -- TODO: kind of a hack, but should never be read
-                , evalOutput = Map.empty
-                }
+getVarValMb :: Located Ident -> Eval (Maybe Value)
+getVarValMb i =
+  do  bindVals <- State.gets (Map.lookup (unloc i) . envBindings)
+      envVals <- State.gets (Map.lookup (unloc i) . envBlockEnv)
+      pure (envVals <|> bindVals)
 
-
-
-throw :: Located a -> Text -> Eval b
-throw why err = Except.throwError $ ErrLocated (err `withSameLocAs` why)
-
-throwUnloc :: Text -> Eval b
-throwUnloc err = Except.throwError $ ErrLocUnknown err
-
-getSchemaDef :: Located a -> Ident -> Eval Schema.SchemaDef
-getSchemaDef why name =
-  do  defs <- State.gets (SchemaEnv.envTypeDefs . evalStateSchema)
-      case Map.lookup name defs of
-        Nothing -> validationBug why ("Could not find referenced type '" <> name <> "'")
+getVarVal :: Located Ident -> Eval Value
+getVarVal i =
+  do  mbVals <- getVarValMb i
+      case mbVals of
+        Nothing -> throw i (q (unloc i) <> " is not defined here")
         Just a -> pure a
 
-getBlockS :: Located a -> Ident -> Eval Schema.BlockS
-getBlockS why name =
-  do  def <- getSchemaDef why name
-      case def of
-        Schema.BlockDef blockS -> pure blockS
-        Schema.UnionDef _ -> validationBug why ("Expecting '" <> name <> "' to be a block def")
-
-getSchemaEnv :: Eval SchemaEnv.Env
-getSchemaEnv = State.gets evalStateSchema
-
-getValueEnv :: Eval Value
-getValueEnv = State.gets evalStateValueEnv
-
-setValueEnv :: Value -> Eval ()
-setValueEnv env' = State.modify (\s -> s { evalStateValueEnv = env' })
-
-modifyValueEnv :: (Value -> Value) -> Eval ()
-modifyValueEnv f =
-  State.modify (\s -> s { evalStateValueEnv = f $ evalStateValueEnv s })
-
-withValueEnv :: Value -> Eval a -> Eval a
-withValueEnv v' c =
-  do  v0 <- getValueEnv
-      setValueEnv v'
-      a <- c
-      setValueEnv v0
-      pure a
-
-
-loadRoot :: [Blok.BlockElement] -> Eval ()
-loadRoot elts =
-  do  env <- getSchemaEnv
-      root <- blockEltValueMap (SchemaEnv.envRootTypes env) elts
-      setValueEnv (VBlock Nothing root)
-
-getVar :: Located Ident -> Eval (Maybe Value)
-getVar name =
-  do  env <- State.gets evalStateValueEnv
-      case env of
-        VBlock _ mp -> pure $ Map.lookup (unloc name) mp
-        _ | unloc name == "value" -> pure (Just env)
-        _ -> pure Nothing
-
-
-validationBug :: Located a -> Text -> Eval b
-validationBug why err = throw why ("[BUG] Vaidation bug: " <> err)
-
-notImplemented :: Located a -> Text -> Eval b
-notImplemented why err = throw why ("Not implemented: " <> err)
-
--- TODO: check if file is open already
--- TODO: do we allow aliasing?
-openFile :: FilePath -> Eval ()
-openFile path =
-  State.modify (\s -> s { evalOutput = Map.insert path PP.emptyDoc (evalOutput s) })
-
-appendToFile :: Located FilePath -> Doc -> Eval ()
-appendToFile handle stuff =
-  do  file <- State.gets (Map.lookup (unloc handle) . evalOutput)
-      case file of
-        Just contents ->
-          let contents' = PP.vcat [contents, stuff]
-          in State.modify (\s -> s {evalOutput = Map.insert (unloc handle) contents' (evalOutput s)})
+bindVar :: Located Ident -> Value -> Eval ()
+bindVar i v =
+  do  mbVals <- getVarValMb i
+      case mbVals of
         Nothing ->
-          throw handle ("[BUG] File handle '" <> Text.pack (unloc handle) <> "' has not been specified")
+            State.modify $ \s ->
+              s { envBindings = Map.insert (unloc i) v (envBindings s)
+                }
+        Just _ ->
+          throw i (q (unloc i) <> " is already bound here")
+
+appendToFile :: FilePath -> Doc -> Eval ()
+appendToFile fp doc =
+  do  out <- State.gets envOutputs
+      let doc' =
+            case Map.lookup fp out of
+              Nothing -> doc
+              Just d -> PP.vcat [d, doc]
+      State.modify $ \s -> s { envOutputs = Map.insert fp doc' (envOutputs s) }
+
+
+modTraverseBlockEnv :: (Value -> Eval Value) -> Eval ()
+modTraverseBlockEnv f  =
+  do  env <- State.gets envBlockEnv
+      env' <- f `traverse` env
+      State.modify' (\s -> s { envBlockEnv = env'})
+
+withBlockEnv :: Map Ident Value -> Eval a -> Eval a
+withBlockEnv env' eval =
+  do  env <- State.gets envBlockEnv
+      State.modify (\s -> s { envBlockEnv = env'})
+      result <- eval
+      State.modify (\s -> s { envBlockEnv = env})
+      pure result
 
 -------------------------------------------------------------------------------
--- Values
+-- Evaluator
 
-data Value =
-    VString Text
-  | VInt Integer
-  | VDouble Double
-  | VDoc Doc
-  | VList [Value]
-  | VBlock (Maybe Ident) (Map Ident Value)
-  | VTagged Ident Ident Value
-  | VRendered Tx.Expr Value
-
-blockValueToValue :: Blok.Value -> Value
-blockValueToValue bv =
-  case bv of
-    Blok.Number n -> VDouble (unloc n)
-    Blok.Ident i -> VString (unloc i)
-    Blok.List l -> VList (blockValueToValue <$> unloc l)
-    Blok.String s -> VString (unloc s)
-    Blok.Construct _ -> undefined  -- TODO: constructors
-
-blockElementName :: Blok.BlockElement -> Ident
-blockElementName b =
-  case b of
-    Blok.BlockSub blk -> unloc $ Blok.blockTypeName (unloc blk)
-    Blok.BlockValue i _ -> unloc i
-
-globbedStype :: SchemaType.Globbed Schema.BlockDecl -> SchemaType.Globbed SchemaType.SType
-globbedStype bd = getStype <$> bd
-  where
-    getStype = unloc . Schema.declType . Schema.blockDeclDecl
-
-declStype :: SchemaType.Globbed Schema.BlockDecl -> SchemaType.SType
-declStype = SchemaType.unGlob . globbedStype
-
-blockEltLocatedName :: Blok.BlockElement -> Located Ident
-blockEltLocatedName be =
-  case be of
-    Blok.BlockSub blok -> Blok.blockTypeName (unloc blok)
-    Blok.BlockValue i _ -> i
-
-blockEltToValue :: SchemaType.Globbed Schema.BlockDecl -> Blok.BlockElement -> Eval Value
-blockEltToValue decl be =
-  case (be, declStype decl) of
-    (Blok.BlockSub sub, SchemaType.SNamed typeName) ->
-      do  blockS' <- getBlockS sub typeName
-          mkBlockValue blockS' sub
-
-    (Blok.BlockValue _ bv, _) ->
-      pure $ blockValueToValue bv
-
-    _ -> validationBug (blockEltLocatedName be) "block element does not match schema"
-
-blockEltValueMap ::
-  Map Ident (SchemaType.Globbed Schema.BlockDecl) ->
-  [Blok.BlockElement] ->
-  Eval (Map Ident Value)
-blockEltValueMap smap elts = Map.unions <$> (eltMap `traverse` Map.toList smap)
-  where
-    eltsFor name = filter ((==name) . blockElementName) elts
-    eltMap (name, decl) =
-      do  vals <- blockEltToValue decl `traverse` eltsFor name
-          case (vals, () <$ globbedStype decl) of
-            ([v], SchemaType.One {}) ->
-              pure $ Map.singleton name v
-
-            ([], SchemaType.Optional {}) ->
-              pure Map.empty
-
-            ([v], SchemaType.Optional {}) ->
-              pure $ Map.singleton name v
-
-            (vs@(_:_), SchemaType.Some {}) ->
-              pure $ Map.singleton name (VList vs)
-
-            (vs, SchemaType.Many {}) ->
-              pure $ Map.singleton name (VList vs)
-
-            -- in some cases (the root block) there is nowhere to point the error
-            _ ->
-              let why =
-                    case eltsFor name of
-                      e:_ -> () <$ blockEltLocatedName e
-                      []  -> locUnknown ()
-              in validationBug why ("number of instances of '" <> name <> "' does not match glob pattern")
-
-mkBlockValue :: Schema.BlockS -> Located Blok.Block -> Eval Value
-mkBlockValue blockS locBlock =
-  VBlock (Just . unloc $ Schema.blockSType blockS) <$> fields
-  where
-    block = unloc locBlock
-    nameField =
-      case (Schema.blockSName blockS, Blok.blockName block) of
-        (Nothing, Nothing) -> pure Map.empty
-        (Just k, Just v)   -> pure $ Map.singleton (unloc k) (VString $ unloc v)
-        (Just _, Nothing)  -> validationBug locBlock "mkBlock - schema has name / block doesn't"
-        (Nothing, Just _)  -> validationBug locBlock "mkBlock - schema doesn't have name / block does"
-
-    fields =
-      do  nf <- nameField
-          fs <- blockEltValueMap (Schema.blockSFields blockS) (Blok.blockContents block)
-          pure $ Map.union nf fs
-
-transformValue :: (Value -> Eval Value) -> Value -> Eval Value
-transformValue f v0 = v' >>= f
-  where
-    v' =
-      case v0 of
-        VString _ -> pure v0
-        VInt _ -> pure v0
-        VDouble _ -> pure v0
-        VDoc _ -> pure v0
-        VList vs -> VList <$> (transformValue f `traverse` vs)
-        VBlock i m -> VBlock i <$> (transformValue f `traverse` m)
-        VTagged ty tag v -> VTagged ty tag <$> transformValue f v
-        VRendered d v -> VRendered d <$> transformValue f v
-
-renderSelectedPath :: [Ident] -> Tx.Expr -> Value -> Value
-renderSelectedPath path e v =
-  case path of
-    [] ->
-      case v of
-        VRendered _ v' -> VRendered e v'
-        VList vs -> VList (renderSelectedPath path e <$> vs)
-        _ -> VRendered e v
-    n:r ->
-      case v of
-        VBlock mbN mp ->
-          case Map.lookup n mp of
-            Nothing -> v
-            Just v' ->
-              VBlock mbN $ Map.insert n (renderSelectedPath r e v') mp
-        VTagged t n' v'  | n == n' ->
-            VTagged t n' $ renderSelectedPath r e v'
-        VList vs -> VList (renderSelectedPath path e <$> vs)
-        _ -> v
-
-renderValueSelector :: Tx.Selector -> Tx.Expr -> Value -> Value
-renderValueSelector sel e v0 =
-  case selectorToPath sel of
-    []  -> v0 -- TODO: this is impossible
-    schema:path ->
-      case v0 of
-        VBlock ty _ | ty == Just (unloc schema) ->
-          renderSelectedPath (identPath path) e v0
-        VTagged ty _ _| ty == unloc schema ->
-          renderSelectedPath (identPath path) e v0
-        VList vs -> VList (renderValueSelector sel e <$> vs)
-        VRendered r vr ->
-          case path of
-            [] -> renderValueSelector sel e v0
-            _ ->  VRendered r (renderValueSelector sel e vr)
-        _ -> v0
-  where
-    identPath path = unloc <$> path
-
-
-selectorToPath :: Tx.Selector -> [Located Ident]
-selectorToPath sel =
-  case sel of
-    Tx.SelName i -> [i]
-    Tx.SelMem m i -> selectorToPath m ++ [i]
-
--------------------------------------------------------------------------------
--- Evaluation
 
 showValue :: Value -> Eval Doc
-showValue v =
-  case v of
-    VString s -> pure $ PP.pretty s
-    VInt i -> pure $ PP.pretty i
-    VDouble d -> pure $ PP.pretty d
-    VList l -> PP.hcat <$> (showValue `traverse` l)
-    VRendered e vr ->
-      withValueEnv vr (evalExpr e) >>= showValue
-    VDoc d -> pure d
-    VTagged {} -> throwUnloc "Tried to show union value (but renderer has not been defined)"
-    VBlock {} -> throwUnloc "Tried to show block (but renderer has not been defined)"
+showValue v0 =
+  case v0 of
+    VDouble _ d -> pure $ PP.pretty d
+    VInt _ i -> pure $ PP.pretty i
+    VString _ s -> pure $ PP.pretty s
+    VIdent _ i -> pure $ PP.pretty i
+    VList _ l -> PP.hcat <$> showValue `traverse` l
+    VDoc _ d -> pure d
+    VFile _ p -> pure $ PP.pretty p
+    VConstruct c ->
+      case Value.tagRenderer c of
+        Nothing ->
+          throw v0 ("No renderer for constructor at " <> ppRange (Value.tagLoc c))
+        Just r ->
+          withBlockEnv (Value.tagValue c) (evalExpr r) >>= showValue
+    VBlock b ->
+      case Value.blockRenderer b of
+        Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
+        Just r ->
+          withBlockEnv (Value.blockValues b) (evalExpr r) >>= showValue
 
 evalDecl :: Tx.Decl -> Eval ()
-evalDecl d =
-  case d of
-    Tx.DeclRender s e ->
-      do  env <- getValueEnv
-          env' <- transformVal s e env
-          setValueEnv env'
-    Tx.DeclFileOut fname e -> undefined
-      -- TODO: file IO
-      -- do  outVal <- evalExpr (unloc e) >>= showValue
-      --     file <- getVar fname
-      --     case file of
-      --       Nothing -> throw fname ("Symbol '"  <> unloc fname <> "' is not defined")
-      --       _ -> throw fname ("Symbol '"  <> unloc fname <> "' is not a file")
-    Tx.DeclLet _ e -> notImplemented e "let"
+evalDecl d0 =
+  case d0 of
+    Tx.DeclLet i e ->
+      do  v <- evalExpr e
+          bindVar i v
+    Tx.DeclRender s e -> modTraverseBlockEnv (evalRender s e)
+    Tx.DeclFileOut f e ->
+      do  f' <- getVarVal f >>= file
+          doc <- evalExpr e >>= showValue
+          appendToFile f' doc
 
+evalRender :: Tx.Selector -> Tx.Expr -> Value -> Eval Value
+evalRender s0 e = Value.traverseSchemaValues (Value.mapSelected render path) schema
   where
-    transformVal s e = transformValue (pure  . renderValueSelector s (unloc e))
+    render vr =
+      case vr of
+        VBlock vb ->
+            pure $ VBlock vb { Value.blockRenderer = Just e}
+        VConstruct vc -> pure $ VConstruct vc { Value.tagRenderer = Just e }
+        _ -> pure vr
 
-evalLit :: Tx.Lit -> Eval Value
-evalLit l =
-  case l of
-    Tx.LitString s -> pure $ VString (unloc s)
-    Tx.LitInt i -> pure $ VInt (unloc i)
-    Tx.LitFloat f -> pure $ VDouble (unloc f)
+    path = reverse (pathRev s0)
+    schema = schemaS s0
+
+    pathRev s =
+      case s of
+        Tx.SelName _ -> []
+        Tx.SelMem s' mem -> unloc mem:pathRev s'
+    schemaS s =
+      case s of
+        Tx.SelName n -> unloc n
+        Tx.SelMem s' _ -> schemaS s'
 
 evalExpr :: Tx.Expr -> Eval Value
 evalExpr e0 =
   case e0 of
-    Tx.ExprFn fname args ->
-      do  argvs <- evalExpr `traverse` (unloc <$> args)
-          let argvs' = zipWith withSameLocAs argvs args
-          evalFn fname argvs'
-    Tx.ExprSelector sel -> VList <$> evalSelector sel
-    Tx.ExprLit l -> evalLit l
+    Tx.ExprFn lc -> evalCall lc
+    Tx.ExprSelector s -> evalSelector s
+    Tx.ExprLit l ->
+      pure $
+        case l of
+          Tx.LitFloat f -> VDouble (location f) (unloc f)
+          Tx.LitInt i -> VInt (location i) (unloc i)
+          Tx.LitString s -> VString (location s) (unloc s)
 
+-- TODO: this is kind of a hack to deal with constructors not being separable into tag/value
+data SelValue =
+    SelValue Value
+  | SelValues [SelValue]
+  | SelMap Value (Map Ident Value)
 
-evalFn :: Tx.FName -> [Located Value] -> Eval Value
-evalFn fn args =
-  case (fn, args) of
-    (Tx.FHCat, _) ->
-      do  args' <- showValue `traverse` uargs
-          pure . VDoc $ PP.hcat args'
-    (Tx.FVCat, _) ->
-      do  args' <- showValue `traverse` uargs
-          pure . VDoc $ PP.vcat args'
-    (Tx.FFile, _) -> undefined
+evalSelector :: Tx.Selector -> Eval Value
+evalSelector s0 = selValToVal s0 <$> go s0
+    where
+      go s1 =
+        case s1 of
+          Tx.SelName n -> SelValue <$> getVarVal n
+          Tx.SelMem s n ->
+            do  s' <- go s
+                pure $ select (unloc n) s'
 
+      selValToVal :: HasLocation why => why -> SelValue -> Value
+      selValToVal loc v0 =
+        case v0 of
+          SelValue  v -> v
+          SelMap v _ -> v
+          SelValues vs ->
+            VList (location loc) [ l | v <- selValToVal loc <$> vs
+                                 , l <- Value.valueToList v ]
+
+      select :: Ident -> SelValue -> SelValue
+      select i v =
+        case v of
+          SelValue (VBlock b) ->
+            case Map.lookup i (Value.blockValues b) of
+              Nothing -> SelValues []
+              Just vs -> SelValue vs
+          SelValue vc@(VConstruct c) | unloc (Value.tagTag c) == i ->
+              SelMap vc (Value.tagValue c)
+          SelValue (VList _ vs) ->
+              SelValues (select i . SelValue <$> vs)
+          SelValues vs ->
+              SelValues $ select i <$> vs
+          SelMap _ m ->
+              case Map.lookup i m of
+                Nothing -> SelValues []
+                Just vs -> SelValue vs
+          _ -> SelValues []
+
+evalCall :: Located Tx.Call -> Eval Value
+evalCall lcall =
+  do  args <- evalExpr `traverse` argExprs
+      case name of
+        Tx.FHCat ->
+          do  docs <- showValue `traverse` args
+              pure $ VDoc (location lcall) (PP.hcat docs)
+        Tx.FVCat ->
+          do  docs <- showValue `traverse` args
+              pure $ VDoc (location lcall) (PP.vcat docs)
+        Tx.FJoin ->
+          do  (sep, vals) <- args2 args
+              sep' <- showValue sep
+              vals' <- list showValue vals
+              pure $ VDoc (location lcall) (PP.hcat $ PP.punctuate sep' vals')
+        Tx.FMkSeq -> pure $ VList (location lcall) args
+        Tx.FFile ->
+          do  fn <- Text.unpack <$> (args1 args >>= string)
+              pure (VFile (location lcall) fn)
   where
-    uargs = unloc <$> args
+    Tx.Call name largExprs = unloc lcall
+    argExprs = unloc largExprs
+    args1 args =
+      case args of
+        [v1] -> pure v1
+        _ -> throw largExprs "Expecting this function to take 1 argument"
 
-
-evalSelector :: Tx.Selector -> Eval [Value]
-evalSelector sel0 =
-  case sel0 of
-    Tx.SelName i ->
-      do  val <- getVar i
-          case val of
-            Nothing -> pure []
-            Just a -> pure [a]
-
-    Tx.SelMem sel' m ->
-      do  inner <- evalSelector sel'
-          concat <$> (select m `traverse` inner)
-
-  where
-    select i v =
-      case v of
-        VList vs ->
-          concat <$> (select i `traverse` vs)
-        VRendered _ v' -> select i v'
-        VBlock _ fields ->
-          case Map.lookup (unloc i) fields of
-            Nothing -> pure []
-            Just a -> pure [a]
-        _ -> validationBug i ("Cannot select '" <> unloc i <> "' from simple value")
-
-
-
--- schemaTransform :: (Value -> Eval Value) -> Tx.Selector -> Eval ()
--- schemaTransform f sel =
---   case sel of
---     Tx.SelName i ->
---       do  def <- getSchemaDef i (unloc i)
---           case def of
---             Tx.BlockDef blocks ->
-
---             Tx.UnionDef _ -> notImplemented i "unions"
-
--- applyRender :: Tx.Selector -> Tx.Expr -> Eval ()
--- applyRender sel expr ->
-
-
+    args2 args =
+      case args of
+        [v1, v2] -> pure (v1, v2)
+        _ -> throw largExprs "Expecting this function to take 2 arguments"
 
 -------------------------------------------------------------------------------
--- Selectors
+-- "typing"
 
--- mbDeclName :: Globbed Schema.BlockDecl -> Maybe Schema.Ident
--- mbDeclName bd =
---   if SchemaType.constainsNamed declType
---     then Just $ SchemaType.containedName declType
---     else Nothing
---   where
---     declType = (Schema.declType $ Schema.unGlob bd)
+describeValueType :: Value -> Text
+describeValueType v0 =
+  case v0 of
+    VInt {} -> "integer"
+    VDouble {} -> "decimal"
+    VIdent {} -> "identifier"
+    VList {} -> "list"
+    VString {} -> "string"
+    VDoc {} -> "doc"
+    VBlock b -> "block " <> q (unloc $ Value.blockType b)
+    VConstruct c ->
+      case Value.tagSchema c of
+        Just a -> "constructor " <> q (unloc $ Value.tagTag c) <> " for union " <> q a
+        Nothing -> "constructor " <> q (unloc $ Value.tagTag c)
+    VFile {} -> "file"
 
+list :: (Value -> Eval a) -> Value -> Eval [a]
+list f v =
+  case v of
+    VList _ l -> f `traverse` l
+    _ -> throw v "Expecting a list here"
 
--- allSelectors
+string :: Value -> Eval Text
+string v =
+  case v of
+    VString _ s -> pure s
+    _ -> throw v "Expecting a string here"
 
--- resolveSchemaSelector :: Tx.Selector -> Map Ident (Globbed Schema.BlockDecl) -> [Tx.Selector]
--- resolveSchemaSelector sel env =
---   declType = Schema.
+file :: Value -> Eval FilePath
+file v =
+  case v of
+    VFile _ f -> pure f
+    _ -> throw v "Expecting a file handle here"
 
---   case sel of
-
-
---   where
---     SelName i ->
---       case Map.lookup (unloc i) env of
---         Nothing -> []
---         Just decl | mbDecl  -> [decl]
-
-
-
--- TODO: does this belong somewhere else?
 -------------------------------------------------------------------------------
 -- misc
 
-unloc :: Located a -> a
-unloc = locValue
+q :: Text -> Text
+q v = "'" <> v <> "'"
+
+-------------------------------------------------------------------------------
+-- API
+
+runTransform :: Tx.Transform -> Map Ident Value -> Either Text (Map FilePath Doc)
+runTransform tx blokenv =
+  do
+      State.evalState (Except.runExceptT run) initialEnv
+  where
+
+    run = evalDecl `traverse_` Tx.transformDecls tx >> State.gets envOutputs
+    initialEnv =
+      InterpEnv { envBindings = Map.empty
+                , envBlockEnv = blokenv
+                , envOutputs = Map.empty
+                }

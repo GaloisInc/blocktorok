@@ -12,11 +12,10 @@ import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MPC
 import Control.Applicative(many, some, (<|>))
 import Language.Common
-    ( SourceRange(SourceRange), Located(..) )
+    ( SourceRange(SourceRange), Located(..), unloc, withSameLocAs)
 import Language.Transform.Syntax
 
 type Parser a = MP.Parsec Void Text a
-
 
 spc :: Parser ()
 spc = Lexer.space MPC.space1
@@ -85,25 +84,33 @@ selectorParser =
           selElt p'
 
 barStringExprParser :: Parser Expr
-barStringExprParser = ExprFn FVCat <$> some line
+barStringExprParser =
+  do  ls <- located $ some (lexeme line)
+      case unloc ls of
+        [a] -> pure a
+        _ -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
-      located $
         do  MP.try (symbol' "|")
-            elts <- many stringElt
-            pure $ ExprFn FHCat elts
-    stringElt = located $ MP.choice [embeddedExpr, escaped, stringChunk]
-    stringChunk =
-      ExprLit . LitString <$>
-        located' (MP.takeWhile1P Nothing (not . (`elem` ['\n', '\r', '$', '\\'])))
+            elts <- located' (many stringElt)
+            case unloc elts of
+              [a] -> pure a
+              _ -> pure $ ExprFn (Call FHCat elts `withSameLocAs` elts)
+    stringElt = MP.choice [stringChunk, embeddedExpr, escaped]
+
+    sc =
+      MP.takeWhile1P Nothing (not . (`elem` ['\n', '\r', '$', '\\']))
+
+    stringChunk = ExprLit . LitString <$> located' sc
     embeddedExpr =
-      do  MP.try (symbol' "${")
+      do  _ <- MP.try (MP.chunk "${")
           expr <- exprParser
           symbol' "}"
           pure expr
+
     escaped =
-      do  MP.try (symbol' "\\")
-          c <- located MP.anySingle
+      do  _ <- MP.try (MP.chunk "\\")
+          c <- located' MP.anySingle
           pure . ExprLit . LitString $ (Text.singleton <$> c)
 
 strLitParser :: Parser Text
@@ -125,17 +132,30 @@ exprParser =
   where
     selector = ExprSelector <$> selectorParser
 
-    fn name fname =
+    parseArgs =
+      located $
+        symbol' "(" *>
+          MP.sepBy exprParser (symbol' ",")
+        <* symbol' ")"
+
+
+    call name fname =
+      located $
       do  MP.try (symbol' name)
-          symbol' "("
-          args <- MP.sepBy (located exprParser) (symbol' ",")
-          symbol' ")"
-          pure $ ExprFn fname args
+          args <- parseArgs
+          pure $ Call fname args
+
+    fn name fname = ExprFn <$> call name fname
 
     mkSeq =
-      MP.try (symbol' "[") *>
-          (ExprFn FMkSeq <$> MP.sepBy (located exprParser) (symbol' ","))
-          <* MP.try (symbol' "]")
+      do  seqb <- seqBody
+          pure $ ExprFn (Call FMkSeq seqb `withSameLocAs` seqb)
+
+    seqBody =
+      located $
+        MP.try (symbol' "[") *>
+          MP.sepBy exprParser (symbol' ",")
+        <* MP.try (symbol' "]")
 
 
 declParser :: Parser Decl
@@ -143,25 +163,25 @@ declParser = MP.choice [renderDecl, letDecl, outDecl]
   where
     outDecl =
       do  i <- MP.try $ lident <* symbol' "<<"
-          expr <- located exprParser
+          expr <- exprParser
           pure $ DeclFileOut i expr
 
     letDecl =
       do  i <- MP.try $ lident <* symbol' "="
-          expr <- located exprParser
+          expr <- exprParser
           pure $ DeclLet i expr
 
     renderDecl =
       do  MP.try (symbol' "render")
           sel <- selectorParser
           --symbol' "as"
-          expr <- located exprParser
+          expr <- exprParser
           pure $ DeclRender sel expr
 
 transformParser :: Parser Transform
 transformParser =
   do  schema <- symbol' "schema" *> located strLitParser
-      decls <- many (located declParser)
+      decls <- many declParser
       pure $ Transform schema decls
 
 -------------------------------------------------------------------------------
@@ -172,6 +192,7 @@ parseTransform name input =
     Right tx -> Right tx
     Left err -> Left (Text.pack $ MP.errorBundlePretty err)
 
-parseTransformFile :: FilePath -> IO (Either Text Transform)
-parseTransformFile fp =
+transformFromFile :: FilePath -> IO (Either Text Transform)
+transformFromFile fp =
   parseTransform fp <$> TIO.readFile fp
+

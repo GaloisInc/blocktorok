@@ -36,6 +36,7 @@ data SType
   | SString
   | SList SType
   | SNamed Ident
+  deriving(Eq)
 
 instance Show SType where
   show SInt = "int"
