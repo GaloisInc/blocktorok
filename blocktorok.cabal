@@ -18,7 +18,6 @@ executable blocktorok
                        Language.Blocktorok.BlockM
                        Language.Blocktorok.PPDemo
 
-                       Language.Schema.Demo
                        Language.Schema.Env
                        Language.Schema.Parser
                        Language.Schema.Syntax
