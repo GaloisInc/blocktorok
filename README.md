@@ -90,7 +90,7 @@ placing any output files in the director `out/`.
 
 ## Samples and Documentation
 
-The directories `hello/` and `battle/` under `drafts/` contains some very
+The directories `hello/` and `battle/` under `drafts/` contain some very
 simple data and transformers to test out the compiler and get a feel for the
 language syntax: `hello/` contains an empty data file whose transformer
 produces all of the output, while `battle/` is a more complex data format
