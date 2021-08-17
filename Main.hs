@@ -1,15 +1,15 @@
 {-|
 Module      : Main
-Description : The LINK compiler entry point
+Description : Compiler stack entry point
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
 Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
 
-The entry point to the LINK compiler. This is likely to be an ever-evolving
-module, as we identify new wants/needs in terms of command-line options,
-functionality, and behavior.
+The entry point to the Blocktorok compiler. This is likely to be an
+ever-evolving module, as we identify new wants/needs in terms of
+command-line options, functionality, and behavior.
 -}
 
 module Main (main) where
