@@ -17,11 +17,12 @@ module Options
   , parseOpts
   ) where
 
-import Options.Applicative (Parser, argument, help, metavar, long, short, str, strOption)
+import           Options.Applicative (Parser, argument, help, long, metavar,
+                                      short, str, strOption)
 
 data Options = Options
   { transformer :: FilePath
-  , output :: FilePath
+  , output      :: FilePath
   , blocktorok  :: FilePath
   }
 

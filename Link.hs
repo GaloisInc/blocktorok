@@ -1,21 +1,26 @@
-module Link(runTransformIO, ParseError(..), EvalError(..)) where
+module Link
+  ( runTransformIO
+  , ParseError(..)
+  , EvalError(..)
+  ) where
 
-import Data.Text(Text)
-import qualified Data.Text as Text
-import qualified Control.Exception as Ex
-import qualified Data.Map as Map
-import qualified System.FilePath as Path
-import qualified System.Directory as Dir
+import qualified Control.Exception            as Ex
 
+import           Data.Foldable                (traverse_)
+import qualified Data.Map                     as Map
+import           Data.Text                    (Text)
+import qualified Data.Text                    as Text
 
-import Language.Transform.Parser(transformFromFile)
-import qualified Language.Transform.Syntax as Tx
+import qualified System.Directory             as Dir
+import qualified System.FilePath              as Path
+
+import           Language.Blocktorok.Parser   (elementsFromFile)
+import           Language.Common              (Located (..))
+import           Language.Schema.Parser       (schemaFromFile)
 import qualified Language.Transform.Evaluator as TxEval
-import qualified Language.Transform.Value as TxValue
-import Language.Blocktorok.Parser(elementsFromFile)
-import Language.Schema.Parser(schemaFromFile)
-import Language.Common(Located(..))
-import Data.Foldable(traverse_)
+import           Language.Transform.Parser    (transformFromFile)
+import qualified Language.Transform.Syntax    as Tx
+import qualified Language.Transform.Value     as TxValue
 
 -- |run a transform and produce output
 -- Throws `ParseError` on failure to parse
@@ -82,10 +87,8 @@ orThrow :: Ex.Exception c => IO (Either a b) -> (a -> c) -> IO b
 orThrow io mkC  =
   do  eitherB <- io
       case eitherB of
-        Left a -> Ex.throwIO (mkC a)
+        Left a  -> Ex.throwIO (mkC a)
         Right b -> pure b
 
 orThrow' :: Ex.Exception c => Either a b -> (a -> c) -> IO b
-orThrow' e  = orThrow (pure e)
-
-
+orThrow' e = orThrow (pure e)

@@ -14,9 +14,11 @@ functionality, and behavior.
 
 module Main (main) where
 
-import Link
-import Options
-import Options.Applicative
+import           Options             (Options (..), parseOpts)
+import           Options.Applicative (execParser, fullDesc, header, helper,
+                                      info, progDesc, (<**>))
+
+import           Link                (runTransformIO)
 
 main :: IO ()
 main = realMain =<< execParser opts
