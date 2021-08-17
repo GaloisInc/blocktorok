@@ -1,9 +1,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : Language.Blocktorok.Parser
+Description : Parser for the Blocktorok data language
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+Parsing of Blocktorok data, including a raw entrypoint and conveniences for
+parsing a 'Block', many 'Block's, and 'BlockElement's from files.
+-}
+
 module Language.Blocktorok.Parser
-  ( blockFromFile
+  ( -- * Parsing Blocktorok data
+    -- ** Parsing 'Block's
+    blockFromFile
   , blocksFromFile
+    -- ** Parsing 'BlockElement's
   , elementsFromFile
+    -- ** Raw entry
   , parseBlocktorok
   ) where
 
@@ -117,15 +134,20 @@ parse parser fp t =
     Right a   -> Right a
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
+-- | Parse the given 'Text' to a 'Block'
 parseBlocktorok :: Text -> Either Text Block
 parseBlocktorok = parse block "--input--"
 
+-- | Parse a 'Block' from the contents of a given file
 blockFromFile :: FilePath -> IO (Either Text Block)
 blockFromFile fp = parse block fp <$> TextIO.readFile fp
 
+-- | Parse many 'Block's from the contents of a given file
 blocksFromFile :: FilePath -> IO (Either Text [Block])
 blocksFromFile fp = parse (MP.many block) fp <$> TextIO.readFile fp
 
+-- | Parse many 'Block's from the contents of a given file, returning the
+-- results as 'BlockElement's
 elementsFromFile :: FilePath -> IO (Either Text (Located [BlockElement]))
 elementsFromFile f =
   parse (located $ MP.many (BlockSub <$> located block)) f <$> TextIO.readFile f
