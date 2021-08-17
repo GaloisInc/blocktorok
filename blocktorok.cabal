@@ -3,7 +3,7 @@ cabal-version:       >=1.10
 -- For further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                blocktorok
-version:             0.1.0.0
+version:             1.0.0.0
 author:              James LaMar, Yerim Lee, Chris Phifer
 maintainer:          james.lamar@galois.com, ylee@galois.com, cphifer@galois.com
 build-type:          Simple
