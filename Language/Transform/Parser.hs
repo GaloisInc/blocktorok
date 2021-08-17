@@ -1,19 +1,29 @@
-{-# Language OverloadedStrings #-}
-module Language.Transform.Parser where
+{-# LANGUAGE OverloadedStrings #-}
 
-import Data.Char ( isDigit, isAlpha )
-import Data.Text(Text, pack)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as TIO
-import Data.Void(Void)
-import Control.Monad(void)
+module Language.Transform.Parser
+  ( transformFromFile
+  ) where
+
+import           Control.Applicative        (many, some)
+import           Control.Monad              (void)
+
+import           Data.Char                  (isAlpha, isDigit)
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+import qualified Data.Text.IO               as TIO
+import           Data.Void                  (Void)
+
+import qualified Text.Megaparsec            as MP
+import qualified Text.Megaparsec.Char       as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
-import qualified Text.Megaparsec as MP
-import qualified Text.Megaparsec.Char as MPC
-import Control.Applicative(many, some, (<|>))
-import Language.Common
-    ( SourceRange(SourceRange), Located(..), unloc, withSameLocAs)
-import Language.Transform.Syntax
+
+import           Language.Common            (Located (..),
+                                             SourceRange (SourceRange), unloc,
+                                             withSameLocAs)
+import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
+                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat),
+                                             Lit (LitString), Selector (..),
+                                             Transform (Transform))
 
 type Parser a = MP.Parsec Void Text a
 
@@ -37,12 +47,6 @@ mkRange s e =
   where
     asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
 
-ppRange :: SourceRange -> Text
-ppRange (SourceRange path (startLn, startCol) (endLn, endCol)) =
-  pack $
-    path ++ ":" ++ show startLn ++ ":" ++ show startCol ++ "-"
-                ++ show endLn ++ ":" ++ show endCol
-
 located :: Parser a -> Parser (Located a)
 located = lexeme . located'
 
@@ -52,9 +56,6 @@ located' p =
         a <- p
         end <- MP.getSourcePos
         pure $ Located (mkRange start end) a
-
-optional :: Parser a -> Parser (Maybe a)
-optional p = (Just <$> MP.try p) <|> pure Nothing
 
 ident :: Parser Text
 ident =
@@ -88,14 +89,14 @@ barStringExprParser =
   do  ls <- located $ some (lexeme line)
       case unloc ls of
         [a] -> pure a
-        _ -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
+        _   -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
         do  MP.try (symbol' "|")
             elts <- located' (many stringElt)
             case unloc elts of
               [a] -> pure a
-              _ -> pure $ ExprFn (Call FHCat elts `withSameLocAs` elts)
+              _   -> pure $ ExprFn (Call FHCat elts `withSameLocAs` elts)
     stringElt = MP.choice [stringChunk, embeddedExpr, escaped]
 
     sc =
@@ -142,8 +143,7 @@ exprParser =
     call name fname =
       located $
       do  MP.try (symbol' name)
-          args <- parseArgs
-          pure $ Call fname args
+          Call fname <$> parseArgs
 
     fn name fname = ExprFn <$> call name fname
 
@@ -163,20 +163,16 @@ declParser = MP.choice [renderDecl, letDecl, outDecl]
   where
     outDecl =
       do  i <- MP.try $ lident <* symbol' "<<"
-          expr <- exprParser
-          pure $ DeclFileOut i expr
+          DeclFileOut i <$> exprParser
 
     letDecl =
       do  i <- MP.try $ lident <* symbol' "="
-          expr <- exprParser
-          pure $ DeclLet i expr
+          DeclLet i <$> exprParser
 
     renderDecl =
       do  MP.try (symbol' "render")
           sel <- selectorParser
-          --symbol' "as"
-          expr <- exprParser
-          pure $ DeclRender sel expr
+          DeclRender sel <$> exprParser
 
 transformParser :: Parser Transform
 transformParser =

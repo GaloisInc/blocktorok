@@ -1,36 +1,38 @@
-{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE ApplicativeDo     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections     #-}
+
 module Language.Transform.Value where
 
+import qualified Control.Monad.Reader       as Reader
+import qualified Control.Monad.Validate     as Validate
 
-import qualified Prettyprinter as PP
-import Data.Text(Text)
-import qualified Data.Text as Text
-import Language.Common(SourceRange, Located(..), HasLocation(..), msgWithLoc, unloc)
-import qualified Data.Map as Map
-import Data.Map(Map)
-import Data.Foldable(traverse_)
+import           Data.Bifunctor             (first)
+import           Data.Foldable              (traverse_)
+import           Data.Map                   (Map)
+import qualified Data.Map                   as Map
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+
+import qualified Prettyprinter              as PP
+
 import qualified Language.Blocktorok.Syntax as Blok
-import Data.Bifunctor(first)
-
-import qualified Control.Monad.Reader as Reader
-import qualified Control.Monad.Validate as Validate
-
-import qualified Language.Transform.Syntax as Tx
-import qualified Language.Schema.Syntax as Schema
-import qualified Language.Schema.Env as Schema
-import qualified Language.Schema.Type as Schema
+import           Language.Common            (HasLocation (..), Located (..),
+                                             SourceRange, msgWithLoc, unloc)
+import qualified Language.Schema.Env        as Schema
+import qualified Language.Schema.Syntax     as Schema
+import qualified Language.Schema.Type       as Schema
+import qualified Language.Transform.Syntax  as Tx
 
 type Doc = PP.Doc ()
 type Ident = Text
 
 data TagValue = TagValue
-  { tagLoc :: SourceRange
-  , tagTag :: Located Ident
+  { tagLoc      :: SourceRange
+  , tagTag      :: Located Ident
   , tagRenderer :: Maybe Tx.Expr
-  , tagValue :: Map Ident Value
-  , tagSchema :: Maybe Ident
+  , tagValue    :: Map Ident Value
+  , tagSchema   :: Maybe Ident
   }
   deriving(Show)
 
@@ -38,12 +40,12 @@ instance HasLocation TagValue where
   location = tagLoc
 
 data BlockValue = BlockValue
-  { blockLoc :: SourceRange
-  , blockType :: Located Ident
-  , blockName :: Maybe (Located Ident)
+  { blockLoc      :: SourceRange
+  , blockType     :: Located Ident
+  , blockName     :: Maybe (Located Ident)
   , blockRenderer :: Maybe Tx.Expr
-  , blockValues :: Map Ident Value
-  , blockSchema :: Maybe Ident
+  , blockValues   :: Map Ident Value
+  , blockSchema   :: Maybe Ident
   }
   deriving(Show)
 
@@ -66,16 +68,16 @@ data Value =
 instance HasLocation Value where
   location v =
     case v of
-      VDouble r _ -> r
-      VInt r _ -> r
-      VIdent r _ -> r
-      VList r _ -> r
-      VString r _ -> r
+      VDouble r _  -> r
+      VInt r _     -> r
+      VIdent r _   -> r
+      VList r _    -> r
+      VString r _  -> r
 
-      VDoc r _ -> r
-      VFile r _ -> r
+      VDoc r _     -> r
+      VFile r _    -> r
       VConstruct b -> location b
-      VBlock b -> location b
+      VBlock b     -> location b
 
 traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
 traverseValue f v =
@@ -86,7 +88,7 @@ traverseValue f v =
     VString {} -> f v
     VFile {} -> f v
     VList r l ->
-      (VList r <$> traverseValue f `traverse` l) >>= f
+      (traverseValue f `traverse` l) >>= f . VList r
 
     VDoc {} -> f v
     VConstruct c ->
@@ -100,15 +102,15 @@ traverseValue f v =
 describeValue :: Value -> Text
 describeValue v =
   case v of
-    VBlock b -> "block " <> unloc (blockType b)
+    VBlock b     -> "block " <> unloc (blockType b)
     VConstruct c -> "constructor " <> unloc (tagTag c)
-    VIdent _ i -> "identifier " <> showT i
-    VString _ s -> "string " <> showT s
-    VInt _ i -> "int " <> showT i
-    VDouble _ i -> "double " <> showT i
-    VDoc _ d -> "doc " <> Text.pack (take 50 (show d))
-    VFile _ f -> "file " <> Text.pack f
-    VList _ l -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
+    VIdent _ i   -> "identifier " <> showT i
+    VString _ s  -> "string " <> showT s
+    VInt _ i     -> "int " <> showT i
+    VDouble _ i  -> "double " <> showT i
+    VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
+    VFile _ f    -> "file " <> Text.pack f
+    VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
 
 mapSelected :: Monad f => (Value -> f Value) -> [Ident] -> Value -> f Value
 mapSelected f path v =
@@ -198,7 +200,7 @@ validateBlockLike why fieldVals fieldTys =
     flagSuperfluousBlockElt (ln, _) =
       case Map.lookup ln fieldTys of
         Nothing -> throw why (ln <> " is not part of this block")
-        Just _ -> pure ()
+        Just _  -> pure ()
 
 
 validateValue :: Schema.SType -> Value -> Val Value
@@ -208,7 +210,7 @@ validateValue ty val =
       case ty of
         -- TODO: handle this during parsing
         Schema.SInt -> pure $ VInt loc (floor d)
-        _ -> req Schema.SFloat
+        _           -> req Schema.SFloat
     VInt {} -> req Schema.SInt
     VIdent {} -> req Schema.SIdent
     VString {} -> req Schema.SString
@@ -237,7 +239,7 @@ validateValue ty val =
     flagExtraFieldError why fieldTys (ln, _) =
       case Map.lookup ln fieldTys of
         Nothing -> throw why ("Field " <> ln <> " is not part of this union")
-        Just _ -> pure ()
+        Just _  -> pure ()
 
     validateConstructorField c (n,ty') =
       case Map.lookup n (tagValue c) of
@@ -257,19 +259,19 @@ validateValue ty val =
     getUnion n =
       do  def <- getSchemaDef val n
           case def of
-            Schema.UnionDef u -> pure u
+            Schema.UnionDef u  -> pure u
             Schema.BlockDef {} -> unexpected "union constructor"
 
     getBlock n =
       do  def <- getSchemaDef val n
           case def of
             Schema.UnionDef {} -> unexpected "block"
-            Schema.BlockDef b -> pure b
+            Schema.BlockDef b  -> pure b
 
     reqNamed ue =
       case ty of
         Schema.SNamed n -> pure n
-        _ -> unexpected ue
+        _               -> unexpected ue
 
     unexpected n =  throw val ("Not expecting " <> n <> " here - should be a value of type " <> q (showT ty))
     req ty' = requireType val ty ty' >> pure val
@@ -375,7 +377,7 @@ valueToList :: Value -> [Value]
 valueToList v0 =
   case v0 of
     VList _ vs -> vs
-    _ -> [v0]
+    _          -> [v0]
 
 showT :: Show a => a -> Text
 showT = Text.pack . show
@@ -392,7 +394,7 @@ validateElts :: Schema.Env -> Located [Blok.BlockElement] -> Either Text (Map Id
 validateElts env elts =
   case runVal env validate of
     Left errs -> Left (Text.unlines errs)
-    Right a -> pure a
+    Right a   -> pure a
 
   where
     validate =

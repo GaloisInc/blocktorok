@@ -1,7 +1,17 @@
-module Language.Transform.Syntax where
+module Language.Transform.Syntax
+  ( Call(..)
+  , Decl(..)
+  , Expr(..)
+  , FName(..)
+  , Lit(..)
+  , Selector(..)
+  , Transform(..)
+  ) where
 
-import Data.Text(Text)
-import Language.Common(HasLocation(..), Located(..), sourceRangeSpan')
+import           Data.Text       (Text)
+
+import           Language.Common (HasLocation (..), Located (..),
+                                  sourceRangeSpan')
 
 type LIdent = Located Text
 
@@ -13,7 +23,7 @@ data Selector =
 instance HasLocation Selector where
   location s =
     case s of
-      SelName n -> location n
+      SelName n   -> location n
       SelMem s' l -> sourceRangeSpan' s' l
 
 data Expr =
@@ -28,9 +38,9 @@ data Call = Call FName (Located [Expr])
 instance HasLocation Expr where
   location e =
     case e of
-      ExprFn c -> location c
+      ExprFn c       -> location c
       ExprSelector s -> location s
-      ExprLit l -> location l
+      ExprLit l      -> location l
 
 -- TODO: units
 data Lit =
@@ -43,7 +53,7 @@ instance HasLocation Lit where
   location l =
     case l of
       LitString r -> location r
-      LitInt r  -> location r
+      LitInt r    -> location r
       LitFloat r  -> location r
 
 
@@ -78,13 +88,13 @@ data Decl =
 instance HasLocation Decl where
   location d =
     case d of
-      DeclRender s e -> sourceRangeSpan' s e
-      DeclLet  l e -> sourceRangeSpan' l e
+      DeclRender s e  -> sourceRangeSpan' s e
+      DeclLet  l e    -> sourceRangeSpan' l e
       DeclFileOut f o -> sourceRangeSpan' f o
 
 data Transform = Transform
   { transformSchema :: Located Text
-  , transformDecls :: [Decl]
+  , transformDecls  :: [Decl]
   }
   deriving(Show, Eq, Ord)
 

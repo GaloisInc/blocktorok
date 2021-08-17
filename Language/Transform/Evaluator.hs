@@ -1,27 +1,34 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances #-}
-module Language.Transform.Evaluator where
+{-# LANGUAGE OverloadedStrings     #-}
 
-import Data.Text(Text)
-import qualified Data.Text as Text
-import Data.Map(Map)
-import qualified Data.Map as Map
-import qualified Control.Monad.Except as Except
-import qualified Control.Monad.State as State
-import Control.Applicative((<|>))
-import qualified Prettyprinter as PP
+module Language.Transform.Evaluator
+  ( describeValueType
+  , runTransform
+  ) where
 
+import           Control.Applicative       ((<|>))
+import qualified Control.Monad.Except      as Except
+import qualified Control.Monad.State       as State
+
+import           Data.Foldable             (traverse_)
+import           Data.Map                  (Map)
+import qualified Data.Map                  as Map
+import           Data.Text                 (Text)
+import qualified Data.Text                 as Text
+
+import qualified Prettyprinter             as PP
+
+import           Language.Common           (HasLocation (..), Located (..),
+                                            msgWithLoc, ppRange, unloc)
 import qualified Language.Transform.Syntax as Tx
-import Language.Transform.Value(Value(..))
-import qualified Language.Transform.Value as Value
-import Language.Common(Located(..), HasLocation(..), unloc, msgWithLoc, ppRange)
-import Data.Foldable(traverse_)
+import           Language.Transform.Value  (Value (..))
+import qualified Language.Transform.Value  as Value
 
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
   , envBlockEnv :: Map Ident Value
-  , envOutputs :: Map FilePath Doc
+  , envOutputs  :: Map FilePath Doc
   }
 
 type Ident = Text
@@ -46,7 +53,7 @@ getVarVal i =
   do  mbVals <- getVarValMb i
       case mbVals of
         Nothing -> throw i (q (unloc i) <> " is not defined here")
-        Just a -> pure a
+        Just a  -> pure a
 
 bindVar :: Located Ident -> Value -> Eval ()
 bindVar i v =
@@ -65,7 +72,7 @@ appendToFile fp doc =
       let doc' =
             case Map.lookup fp out of
               Nothing -> doc
-              Just d -> PP.vcat [d, doc]
+              Just d  -> PP.vcat [d, doc]
       State.modify $ \s -> s { envOutputs = Map.insert fp doc' (envOutputs s) }
 
 
@@ -136,11 +143,11 @@ evalRender s0 e = Value.traverseSchemaValues (Value.mapSelected render path) sch
 
     pathRev s =
       case s of
-        Tx.SelName _ -> []
+        Tx.SelName _     -> []
         Tx.SelMem s' mem -> unloc mem:pathRev s'
     schemaS s =
       case s of
-        Tx.SelName n -> unloc n
+        Tx.SelName n   -> unloc n
         Tx.SelMem s' _ -> schemaS s'
 
 evalExpr :: Tx.Expr -> Eval Value
@@ -151,8 +158,8 @@ evalExpr e0 =
     Tx.ExprLit l ->
       pure $
         case l of
-          Tx.LitFloat f -> VDouble (location f) (unloc f)
-          Tx.LitInt i -> VInt (location i) (unloc i)
+          Tx.LitFloat f  -> VDouble (location f) (unloc f)
+          Tx.LitInt i    -> VInt (location i) (unloc i)
           Tx.LitString s -> VString (location s) (unloc s)
 
 -- TODO: this is kind of a hack to deal with constructors not being separable into tag/value
@@ -224,7 +231,7 @@ evalCall lcall =
     args1 args =
       case args of
         [v1] -> pure v1
-        _ -> throw largExprs "Expecting this function to take 1 argument"
+        _    -> throw largExprs "Expecting this function to take 1 argument"
 
     args2 args =
       case args of
@@ -254,19 +261,19 @@ list :: (Value -> Eval a) -> Value -> Eval [a]
 list f v =
   case v of
     VList _ l -> f `traverse` l
-    _ -> throw v "Expecting a list here"
+    _         -> throw v "Expecting a list here"
 
 string :: Value -> Eval Text
 string v =
   case v of
     VString _ s -> pure s
-    _ -> throw v "Expecting a string here"
+    _           -> throw v "Expecting a string here"
 
 file :: Value -> Eval FilePath
 file v =
   case v of
     VFile _ f -> pure f
-    _ -> throw v "Expecting a file handle here"
+    _         -> throw v "Expecting a file handle here"
 
 -------------------------------------------------------------------------------
 -- misc
