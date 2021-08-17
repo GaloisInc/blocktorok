@@ -52,7 +52,6 @@ runTransformIO txPath blokPath out = runTx
           -- run transform
           let eOutputs = TxEval.runTransform tx root
           outputs <- eOutputs `orThrow'` EvalError
-          print outputs
 
           -- do output
           Dir.createDirectoryIfMissing True out
