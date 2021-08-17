@@ -20,6 +20,7 @@ import           Options.Applicative (execParser, fullDesc, header, helper,
 
 import           Link                (runTransformIO)
 
+-- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
 main = realMain =<< execParser opts
   where

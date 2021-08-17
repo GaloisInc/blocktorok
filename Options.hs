@@ -20,12 +20,14 @@ module Options
 import           Options.Applicative (Parser, argument, help, long, metavar,
                                       short, str, strOption)
 
+-- | The options provided at the command line to control compilation
 data Options = Options
   { transformer :: FilePath
   , output      :: FilePath
   , blocktorok  :: FilePath
   }
 
+-- | A parser for command line options
 parseOpts :: Parser Options
 parseOpts =
   Options <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data")

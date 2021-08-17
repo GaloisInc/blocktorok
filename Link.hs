@@ -1,7 +1,23 @@
+{-|
+Module      : Link
+Description : Entry to the Blocktorok compiler
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+The 'real' entry to the Blocktorok compiler which parses everything, validates
+data against the schema, and runs the transformer to produce output.
+-}
+
 module Link
-  ( runTransformIO
-  , ParseError(..)
+  ( -- * Invoking the compiler
+    -- ** Error types
+    ParseError(..)
   , EvalError(..)
+    -- ** Running the transformer
+  , runTransformIO
   ) where
 
 import qualified Control.Exception            as Ex
@@ -22,7 +38,7 @@ import           Language.Transform.Parser    (transformFromFile)
 import qualified Language.Transform.Syntax    as Tx
 import qualified Language.Transform.Value     as TxValue
 
--- |run a transform and produce output
+-- | run a transform and produce output
 -- Throws `ParseError` on failure to parse
 -- Throws `EvalError` for errors during validation/evaluation
 runTransformIO ::
@@ -70,12 +86,12 @@ runTransformIO txPath blokPath out = runTx
 
 -------------------------------------------------------------------------------
 
--- |The type of parse errors
+-- | The type of parse errors
 newtype ParseError = ParseError Text
   deriving(Show)
 instance Ex.Exception ParseError where
 
--- |The type of evaluation errors
+-- | The type of evaluation errors
 newtype EvalError = EvalError Text
   deriving(Show)
 instance Ex.Exception EvalError where
