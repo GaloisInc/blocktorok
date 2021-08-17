@@ -14,6 +14,7 @@ functionality, and behavior.
 
 module Main (main) where
 
+import Link
 import Options
 import Options.Applicative
 
@@ -27,5 +28,5 @@ main = realMain =<< execParser opts
 -- invoke the schema machinery implicitly since the transformer explicitly
 -- refers to a schema file.
 realMain :: Options -> IO ()
-realMain Options { transformer = t, blocktorok = d} =
-  do putStrLn $ "Apply " ++ t ++ " to " ++ d
+realMain Options { transformer = t, output = o, blocktorok = d} =
+  runTransformIO t d o

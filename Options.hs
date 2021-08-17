@@ -20,11 +20,13 @@ module Options
 import Options.Applicative (Parser, argument, help, metavar, long, short, str, strOption)
 
 data Options = Options
-  { transformer :: String
-  , blocktorok  :: String
+  { transformer :: FilePath
+  , output :: FilePath
+  , blocktorok  :: FilePath
   }
 
 parseOpts :: Parser Options
 parseOpts =
   Options <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data")
+          <*> strOption (long "output" <> short 'o' <> metavar "DIR" <> help "The directory to send outputs to")
           <*> argument str (metavar "FILE" <> help "The data to be transformed")
