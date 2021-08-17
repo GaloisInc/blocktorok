@@ -22,20 +22,21 @@ module Language.Schema.Env
   , lookupTypeDef
   ) where
 
-import Control.Monad.State
+import           Control.Monad.State
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
-import Data.Text (unpack)
+import           Data.Map.Strict        (Map)
+import qualified Data.Map.Strict        as Map
+import           Data.Text              (unpack)
 
-import Language.Common (locValue)
-import Language.Schema.Syntax
-import Language.Schema.Type (Ident, Globbed, ppGlob, unGlob)
+import           Language.Common        (locValue)
+import           Language.Schema.Syntax (BlockDecl (blockDeclDecl),
+                                         Decl (declName), SchemaDef)
+import           Language.Schema.Type   (Globbed, Ident, ppGlob, unGlob)
 
 -- | The typing environment
 data Env = Env
   { envRootTypes :: Map Ident (Globbed BlockDecl)
-  , envTypeDefs :: Map Ident SchemaDef
+  , envTypeDefs  :: Map Ident SchemaDef
   }
 
 -- | Construct an empty environment (used as initial parse state)

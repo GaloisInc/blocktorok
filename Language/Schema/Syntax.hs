@@ -13,14 +13,27 @@ it provides a typing environment to the transformer language, which defines how
 input files should be rendered as output to one or more files.
 -}
 
-module Language.Schema.Syntax where
+module Language.Schema.Syntax
+  ( BlockDecl(..)
+  , BlockS(..)
+  , Decl(..)
+  , Root(..)
+  , Schema(..)
+  , SchemaDef(..)
+  , Union(..)
+  , Variant(..)
+  , declsMap
+  , globbedDeclsMap
+  , schemaDefMap
+  , variantsMap
+  ) where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
-import Data.Text (Text, unpack)
+import           Data.Map.Strict      (Map)
+import qualified Data.Map.Strict      as Map
+import           Data.Text            (Text, unpack)
 
-import Language.Common (Located(..))
-import Language.Schema.Type (Ident, Globbed, SType, unGlob)
+import           Language.Common      (Located (..))
+import           Language.Schema.Type (Globbed, Ident, SType, unGlob)
 
 -- | Union constructor field declarations
 data Decl = Decl
@@ -33,20 +46,20 @@ instance Show Decl where
 
 -- | Union variant definition
 data Variant = Variant
-  { variantDoc :: Maybe (Located Text)
-  , variantTag :: Located Ident
+  { variantDoc    :: Maybe (Located Text)
+  , variantTag    :: Located Ident
   , variantFields :: Map Ident SType
   } deriving (Show)
 
 -- | Union-type definition
 data Union = Union
-  { unionName :: Located Ident
+  { unionName     :: Located Ident
   , unionVariants :: Map Ident Variant
   } deriving (Show)
 
 -- | Annotated declarations for block layout definitions
 data BlockDecl = BlockDecl
-  { blockDeclDoc :: Maybe (Located Text)
+  { blockDeclDoc  :: Maybe (Located Text)
   , blockDeclDecl :: Decl
   }
 
@@ -55,13 +68,13 @@ instance Show BlockDecl where
 
 -- | Block layout definition
 data BlockS = BlockS
-  { blockSType :: Located Ident
-  , blockSName :: Maybe (Located Ident)
+  { blockSType   :: Located Ident
+  , blockSName   :: Maybe (Located Ident)
   , blockSFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
 
 -- | Root definition; this defines the top-level structure of input files
-data Root = Root
+newtype Root = Root
   { rootFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
 

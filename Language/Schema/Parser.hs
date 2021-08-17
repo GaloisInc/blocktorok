@@ -17,39 +17,37 @@ module Language.Schema.Parser
   ( schemaFromFile
   ) where
 
-import Control.Monad (void)
-import Control.Monad.State (State)
-import qualified Control.Monad.State as State
+import           Control.Monad              (void)
+import           Control.Monad.State        (State)
+import qualified Control.Monad.State        as State
 
-import Data.Char (isAlpha, isDigit, isUpper)
-import qualified Data.List as List
-import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.IO as TIO
-import Data.Void (Void)
+import           Data.Char                  (isAlpha, isDigit, isUpper)
+import           Data.Functor               (($>))
+import qualified Data.List                  as List
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+import qualified Data.Text.IO               as TIO
+import           Data.Void                  (Void)
 
-import Text.Megaparsec ((<|>))
-import qualified Text.Megaparsec as MP
-import qualified Text.Megaparsec.Char as MPC
+import           Text.Megaparsec            ((<|>))
+import qualified Text.Megaparsec            as MP
+import qualified Text.Megaparsec.Char       as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import Language.Common (Located(..), SourceRange(..))
-import Language.Schema.Env
-  ( Env
-  , addRootType
-  , addTypeDef
-  , emptyEnv
-  , lookupTypeDef
-  )
-import Language.Schema.Syntax
-import Language.Schema.Type
-  ( Ident
-  , SType(..)
-  , Globbed(..)
-  , containedName
-  , containsNamed
-  , unGlob
-  )
+import           Language.Common            (Located (..), SourceRange (..))
+import           Language.Schema.Env        (Env, addRootType, addTypeDef,
+                                             emptyEnv, lookupTypeDef)
+import           Language.Schema.Syntax     (BlockDecl (BlockDecl, blockDeclDecl),
+                                             BlockS (BlockS),
+                                             Decl (Decl, declName), Root (Root),
+                                             Schema (Schema), SchemaDef (..),
+                                             Union (Union),
+                                             Variant (Variant, variantTag),
+                                             declsMap, globbedDeclsMap,
+                                             schemaDefMap, variantsMap)
+import           Language.Schema.Type       (Globbed (..), Ident, SType (..),
+                                             containedName, containsNamed,
+                                             unGlob)
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -111,10 +109,10 @@ brackets p = symbol' "{" *> p <* symbol' "}"
 stype :: Parser SType
 stype = int <|> float <|> i <|> string <|> list <|> named
   where
-    int    = symbol' "int"    *> pure SInt
-    float  = symbol' "float"  *> pure SFloat
-    i      = symbol' "ident"  *> pure SIdent
-    string = symbol' "string" *> pure SString
+    int    = symbol' "int"    $> SInt
+    float  = symbol' "float"  $> SFloat
+    i      = symbol' "ident"  $> SIdent
+    string = symbol' "string" $> SString
     list   = symbol' "list"   *> (SList <$> stype)
     named  = SNamed <$> ident
 
@@ -128,7 +126,7 @@ decl p =
           env <- State.get
           case lookupTypeDef nm env of
             Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
-            Just _ -> pure $ Decl n t
+            Just _  -> pure $ Decl n t
      else pure $ Decl n t
 
 doc :: Parser Text
@@ -166,9 +164,9 @@ union =
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
   where
-    opt  = symbol' "?" *> pure Optional
-    some = symbol' "+" *> pure Some
-    many = symbol' "*" *> pure Many
+    opt  = symbol' "?" $> Optional
+    some = symbol' "+" $> Some
+    many = symbol' "*" $> Many
 
 globbed :: Parser a -> Parser (Globbed a)
 globbed p =

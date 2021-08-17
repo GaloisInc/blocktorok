@@ -13,8 +13,8 @@ Types (and associated functions) that are supported in the schema language.
 -}
 
 module Language.Schema.Type
-  ( Ident
-  , Globbed(..)
+  ( Globbed(..)
+  , Ident
   , SType(..)
   , containedName
   , containsNamed
@@ -22,7 +22,7 @@ module Language.Schema.Type
   , unGlob
   ) where
 
-import Data.Text (Text, unpack)
+import           Data.Text (Text, unpack)
 
 -- | Identifiers
 type Ident = Text
@@ -39,11 +39,11 @@ data SType
   deriving(Eq)
 
 instance Show SType where
-  show SInt = "int"
-  show SFloat = "float"
-  show SIdent = "ident"
-  show SString = "string"
-  show (SList t) = "list " ++ show t
+  show SInt       = "int"
+  show SFloat     = "float"
+  show SIdent     = "ident"
+  show SString    = "string"
+  show (SList t)  = "list " ++ show t
   show (SNamed i) = unpack i
 
 -- | Globs for block layout definitions
@@ -57,10 +57,10 @@ data Globbed a
 instance Functor Globbed where
   fmap f globbed =
     case globbed of
-      One a -> One $ f a
+      One a      -> One $ f a
       Optional a -> Optional $ f a
-      Some a -> Some $ f a
-      Many a -> Many $ f a
+      Some a     -> Some $ f a
+      Many a     -> Many $ f a
 
 
 -------------------------------------------------------------------------------
