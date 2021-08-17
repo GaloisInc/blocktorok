@@ -22,9 +22,6 @@ import qualified Language.Schema.Syntax as Schema
 import qualified Language.Schema.Env as Schema
 import qualified Language.Schema.Type as Schema
 
-import qualified Debug.Trace as Trace
-
-
 type Doc = PP.Doc ()
 type Ident = Text
 
@@ -115,8 +112,6 @@ describeValue v =
 
 mapSelected :: Monad f => (Value -> f Value) -> [Ident] -> Value -> f Value
 mapSelected f path v =
-  Trace.traceM ("Path: " ++ show path) >>
-  Trace.traceM ("Value: " ++ Text.unpack (describeValue v)) >>
   case path of
     [] ->
       case v of

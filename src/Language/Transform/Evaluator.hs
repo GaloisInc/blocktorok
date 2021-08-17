@@ -18,8 +18,6 @@ import qualified Language.Transform.Value as Value
 import Language.Common(Located(..), HasLocation(..), unloc, msgWithLoc, ppRange)
 import Data.Foldable(traverse_)
 
-import qualified Debug.Trace as Trace
-
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
   , envBlockEnv :: Map Ident Value
