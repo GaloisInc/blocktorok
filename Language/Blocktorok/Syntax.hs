@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Language.Link.Blocktorok.Syntax where
+module Language.Blocktorok.Syntax where
 
 import Data.Text(Text)
 

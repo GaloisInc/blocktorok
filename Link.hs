@@ -12,7 +12,7 @@ import Language.Transform.Parser(transformFromFile)
 import qualified Language.Transform.Syntax as Tx
 import qualified Language.Transform.Evaluator as TxEval
 import qualified Language.Transform.Value as TxValue
-import Language.Link.Blocktorok.Parser(elementsFromFile)
+import Language.Blocktorok.Parser(elementsFromFile)
 import Language.Schema.Parser(schemaFromFile)
 import Language.Common(Located(..))
 import Data.Foldable(traverse_)

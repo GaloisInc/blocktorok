@@ -4,7 +4,7 @@
 {-# LANGUAGE BlockArguments #-}
 
 -- generate docs from this description?
-module Language.Link.Blocktorok.BlockM where
+module Language.Blocktorok.BlockM where
 
 import qualified Control.Monad.Reader as Reader
 import qualified Control.Monad.Except as Except
@@ -13,8 +13,8 @@ import Data.Text(Text)
 import qualified Data.Text as Text
 
 import Language.Common (Located(..), ppRange)
-import Language.Link.Blocktorok.Parser(parseBlocktorok)
-import Language.Link.Blocktorok.Syntax
+import Language.Blocktorok.Parser(parseBlocktorok)
+import Language.Blocktorok.Syntax
     ( Value,
       BlockElement(..),
       Block(..),

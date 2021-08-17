@@ -11,7 +11,7 @@ import Language.Common(SourceRange, Located(..), HasLocation(..), msgWithLoc, un
 import qualified Data.Map as Map
 import Data.Map(Map)
 import Data.Foldable(traverse_)
-import qualified Language.Link.Blocktorok.Syntax as Blok
+import qualified Language.Blocktorok.Syntax as Blok
 import Data.Bifunctor(first)
 
 import qualified Control.Monad.Reader as Reader

@@ -14,36 +14,18 @@ functionality, and behavior.
 
 module Main (main) where
 
-import Control.Monad (zipWithM)
-import Control.Monad.Except (Except, runExcept)
-
-import Data.Backends.SU2 (SU2Config)
-import Data.Class.Render
-import Language.Compile.SU2 (compile)
-import Language.Error (LinkError)
-import Language.Link (link)
 import Options
-import Text.Parse.Link (parseDecl)
-
 import Options.Applicative
-
-import System.Exit
 
 main :: IO ()
 main = realMain =<< execParser opts
   where
     opts = info (parseOpts <**> helper)
-      (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
+      (fullDesc <> progDesc "Transform Blocktorok data." <> header "blocktorok - A Blocktorok data transformer")
 
+-- TODO: Read and execute the transformer on the data for real. This will
+-- invoke the schema machinery implicitly since the transformer explicitly
+-- refers to a schema file.
 realMain :: Options -> IO ()
-realMain Options { sources = inputs, target = output } =
-  do inputContents <- mapM readFile inputs
-     case runExcept $ processProg inputContents of
-       Left e -> putStrLn (render e) >> exitFailure
-       Right su2 -> writeFile output (render su2)
-  where
-    processProg :: [String] -> Except LinkError SU2Config
-    processProg contents =
-      do progs <- zipWithM parseDecl inputs contents
-         prog <- link progs
-         compile prog
+realMain Options { transformer = t, blocktorok = d} =
+  do putStrLn $ "Apply " ++ t ++ " to " ++ d
