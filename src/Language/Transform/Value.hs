@@ -127,6 +127,7 @@ mapSelected f path v =
       case v of
         VBlock b ->
           VBlock . mkBlock b <$> (mapElt n r `traverse`  Map.toList (blockValues b))
+        -- TODO: a bit of a hack because of VConstruct
         VConstruct c | unloc (tagTag c) == n ->
           case r of
             [] -> f v
