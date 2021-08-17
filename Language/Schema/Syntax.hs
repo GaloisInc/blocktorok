@@ -14,7 +14,9 @@ input files should be rendered as output to one or more files.
 -}
 
 module Language.Schema.Syntax
-  ( BlockDecl(..)
+  ( -- * Blocktorok Schemas
+    -- ** The AST
+    BlockDecl(..)
   , BlockS(..)
   , Decl(..)
   , Root(..)
@@ -22,6 +24,7 @@ module Language.Schema.Syntax
   , SchemaDef(..)
   , Union(..)
   , Variant(..)
+    -- ** Turning lists into 'Map's
   , declsMap
   , globbedDeclsMap
   , schemaDefMap
@@ -93,19 +96,24 @@ data Schema = Schema
 
 -------------------------------------------------------------------------------
 
+-- | Transform a list of 'Decl's into a map from 'Ident' to 'SType'
 declsMap :: [Decl] -> Map Ident SType
 declsMap =
   Map.fromList . fmap (\d-> (locValue (declName d), locValue (declType d)))
 
+-- | Transform a list of 'Variant's into a map from 'Ident' to 'Variant'
+-- where the 'Ident' is the variant's tag
 variantsMap :: [Variant] -> Map Ident Variant
 variantsMap = Map.fromList . fmap (\v -> (locValue (variantTag v), v))
 
+-- | Transform a list of 'Globbed' 'BlockDecl's into a map
 globbedDeclsMap :: [Globbed BlockDecl] -> Map Ident (Globbed BlockDecl)
 globbedDeclsMap = Map.fromList . fmap getDecl
   where
     getDecl :: Globbed BlockDecl -> (Ident, Globbed BlockDecl)
     getDecl g = ((locValue . declName . blockDeclDecl . unGlob) g, g)
 
+-- | Transform a list of 'SchemaDef's into a map
 schemaDefMap :: [SchemaDef] -> Map Ident SchemaDef
 schemaDefMap = Map.fromList . fmap getDef
   where

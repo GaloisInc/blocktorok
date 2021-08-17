@@ -43,7 +43,8 @@ data Env = Env
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty
 
--- | TODO: Better use of location info in error messaging
+-- | Add a new root type to the 'Env' if it is not already defined, failing
+-- with an error otherwise
 addRootType :: (MonadState Env m, MonadFail m)
             => Globbed BlockDecl
             -> m ()
@@ -57,7 +58,8 @@ addRootType d =
        Nothing -> put $ e { envRootTypes = Map.insert i d $ envRootTypes e }
   where i =  (locValue . declName . blockDeclDecl . unGlob) d
 
--- | TODO: Better use of location info in error messaging
+-- | Add a new type definition to the `Env` if it is not already defined,
+-- failing with an error otherwise
 addTypeDef :: (MonadState Env m, MonadFail m)
            => Ident
            -> SchemaDef
@@ -69,5 +71,7 @@ addTypeDef i s =
          fail $ "The type " ++ show (unpack i) ++ " is already defined."
        Nothing -> put $ e { envTypeDefs = Map.insert i s $ envTypeDefs e }
 
+-- | Lookup an identifier in the 'Env's type definition map, returning
+-- 'Nothing' if it is not found
 lookupTypeDef :: Ident -> Env -> Maybe SchemaDef
 lookupTypeDef i e = Map.lookup i (envTypeDefs e)

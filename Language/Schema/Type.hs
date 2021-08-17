@@ -13,11 +13,15 @@ Types (and associated functions) that are supported in the schema language.
 -}
 
 module Language.Schema.Type
-  ( Globbed(..)
+  ( -- * Schema Types
+    -- ** Type Representations
+    Globbed(..)
   , Ident
   , SType(..)
+    -- ** User-defined/named type utilities
   , containedName
   , containsNamed
+    -- ** Globbed type utilities
   , ppGlob
   , unGlob
   ) where
@@ -74,6 +78,7 @@ unGlob glob =
     Some a     -> a
     Many a     -> a
 
+-- | Pretty-print a 'Globbed' value that can be shown
 ppGlob :: Show a => Globbed a -> String
 ppGlob g = show (unGlob g) ++ globStr
   where
@@ -91,7 +96,7 @@ containsNamed _          = False
 
 -- | If the type @t@ contains a named type (i.e. @containsNamed t@ returns
 -- @True@), return that type's name. This function errors on types that
--- fail to return true when passed to 'containsName'.
+-- fail to return true when passed to 'containsNamed'.
 containedName :: SType -> Ident
 containedName (SNamed i) = i
 containedName (SList t)  = containedName t

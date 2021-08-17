@@ -14,7 +14,8 @@ used in the glue code connecting schemas to the transformer language.
 -}
 
 module Language.Schema.Parser
-  ( schemaFromFile
+  ( -- * Parsing Blocktorok schemas
+    schemaFromFile
   ) where
 
 import           Control.Monad              (void)
@@ -230,5 +231,7 @@ schema =
 parseSchema :: FilePath -> Text -> Env
 parseSchema fp t = State.execState (MP.runParserT schema fp t) emptyEnv
 
+-- | Parse a 'Schema' from the given file, returning the typing 'Env' it
+-- specifies
 schemaFromFile :: FilePath -> IO Env
 schemaFromFile fp = parseSchema fp <$> TIO.readFile fp
