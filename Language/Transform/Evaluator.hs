@@ -2,6 +2,20 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
+{-|
+Module      : Language.Transform.Evaluator
+Description : Blocktorok transformer language evaluator
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+An evaluator for the Blocktorok transformer language, which applies the
+transform to real data. This module does not provide the mechanisms to output
+the result of applying the transform to files; see "Link" for that interface.
+-}
+
 module Language.Transform.Evaluator
   ( describeValueType
   , runTransform
@@ -241,6 +255,7 @@ evalCall lcall =
 -------------------------------------------------------------------------------
 -- "typing"
 
+-- | Describe the type of a value. Useful for debugging/testing
 describeValueType :: Value -> Text
 describeValueType v0 =
   case v0 of
@@ -284,6 +299,8 @@ q v = "'" <> v <> "'"
 -------------------------------------------------------------------------------
 -- API
 
+-- | Apply a transformer to validated data, returning a map from output files
+-- to the output that should be written
 runTransform :: Tx.Transform -> Map Ident Value -> Either Text (Map FilePath Doc)
 runTransform tx blokenv =
   do

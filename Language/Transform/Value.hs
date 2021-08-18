@@ -2,7 +2,34 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
-module Language.Transform.Value where
+{-|
+Module      : Language.Transform.Value
+Description : Blocktorok transformer language values
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+Definitions of and methods for working with values in the Blocktorok transform
+language. These values are the result of evaluating 'Expr's which are to be
+interpolated in bar strings, and may eventually be the parse target for actual
+Blocktorok data (currently, those values are translated into these values.)
+-}
+
+module Language.Transform.Value
+  ( -- * Blocktorok transform values
+    -- ** Values
+    BlockValue(..)
+  , TagValue(..)
+  , Value(..)
+    -- ** Describing, traversing, validating values
+  , describeValue
+  , mapSelected
+  , traverseSchemaValues
+  , validateElts
+  , valueToList
+  ) where
 
 import qualified Control.Monad.Reader       as Reader
 import qualified Control.Monad.Validate     as Validate
@@ -27,11 +54,18 @@ import qualified Language.Transform.Syntax  as Tx
 type Doc = PP.Doc ()
 type Ident = Text
 
+-- | Representation of union variant values, carrying their rendering rule and
+-- type information
 data TagValue = TagValue
-  { tagLoc      :: SourceRange
+  { -- | The source location of this variant
+    tagLoc      :: SourceRange
+    -- | The variant's tag
   , tagTag      :: Located Ident
+    -- | How to render this variant, if defined
   , tagRenderer :: Maybe Tx.Expr
+    -- | The fields of the variant and their values
   , tagValue    :: Map Ident Value
+    -- | The type of this variant, if defined
   , tagSchema   :: Maybe Ident
   }
   deriving(Show)
@@ -39,12 +73,20 @@ data TagValue = TagValue
 instance HasLocation TagValue where
   location = tagLoc
 
+-- | Representation of block values, carrying their rendering rule and type
+-- information
 data BlockValue = BlockValue
-  { blockLoc      :: SourceRange
+  { -- | The source location of this block
+    blockLoc      :: SourceRange
+    -- | The 'type' of the block; its leading identifier
   , blockType     :: Located Ident
+    -- | The name of the block, if required in the schema
   , blockName     :: Maybe (Located Ident)
+    -- | How to render this block, if defined
   , blockRenderer :: Maybe Tx.Expr
+    -- | The fields of the block and their values
   , blockValues   :: Map Ident Value
+    -- | The type of this block, if defined
   , blockSchema   :: Maybe Ident
   }
   deriving(Show)
@@ -52,6 +94,8 @@ data BlockValue = BlockValue
 instance HasLocation BlockValue where
   location = blockLoc
 
+-- | Values in the transformer language, which correspond closely to the values
+-- defined in "Language.Blocktorok.Syntax"
 data Value =
     VDouble SourceRange Double
   | VInt SourceRange Integer
@@ -99,6 +143,8 @@ traverseValue f v =
       do  v' <- traverseValue f `traverse` blockValues b
           f (VBlock b { blockValues = v' })
 
+-- | Return a textual description of a 'Value', useful for debugging and
+-- testing
 describeValue :: Value -> Text
 describeValue v =
   case v of
@@ -112,6 +158,8 @@ describeValue v =
     VFile _ f    -> "file " <> Text.pack f
     VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
 
+-- | Map an action over the selected parts of a 'Value'. The list of 'Ident'
+-- corresponds to a path described by a 'Selector'
 mapSelected :: Monad f => (Value -> f Value) -> [Ident] -> Value -> f Value
 mapSelected f path v =
   case path of
@@ -139,6 +187,8 @@ mapSelected f path v =
     mapElt p r (n, v') | n == p =  (n,) <$> mapSelected f r v'
                        | otherwise = pure (n, v')
 
+-- | Traverse a 'Value', running an action at each entity described by the
+-- schema named by the provided 'Ident'
 traverseSchemaValues :: Monad m => (Value -> m Value) -> Ident -> Value -> m Value
 traverseSchemaValues f i = traverseValue sch
   where
@@ -373,6 +423,8 @@ blockBlockToValue block =
 
 --
 
+-- | @valueToList v@ returns the underlying list if @v@ is a @VList@, and
+-- injects @v@ into a singleton list otherwise
 valueToList :: Value -> [Value]
 valueToList v0 =
   case v0 of
@@ -390,6 +442,8 @@ q a = "'" <> a <> "'"
 -------------------------------------------------------------------------------
 --
 
+-- | Given a schema and collection of 'BlockElement's, validate that the
+-- elements satisfy the schema, returning a value environment upon success
 validateElts :: Schema.Env -> Located [Blok.BlockElement] -> Either Text (Map Ident Value)
 validateElts env elts =
   case runVal env validate of

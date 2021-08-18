@@ -9,8 +9,8 @@ Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
 
-Parsers for the LINK schema language, including high-level entrypoints to be
-used in the glue code connecting schemas to the transformer language.
+Parsers for the Blocktorok schema language, including high-level entrypoints to
+be used in the glue code connecting schemas to the transformer language.
 -}
 
 module Language.Schema.Parser

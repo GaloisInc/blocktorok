@@ -1,7 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : Language.Transform.Parser
+Description : Parsers for the transformer language
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+Parsing of Blocktorok transformers, exposing only an interface to parse
+transformers from files in 'IO' contexts.
+-}
+
 module Language.Transform.Parser
-  ( transformFromFile
+  ( -- * Parsing Blocktorok transformers
+    transformFromFile
   ) where
 
 import           Control.Applicative        (many, some)
@@ -188,6 +202,7 @@ parseTransform name input =
     Right tx -> Right tx
     Left err -> Left (Text.pack $ MP.errorBundlePretty err)
 
+-- | Parse a 'Transform' from the contents of a given file
 transformFromFile :: FilePath -> IO (Either Text Transform)
 transformFromFile fp =
   parseTransform fp <$> TIO.readFile fp

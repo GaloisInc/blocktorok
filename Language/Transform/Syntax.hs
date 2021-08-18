@@ -1,5 +1,21 @@
+{-|
+Module      : Language.Transform.Syntax
+Description : Blocktorok transformer language syntax definition
+Copyright   : (c) Galois, Inc. 2021
+License     : N/A
+Maintainer  : james.lamar@galois.com
+Stability   : experimental
+Portability : N/A
+
+Definition of the AST for Blocktorok transformers; for definitions of schema
+language syntax see "Language.Schema.Syntax", and for the data language see
+"Language.Blocktorok.Syntax".
+-}
+
 module Language.Transform.Syntax
-  ( Call(..)
+  ( -- * Blocktorok Transformers
+    -- ** The AST
+    Call(..)
   , Decl(..)
   , Expr(..)
   , FName(..)
@@ -13,8 +29,12 @@ import           Data.Text       (Text)
 import           Language.Common (HasLocation (..), Located (..),
                                   sourceRangeSpan')
 
+-- | Identifiers carrying their location; type alias for easy representation
+-- changes
 type LIdent = Located Text
 
+-- | Selectors, which refer to parts of a schema (overall data shape) or the
+-- actual data present in inputs. See 'Expr' and 'Decl' for more information
 data Selector =
     SelName LIdent
   | SelMem  Selector LIdent
@@ -26,12 +46,16 @@ instance HasLocation Selector where
       SelName n   -> location n
       SelMem s' l -> sourceRangeSpan' s' l
 
+-- | Expressions in the transformer language, which can be interpolated in
+-- so-called "bar strings". 'Selector' in this context refers to the data
+-- that is being transformed rather than part of the schema
 data Expr =
     ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
   deriving(Show, Eq, Ord)
 
+-- | A function call (e.g. @join(", ", foo.bar)@)
 data Call = Call FName (Located [Expr])
   deriving(Show, Eq, Ord)
 
@@ -43,6 +67,8 @@ instance HasLocation Expr where
       ExprLit l      -> location l
 
 -- TODO: units
+-- | Literals in the transformer language; numerical literals will eventually
+-- carry unit information
 data Lit =
     LitString (Located Text)
   | LitInt (Located Integer)
@@ -56,7 +82,9 @@ instance HasLocation Lit where
       LitInt r    -> location r
       LitFloat r  -> location r
 
-
+-- | Primitive functions provided in the transformer language. Only @join@ and
+-- @file@ are exposed to the user; the others are internally computed to
+-- support bar strings
 data FName =
   -- | Horizontally concat docs
     FHCat
@@ -74,6 +102,12 @@ data FName =
   | FFile
   deriving(Show, Eq, Ord)
 
+-- | Top-level declarations defining a transformer, consisting of:
+--
+-- * Rendering instructions - here, a 'Selector' refers to overall data shape
+-- as defined in the data schema
+-- * Variable definitions
+-- * Writing output to files
 data Decl =
   -- | Describe how to render a selector
     DeclRender Selector Expr
@@ -92,6 +126,8 @@ instance HasLocation Decl where
       DeclLet  l e    -> sourceRangeSpan' l e
       DeclFileOut f o -> sourceRangeSpan' f o
 
+-- | A full transformer, consisting of a schema filename and the 'Decl's which
+-- define the transformation
 data Transform = Transform
   { transformSchema :: Located Text
   , transformDecls  :: [Decl]
