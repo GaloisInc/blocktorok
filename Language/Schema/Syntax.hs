@@ -1,16 +1,16 @@
 {-|
 Module      : Language.Schema.Syntax
-Description : The abstract syntax of the LINK schema language
+Description : The abstract syntax of the Blocktorok schema language
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
 Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
 
-This module defines the syntax of the LINK schema language, which is used to
-define the layout of input files and perform some light validation. Ultimately,
-it provides a typing environment to the transformer language, which defines how
-input files should be rendered as output to one or more files.
+This module defines the syntax of the Blocktorok schema language, which is used
+to define the layout of input files and perform some light validation.
+Ultimately, it provides a typing environment to the transformer language, which
+defines how input files should be rendered as output to one or more files.
 -}
 
 module Language.Schema.Syntax
