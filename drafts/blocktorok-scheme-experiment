@@ -1,0 +1,134 @@
+
+monsters {
+  orc: [ ... ]
+  orc Jarvis {
+    name: "Jarvis the Orc"
+    age: 12
+    hobbies: ["crochet", "romantic poetry", "cybernetics"]
+  }
+
+  orc Leopold {
+    name: "Leopold"
+    hobbies: ["macrame", "french cooking", "control theory"]
+  }
+}
+
+Jarvis the Orc (Age 12)
+  Likes: crochet, romantic poetry, cybernetics
+
+Jarvis the Orc (Age 12)
+  Likes: crochet, romantic poetry, cybernetics
+
+---------------------------------------
+
+orcs = file("orcs.dat")
+
+schema.ocs:
+
+evil {
+  .is_demonic: bool
+  .is_sentient: bool
+}
+
+weapons extends evil {
+  .is_fauchard: bool
+  .is_voulge: bool
+  .eviltype: string
+}
+
+sentient_weapon extends evil, weapons {
+
+}
+
+orc_schema {
+  .name: string
+  .age: option int
+  .hobbies: list string
+}
+
+
+orc_schema =
+  schema
+    .name: string
+    .age: option int
+    .hobbies: list string
+
+monster_schema =
+  schema
+    .orc: orc_schema*
+
+experiment.ocs:
+
+experiment =
+  schema
+    ..
+
+
+su2.ocs:
+pull in "experiment.ocs"
+
+augment experiment with
+  schema
+    .su2: su2_config
+
+su2_experiement extends experiment {
+  .backend.su2: su2_config
+}
+
+
+
+parser.oca:
+
+root schema "schema.ocs" as monster
+
+
+require monster.orc.age > 0 "orcs cannot have negative age"
+
+for monsters.orc
+  require age > 0 "orcs cannot have negative age"
+
+
+
+
+
+validate monsters.orc orc_schema
+
+schema monsters
+
+for monsters.orc
+  for friend
+    ...
+  age <- aga as int
+
+
+
+
+
+ms = map monsters.orc {
+  name <- name as string
+  age <- age as (option int)
+  hobbies <- hobbies as (list string)
+
+  age_desc = if exists(age) then "(Age ${age})" else ""
+
+  return
+    |${name} ${age_desc}
+    |   Likes: ${ join(hobbies, ", ") }
+}
+
+orcs << join(ms, "\n")
+
+
+
+experiment K {
+  model S {
+    domain Y {
+
+    }
+
+    domain Z {
+
+    }
+  }
+}
+

@@ -1,78 +1,103 @@
-# The LINK Programming Language
+# Blocktorok: Easy Structured Data Transformers
 
 ## Introduction
 
-LINK is a domain-specific language (DSL) used to express multi-physics
-problems. LINK combines simple and intuitive syntax, static analysis, and
-sophisticated backend systems (such as SU2 and OpenFoam) to provide users with
-what's necessary to confidently compose physical models.
+**Blocktorok** is a language ecosystem for expressing data schemas, encoding
+data that matches these schemas, and transforming these data into arbitrary
+targets defined by the user.
+
+Blocktorok features simple syntax, static analysis, and the flexibility to
+express data across many domains in ways natural to practitioners in those
+domains.
+
+The design of Blocktorok was motivated by problems in the usability of tools
+for modeling physical phenomena: Labs often use custom tools, making
+collaboration between groups difficult and tedious. With Blocktorok, a common
+language can be agreed upon and individual labs can continue to use their own
+tools simply by defining a transformer from the common language to those tools'
+input languages. In particular, it is possible, through the use of multiple
+transformers, for a single expression of a physics problem to be translated to
+the language of sophisticated (but challenging to use) systems such as SU2 and
+OpenFoam.
 
 ## Prerequisites
 
-There are currently no binary released of LINK, so it must be built from
+There are currently no binary releases of Blocktorok, so it must be built from
 source.
 
-In order to build LINK, you must have an installation of the Glasgow Haskell
-Compiler (GHC) and the `cabal` build system. The easiest way to install these
-tools on most *nix platforms (including OSX) is through
+In order to build Blocktorok, you must have an installation of the Glasgow
+Haskell Compiler (GHC) and the `cabal` build system. The easiest way to install
+these tools on most *nix platforms (including OSX) is through
 [`ghcup`](https://www.haskell.org/ghcup/) - This tool allows for the management
 of multiple GHC/`cabal` installations, and in most cases "just works."
 
-In addition, to run the compiled output, an installation of
-[SU2](https://su2code.github.io/) is required. Instructions can be found at the
-linked resource.
+In addition, if you plan to run any examples of SU2/OpenFoam output, an
+installation of those tools is required:
 
-## Building LINK
+* [SU2](https://su2code.github.io/)
+* [OpenFoam](https://openfoam.org/)
 
-To build LINK, simply run `cabal build exe:steel` from within the directory containing
-this README. Any Haskell dependencies necessary will be fetched and built
-automatically.
+Intallation/use instructions can be found at the linked resources.
 
-## Running LINK
+## Building Blocktorok
 
-Because LINK is in a prototype state, it is best and easiest to run it using
-`cabal`.
+To build Blocktorok, simply run `cabal build` from within the directory
+containing this README. Any Haskell dependencies necessary will be fetched and
+built automatically.
 
-Executing `cabal run steel` within the directory containing this README results
-in this output:
+## Running Blocktorok
+
+Because Blocktorok is in a prototype state, it is best and easiest to run it
+using `cabal`.
+
+Executing `cabal run blocktorok` within the directory containing this README
+results in this output:
 
 ```bash
-Missing: FILES... (-o|--output DIR) (-l|--lib DIR)
+Missing: (-t|--transformer FILE) (-o|--output DIR) FILE
 
-Usage: steel FILES... (-o|--output DIR) (-l|--lib DIR)
-  Compile a LINK program
+Usage: blocktorok (-t|--transformer FILE) (-o|--output DIR) FILE
+  Transform Blocktorok data.
 ```
 
-More detailed help can be displayed by executing `cabal run steel -- -h` or
-`cabal run steel -- --help`. The `--` passes the flags following to the
-LINK executable rather than `cabal`. Here is the help output:
+More detailed help can be displayed by executing `cabal run blocktorok -- -h`
+or `cabal run blocktorok -- --help`. The `--` passes the flags following to the
+Blocktorok executable rather than `cabal`. Here is the help output:
 
 ```text
-steel - A LINK compiler
+blocktorok - A Blocktorok data transformer
 
-Usage: steel FILES... (-o|--output DIR) (-l|--lib DIR)
-  Compile a LINK program
+Usage: blocktorok (-t|--transformer FILE) (-o|--output DIR) FILE
+  Transform Blocktorok data.
 
 Available options:
-  FILES...                 The LINK sources to be compiled
-  -o,--output DIR          The directory to output to
-  -l,--lib DIR             Directory containing backend libraries
+  -t,--transformer FILE    The transformer to apply to the input data
+  -o,--output DIR          The directory to send outputs to
+  FILE                     The data to be transformed
   -h,--help                Show this help text
 ```
 
-So, given a collection of LINK sources (say `a.steel`, `b.steel`, `c.steel`),
-and a desired output file `out.cfg`, the compiler can be run like so:
+So, given a transformer definition (e.g. `transform.oct`), some data (e.g.
+`data.blok`), and an output directory name (e.g. `out/`) the compiler can be
+run like so:
 
 ```bash
-cabal run steel -- a.steel b.steel c.steel --output outdir
+cabal run blocktorok -- --transformer transform.oct --output out/ data.blok
 ```
 
-This will link and compile the source files, dumping the output into the
-directory `outdir`, relative to where the compiler was invoked.
+Which will transform `data.blok` according to the rules in `transform.oct`,
+placing any output files in the director `out/`.
 
 ## Samples and Documentation
 
-TODO: Update with info on running the challenge problem.
+The directories `hello/` and `battle/` under `drafts/` contain some very
+simple data and transformers to test out the compiler and get a feel for the
+language syntax: `hello/` contains an empty data file whose transformer
+produces all of the output, while `battle/` is a more complex data format
+describing fantasy RPG battle scenarios together with a transformer that emits
+Python code which simulates the battle scenario described. The `b1.py` file
+unde `drafts/` contains the simulation code referred to by the output of the
+latter example.
 
-Documentation for the LINK language can be found in the report distributed as
-part of the Milestone 4 deliverables.
+Documentation for the Blocktorok's data, schema, and transformer language can
+be found in the report distributed with this code release.

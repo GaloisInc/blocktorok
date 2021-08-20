@@ -1,0 +1,94 @@
+union thermal_diffusivity {
+  [-- Right hand side of the equation --]
+  components { density: float, heat_capcity: float, thermal_conductivity: float };
+
+  [-- Left hand side of the equation --]
+  dt { dt: float };
+}
+
+union convergence {
+  [-- Maximum number of iterations before the simulation ends --]
+  max_iterations { iter: int };
+
+  [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
+  criterion { field: optional string, min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
+}
+
+union time {
+  [-- Steady state simulation --]
+  steady_state { outer_iter: int };
+
+  [-- Transient simulation --]
+  transient { dt: float, max_time: float, start_time: optional float, inner_iter: int, outer_iter: int };
+}
+
+block input_output {
+  [-- Output solution frequency --]
+  .write_interval: float
+
+  [-- Name of output file is optional (OpenFoam does not have one) --]
+  .output_file: optional string
+
+  [-- Output file format --]
+  .output_format: string
+
+  [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
+  .mesh_filename: optional string
+
+  [-- The format of the mesh file --]
+  .mesh_format: optional string
+}
+
+block physics {
+  [-- The governing equation/solver for the problem --]
+  .governing_equation: string
+
+  [-- Parameters for physical models such as turbulence and thermophysical models are defined here --]
+  .physical_models: thermal_diffusivity
+}
+
+block boundary_condition_value .name {
+  [-- Field type: e.g. Uniform --]
+  .field_type: string
+
+  [-- Value for the field: e.g. 273]
+  .value: float
+}
+
+block boundary_conditions {
+  [-- The variable that the boundary condition is being applied (temperature, pressure, ...) --]
+  .variable: string
+
+  [-- Name of the mesh location to apply the boundary condition --]
+  .marker: string
+
+  [-- Type of boundary condition: fixed value, zero gradient, ... --]
+  .type: string
+
+  [-- Value being applied to the boundary: e.g. uniform 273 --]
+  .value: ident
+}
+
+block domain {
+  [-- Physics parameters --]
+  .physics: physics
+
+  [-- Simulation termination conditions --]
+  .convergence: convergence
+
+  [-- Input output parameters (mesh files are included here) --]
+  .input_output: input_output
+
+  [-- Time dependency: transient or steady state parameters are defined here --]
+  .time: time
+
+  [-- Values for boundary conditions --]
+  .bc_value: boundary_condition_value*
+
+  [-- Boundary conditions --]
+  .boundary_conditions: boundary_conditions*
+}
+
+root {
+  .simulation: domain
+}
