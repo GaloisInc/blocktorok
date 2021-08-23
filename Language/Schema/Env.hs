@@ -22,7 +22,7 @@ module Language.Schema.Env
   , lookupTypeDef
   ) where
 
-import           Control.Monad.State
+import           Control.Monad.State    (MonadState (get, put))
 
 import           Data.Map.Strict        (Map)
 import qualified Data.Map.Strict        as Map
