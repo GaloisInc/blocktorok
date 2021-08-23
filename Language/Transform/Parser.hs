@@ -120,7 +120,7 @@ barStringExprParser =
     embeddedExpr =
       do  _ <- MP.try (MP.chunk "${")
           expr <- exprParser
-          symbol' "}"
+          void $ MP.chunk "}"
           pure expr
 
     escaped =
