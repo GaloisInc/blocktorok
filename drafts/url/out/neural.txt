@@ -1,4 +1,1 @@
-urlBase
-"&activation=" +  urlParams.activation
-"&batchSize=" + urlParams.batchSize
-"&dataset=" +  urlParams.dataSet
+https://playground.tensorflow.org/#activation=Tanh&batchSize=7&dataset=circle
