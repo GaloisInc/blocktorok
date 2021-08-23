@@ -1,0 +1,4 @@
+urlBase
+"&activation=" +  urlParams.activation
+"&batchSize=" + urlParams.batchSize
+"&dataset=" +  urlParams.dataSet

@@ -1,0 +1,23 @@
+block urlParams {
+   [-- Eventually need to constrain to optons "Tanh","Sigmoid","Linear","ReLU" --]
+   .activation: string
+
+   [-- Eventually I want to figure out how to make this >=1 and <=30 --]
+   .batchSize:  int
+
+   [-- Eventually need to constrain to options "circle","xor","gauss","spiral" --]
+   .dataSet:    string
+}
+
+block urlBase {
+   .base:       string
+}
+
+block neural {
+   .urlBase:    urlBase
+   .urlParams:  urlParams
+}
+
+root {
+   .neural:  neural
+}
