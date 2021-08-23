@@ -222,9 +222,9 @@ schemaDefsP =  UnionDef <$> union
            <|> BlockDef <$> blockS
 
 schema :: Parser Schema
-schema =
-  Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
-         <*> root
+schema = spc *>
+  (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
+          <*> root)
 
 -------------------------------------------------------------------------------
 

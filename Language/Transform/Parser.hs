@@ -190,7 +190,8 @@ declParser = MP.choice [renderDecl, letDecl, outDecl]
 
 transformParser :: Parser Transform
 transformParser =
-  do  schema <- symbol' "schema" *> located strLitParser
+  do  spc
+      schema <- symbol' "schema" *> located strLitParser
       decls <- many declParser
       pure $ Transform schema decls
 
