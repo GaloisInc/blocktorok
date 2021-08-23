@@ -124,7 +124,7 @@ barStringExprParser =
           pure expr
 
     escaped =
-      do  _ <- MP.try (MP.chunk "\\")
+      do  void $ MP.try (MP.chunk "\\")
           c <- located' MP.anySingle
           pure . ExprLit . LitString $ (Text.singleton <$> c)
 
@@ -132,7 +132,7 @@ strLitParser :: Parser Text
 strLitParser =
   do  MP.try (symbol' "\"")
       contents <- MP.takeWhileP (Just "string literal") (/= '"')
-      _ <- MP.single '"'
+      void $ MP.single '"'
       pure contents
 
 exprParser :: Parser Expr
