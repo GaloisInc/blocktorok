@@ -1,6 +1,6 @@
 neural {
    urlBase {
-      base: "https://playground.tensorflow.org/#"
+      base: "https://playground.tensorflow.org/"
    }
 
    urlParams {

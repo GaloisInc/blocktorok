@@ -5,6 +5,6 @@ output = file("neural.txt")
 render neural.urlBase   |${base}
 render neural.urlParams |activation=${activation}&batchSize=${batchSize}&dataset=${dataSet}
 
-render neural |${urlBase}${urlParams}
+render neural |${urlBase}#${urlParams}
 
 output << neural
