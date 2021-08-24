@@ -1,15 +1,15 @@
 union activation {
-   Tanh { };
-   Sigmoid { };
-   Linear { };
-   ReLU { };
+   Tanh {};
+   Sigmoid {};
+   Linear {};
+   ReLU {};
 }
 
 union data {
-   Circle { };
-   Xor { };
-   Gauss { };
-   Spiral { };
+   Circle {};
+   Xor {};
+   Gauss {};
+   Spiral {};
 }
 
 block urlParams {
