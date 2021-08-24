@@ -1,12 +1,24 @@
+union activation {
+   Tanh { };
+   Sigmoid { };
+   Linear { };
+   ReLU { };
+}
+
+union data {
+   Circle { };
+   Xor { };
+   Gauss { };
+   Spiral { };
+}
+
 block urlParams {
-   [-- Eventually need to constrain to optons "Tanh","Sigmoid","Linear","ReLU" --]
-   .activation: string
+   .activation: activation
 
    [-- Eventually I want to figure out how to make this >=1 and <=30 --]
    .batchSize:  int
 
-   [-- Eventually need to constrain to options "circle","xor","gauss","spiral" --]
-   .dataSet:    string
+   .dataSet:    data
 }
 
 block urlBase {

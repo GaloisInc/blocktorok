@@ -4,8 +4,8 @@ neural {
    }
 
    urlParams {
-      activation: "Tanh"
+      activation: Tanh { }
       batchSize:  7
-      dataSet:    "circle"
+      dataSet:    Circle { }
    }
 }

@@ -2,6 +2,16 @@ schema "schema-neural.ocs"
 
 output = file("neural.txt")
 
+render activation.Tanh    |Tanh
+render activation.Sigmoid |Sigmoid
+render activation.Linear  |Linear
+render activation.ReLU    |ReLU
+
+render data.Circle |circle
+render data.Xor    |xor
+render data.Gauss  |gauss
+render data.Spiral |spiral
+
 render neural.urlBase   |${base}
 render neural.urlParams |activation=${activation}&batchSize=${batchSize}&dataset=${dataSet}
 
