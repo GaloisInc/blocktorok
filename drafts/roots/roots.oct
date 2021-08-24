@@ -1,0 +1,7 @@
+schema "roots.ocs"
+
+output = file("roots.out")
+
+render foo |The int is ${bar}
+
+output << baz

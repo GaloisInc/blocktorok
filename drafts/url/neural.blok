@@ -6,6 +6,12 @@ neural {
    urlParams {
       activation: Tanh {}
       batchSize:  7
-      dataSet:    Circle {}
+      dataSet:    None {}
+   }
+}
+
+foo {
+   bar {
+      base: "hello"
    }
 }
