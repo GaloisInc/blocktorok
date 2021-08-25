@@ -39,16 +39,18 @@ data SType
   | SIdent
   | SString
   | SList SType
+  | SOptional SType
   | SNamed Ident
   deriving(Eq)
 
 instance Show SType where
-  show SInt       = "int"
-  show SFloat     = "float"
-  show SIdent     = "ident"
-  show SString    = "string"
-  show (SList t)  = "list " ++ show t
-  show (SNamed i) = unpack i
+  show SInt          = "int"
+  show SFloat        = "float"
+  show SIdent        = "ident"
+  show SString       = "string"
+  show (SList t)     = "list " ++ show t
+  show (SOptional t) = "optional " ++ show t
+  show (SNamed i)    = unpack i
 
 -- | Globs for block layout definitions
 data Globbed a
