@@ -97,13 +97,6 @@ ident =
 selector :: Parser Ident
 selector = MPC.char '.' *> ident
 
-tag :: Parser Ident
-tag = ident
-  -- lexeme .MP.try $
-  --   do c0 <- MP.satisfy isUpper
-  --      cr <- MP.takeWhileP Nothing isAlpha
-  --      pure (c0 `Text.cons` cr)
-
 brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
@@ -137,7 +130,7 @@ doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--
 variant :: Parser Variant
 variant =
   do ann   <- optional (located doc)
-     t     <- located tag
+     t     <- located ident
      decls <- brackets $ MP.sepBy (decl ident) (symbol' ",")
      symbol' ";"
      if length (declNames decls) /= length (List.nub (declNames decls)) then
