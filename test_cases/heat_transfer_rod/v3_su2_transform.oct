@@ -4,11 +4,11 @@ output = file("v3_solid_rod.cfg")
 
 -- su2 takes the individual components and openfoam takes dt
 -- TODO: use require at a later point to throw an error when this isn't given by the user
-render thermal_diffusivity.components |SOLID_DENSITY= ${density}
+render physical_models.Components     |SOLID_DENSITY= ${density}
                                       |SPECIFIC_HEAT_CP= ${heat_capacity}
                                       |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
 
-render convergence.criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
+render convergence.Criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
                                       |CONV_STARTITER= ${start_iter}
                                       |CONV_CAUCHY_ELEMS= ${cauchy_elements}
                                       |CONV_CAUCHY_EPS= ${cauchy_epsilon}
@@ -17,8 +17,8 @@ render convergence.criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
 render convergence.max_iterations     |ITER= ${max_iterations}
 
 -- is this the correct way to refer to record syntax?
-render time.steady_state              |TIME_DOMAIN= NO
-render time.transient                 |TIME_DOMAIN= YES
+render time.Steady_state              |TIME_DOMAIN= NO
+render time.Transient                 |TIME_DOMAIN= YES
                                       |TIME_STEP= ${dt}
                                       |MAX_TIME= ${max_time}
                                       |INNER_ITER= ${inner_iter}
@@ -31,10 +31,10 @@ render input_output                   |MESH_FILENAME= ${mesh_filename}
 -- TODO: how do I make it if it exists use the user defined value, if not use flow?
                                       |VOLUME_FILENAME= flow
                                       |SURFACE_FILENAME= surface_flow
-                                      |OUTPUT_WRT_FREQ = ${write_interval}
+                                      |OUTPUT_WRT_FREQ = ${write_interval_iter}
                                       |SCREEN_WRT_FREQ_TIME = 1
 
-render physics                        |SOLVER= ${governing_equation}
+render physics                        |SOLVER= HEAT_EQUATION
                                       |MATH_PROBLEM= DIRECT
                                       |RESTART_SOL= NO
                                       |OBJECTIVE_FUNCTION= TOTAL_HEATFLUX
@@ -42,9 +42,15 @@ render physics                        |SOLVER= ${governing_equation}
 render boundary_conditions.Isothermal |${marker}, ${value}
 render boundary_conditions.Heatflux   |${marker}, ${value}
 
+render mesh_format.SU2                |SU2
+render mesh_format.CGNS               |CGNS
+
+render output_format.CSV              |CSV
+render output_format.TECPLOT          |TECPLOT
+
 conduction_condition =                |INC_NONDIM = DIMENSIONAL
-                                      |SOLID_TEMPERATURE_INIT = ${domain.initial_temp}
-                                      |${thermal_diffusivity.components}
+                                      |SOLID_TEMPERATURE_INIT = ${simulation.initial_temp}
+                                      |${simulation.physics.physical_models.Components}
 
 -- should this be root.simulation or domain?
 render domain                         |${physics}

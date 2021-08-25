@@ -1,28 +1,29 @@
 simulation {
   physics {
-    governing_equation: "heat equation"
-    physical_models: Components {
-      density = 19300,
-      heat_capcity = 130,
-      thermal_conductivity = 318
+    physical_models {
+      density: 19300
+      heat_capacity: 130
+      thermal_conductivity: 318
+      dt: 0.000127
     }
   }
 
   initial_temp: 273.0
 
   convergence: Criterion {
-    min_value = 19, -- -19
+    min_value = -19,
     start_iter = 10,
     cauchy_elements = 100,
     cauchy_epsilon = 1E-6
   }
 
   input_output {
-    write_interval: 250
+    write_interval_iter: 250
+    write_interval_sec: 0.2
     -- TODO: convert from strings to unions
     output_file: "flow"
     output_format: CSV {}
-    mesh_filename: "mesh_name.su2"
+    mesh_filename: "mesh_solid_rod.su2"
     mesh_format: SU2 {}
   }
 
@@ -34,9 +35,9 @@ simulation {
     outer_iter = 600
   }
 
-  boundary_conditions: [ Isothermal { marker = left, value = 573.0 }
-                       , Isothermal { marker = right, value = 573.0 }
-                       , Heatflux {marker = bottom, value = 0}
-                       , Heatflux {marker = top, value = 0}
+  boundary_conditions: [ Isothermal { marker = "left", value = 573.0 }
+                       , Isothermal { marker = "right", value = 573.0 }
+                       , Heatflux {marker = "bottom", value = 0}
+                       , Heatflux {marker = "top", value = 0}
                        ]
 }
