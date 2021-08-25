@@ -20,7 +20,6 @@ simulation {
   input_output {
     write_interval_iter: 250
     write_interval_sec: 0.2
-    -- TODO: convert from strings to unions
     output_file: "flow"
     output_format: CSV {}
     mesh_filename: "mesh_solid_rod.su2"
