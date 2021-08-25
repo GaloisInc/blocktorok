@@ -109,7 +109,7 @@ termBy elt sep =
 value :: Parser Value
 value =
       Construct <$> MP.try (located cns)
-  <|> Number <$> located (SciN.toRealFloat <$> lexeme Lexer.scientific)  -- use 'scientific instead?
+  <|> Number <$> located (SciN.toRealFloat <$> signedNum)  -- use 'scientific instead?
   <|> List <$> located (symbol' "[" *> MP.sepBy value (symbol' ",")   <* symbol' "]")
   <|> str
   <|> Ident <$> located ident
@@ -118,7 +118,7 @@ value =
     str =
       do  s <- located strLit
           pure $ String (Text.pack <$> s)
-
+    signedNum = Lexer.signed spc $ lexeme Lexer.scientific
     strLit = char '"' >> MP.manyTill Lexer.charLiteral (char '"')
     nv =
       do  n <- located ident
