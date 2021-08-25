@@ -22,7 +22,7 @@ import           Control.Monad              (void)
 import           Control.Monad.State        (State)
 import qualified Control.Monad.State        as State
 
-import           Data.Char                  (isAlpha, isDigit, isUpper)
+import           Data.Char                  (isAlpha, isDigit)
 import           Data.Functor               (($>))
 import qualified Data.List                  as List
 import           Data.Text                  (Text)
@@ -222,10 +222,9 @@ schemaDefsP =  UnionDef <$> union
            <|> BlockDef <$> blockS
 
 schema :: Parser Schema
-schema =
-  spc *>
-    (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
-            <*> root)
+schema = spc *>
+  (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
+          <*> root)
 
 -------------------------------------------------------------------------------
 
@@ -233,7 +232,7 @@ parseSchema :: FilePath -> Text -> Either Text Env
 parseSchema fp t =
     case result of
       (Left err, _) -> Left (Text.pack $ MP.errorBundlePretty err)
-      (Right _, s) -> Right s
+      (Right _, s)  -> Right s
   where
     result = State.runState (MP.runParserT (schema >> MP.eof) fp t) emptyEnv
 
