@@ -3,7 +3,7 @@ simulation {
     governing_equation: "heat equation"
     physical_models: Components {
       density = 19300,
-      heat_capcity = 130,
+      heat_capacity = 130,
       thermal_conductivity = 318
     }
   }
@@ -34,9 +34,9 @@ simulation {
     outer_iter = 600
   }
 
-  boundary_conditions: [ Isothermal { marker = left, value = 573.0 }
-                       , Isothermal { marker = right, value = 573.0 }
-                       , Heatflux {marker = bottom, value = 0}
-                       , Heatflux {marker = top, value = 0}
+  boundary_conditions: [ Isothermal { marker = "left", value = 573.0 }
+                       , Isothermal { marker = "right", value = 573.0 }
+                       , Heatflux {marker = "bottom", value = 0}
+                       , Heatflux {marker = "top", value = 0}
                        ]
 }
