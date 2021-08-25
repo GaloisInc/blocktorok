@@ -1,0 +1,42 @@
+simulation {
+  physics {
+    governing_equation: "heat equation"
+    physical_models: Components {
+      density = 19300,
+      heat_capcity = 130,
+      thermal_conductivity = 318
+    }
+  }
+
+  initial_temp: 273.0
+
+  convergence: Criterion {
+    min_value = 19, -- -19
+    start_iter = 10,
+    cauchy_elements = 100,
+    cauchy_epsilon = 1E-6
+  }
+
+  input_output {
+    write_interval: 250
+    -- TODO: convert from strings to unions
+    output_file: "flow"
+    output_format: CSV {}
+    mesh_filename: "mesh_name.su2"
+    mesh_format: SU2 {}
+  }
+
+  time: Transient {
+    dt = 0.005,
+    max_time = 3,
+    start_time = 0,
+    inner_iter = 200,
+    outer_iter = 600
+  }
+
+  boundary_conditions: [ Isothermal { marker = left, value = 573.0 }
+                       , Isothermal { marker = right, value = 573.0 }
+                       , Heatflux {marker = bottom, value = 0}
+                       , Heatflux {marker = top, value = 0}
+                       ]
+}
