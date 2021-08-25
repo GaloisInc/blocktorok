@@ -65,7 +65,8 @@ runTransformIO txPath blokPath out = runTx
           -- load schema
           let schemaRelPath = Text.unpack . locValue $ Tx.transformSchema tx
               schemaPath = rel transformDir schemaRelPath
-          schemaEnv <- schemaFromFile schemaPath
+          schemaEnv <- schemaFromFile schemaPath `orThrow` ParseError
+
 
           -- validate and typecheck input
           root <- TxValue.validateElts schemaEnv bloks `orThrow'` EvalError

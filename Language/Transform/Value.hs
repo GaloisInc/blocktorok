@@ -249,7 +249,7 @@ validateBlockLike why fieldVals fieldTys =
 
     flagSuperfluousBlockElt (ln, _) =
       case Map.lookup ln fieldTys of
-        Nothing -> throw why (ln <> " is not part of this block")
+        Nothing -> throw why (q ln <> " is not part of this block")
         Just _  -> pure ()
 
 

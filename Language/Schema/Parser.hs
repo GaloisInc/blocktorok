@@ -98,11 +98,11 @@ selector :: Parser Ident
 selector = MPC.char '.' *> ident
 
 tag :: Parser Ident
-tag =
-  lexeme .MP.try $
-    do c0 <- MP.satisfy isUpper
-       cr <- MP.takeWhileP Nothing isAlpha
-       pure (c0 `Text.cons` cr)
+tag = ident
+  -- lexeme .MP.try $
+  --   do c0 <- MP.satisfy isUpper
+  --      cr <- MP.takeWhileP Nothing isAlpha
+  --      pure (c0 `Text.cons` cr)
 
 brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
@@ -222,16 +222,22 @@ schemaDefsP =  UnionDef <$> union
            <|> BlockDef <$> blockS
 
 schema :: Parser Schema
-schema = spc *>
-  (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
-          <*> root)
+schema =
+  spc *>
+    (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
+            <*> root)
 
 -------------------------------------------------------------------------------
 
-parseSchema :: FilePath -> Text -> Env
-parseSchema fp t = State.execState (MP.runParserT schema fp t) emptyEnv
+parseSchema :: FilePath -> Text -> Either Text Env
+parseSchema fp t =
+    case result of
+      (Left err, _) -> Left (Text.pack $ MP.errorBundlePretty err)
+      (Right _, s) -> Right s
+  where
+    result = State.runState (MP.runParserT (schema >> MP.eof) fp t) emptyEnv
 
 -- | Parse a 'Schema' from the given file, returning the typing 'Env' it
 -- specifies
-schemaFromFile :: FilePath -> IO Env
+schemaFromFile :: FilePath -> IO (Either Text Env)
 schemaFromFile fp = parseSchema fp <$> TIO.readFile fp

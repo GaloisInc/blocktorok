@@ -32,6 +32,7 @@ import           Language.Common        (locValue)
 import           Language.Schema.Syntax (BlockDecl (blockDeclDecl),
                                          Decl (declName), SchemaDef)
 import           Language.Schema.Type   (Globbed, Ident, ppGlob, unGlob)
+import qualified Debug.Trace as Trace
 
 -- | The typing environment
 data Env = Env
@@ -55,7 +56,11 @@ addRootType d =
          fail $ "Cannot add root type " ++ ppGlob d ++
                 " since the definition " ++ ppGlob d' ++
                 " already exists in the root specification."
-       Nothing -> put $ e { envRootTypes = Map.insert i d $ envRootTypes e }
+       Nothing ->
+         do  put $ e { envRootTypes = Map.insert i d $ envRootTypes e }
+             Trace.traceM "Added:"
+             Trace.traceShowM (i, d)
+
   where i =  (locValue . declName . blockDeclDecl . unGlob) d
 
 -- | Add a new type definition to the `Env` if it is not already defined,
