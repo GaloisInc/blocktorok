@@ -54,7 +54,7 @@ type Parser a = MP.ParsecT Void Text (State Env) a
 
 spc :: Parser ()
 spc = Lexer.space MPC.space1
-                  MP.empty
+                  (Lexer.skipLineComment "--")
                   MP.empty
 
 lexeme :: Parser a -> Parser a
