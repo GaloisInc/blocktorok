@@ -1,0 +1,5 @@
+{
+    MARKER_FAR: [ "farfield" ],
+    MARKER_PLOTTING: [ "cylinder_outer1", "cylinder_outer2", "cylinder_outer3" ],
+    MARKER_MONITORING: [ "cylinder_outer1", "cylinder_outer2", "cylinder_outer3" ]
+}

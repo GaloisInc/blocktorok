@@ -1,4 +1,9 @@
+*.idea
+*.DS_Store
+*.ipynb
+*.vtu
+*.vtk
+*.csv
+*.su2
+*.dat
 dist-newstyle/
-
-# OSX nonsense
-.DS_Store

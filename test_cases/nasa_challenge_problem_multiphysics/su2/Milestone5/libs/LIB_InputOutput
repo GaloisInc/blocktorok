@@ -1,0 +1,12 @@
+{
+    "HISTORY_OUTPUT": ["ITER", "RMS_RES", "MAX_RES", "CFL_NUMBER"],
+    "VOLUME_OUTPUT": ["COORDINATES", "SOLUTION", "PRIMITIVE"],
+    "OUTPUT_FILES": ["PARAVIEW", "SURFACE_PARAVIEW", "PARAVIEW_ASCII", "CSV"],
+    "CONV_FILENAME": "history",
+    "VOLUME_FILENAME": "flow",
+    "VOLUME_ADJ_FILENAME": "adjoint",
+    "VALUE_OBJFUNC_FILENAME": "of_eval.dat",
+    "GRAD_OBJFUNC_FILENAME": "of_grad.dat",
+    "SURFACE_FILENAME": "surface_flow",
+    "SURFACE_ADJ_FILENAME": "surface_adjoint"
+}

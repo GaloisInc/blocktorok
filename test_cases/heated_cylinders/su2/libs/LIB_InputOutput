@@ -1,0 +1,19 @@
+{
+    "MESH_FORMAT": "SU2",
+    "WRT_ZONE_HIST": "YES",
+    "HISTORY_OUTPUT": ["ITER", "RMS_RES", "HEAT"],
+    "OUTPUT_FILES": ["RESTART", "TECPLOT", PARAVIEW", "SURFACE_PARAVIEW", "SURFACE_TECPLOT" ],
+    "SOLUTION_FILENAME": "solution_flow.dat",
+    "SOLUTION_ADJ_FILENAME": "solution_adj.dat",
+    "CONV_FILENAME": "history",
+    "BREAKDOWN_FILENAME": "forces_breakdown.dat",
+    "RESTART_FILENAME": "restart_flow.dat",
+    "RESTART_ADJ_FILENAME": "restart_adj.dat",
+    "VOLUME_FILENAME": "flow",
+    "VOLUME_ADJ_FILENAME": "adjoint",
+    "VALUE_OBJFUNC_FILENAME": "of_eval.dat",
+    "GRAD_OBJFUNC_FILENAME": "of_grad.dat",
+    "SURFACE_FILENAME": "surface_flow",
+    "SURFACE_ADJ_FILENAME": "surface_adjoint"
+    "OUTPUT_WRT_FREQ": 15000
+}

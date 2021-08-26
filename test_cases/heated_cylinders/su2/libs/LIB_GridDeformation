@@ -1,0 +1,10 @@
+{
+    "FFD_TOLERANCE": 1E-12,
+    "FFD_ITERATIONS": 500,
+    "FFD_DEFINITION": [ "MAIN_BOX", "-0.1", "-0.6", "0.0", "1.1", "-0.6", "0.0", "1.1", "0.6", "0.0", "-0.1", "0.6", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0"],
+    "FFD_DEGREE": [ 24, 1, 0 ],
+    "FFD_CONTINUITY": "2ND_DERIVATIVE",
+    "DV_KIND": "FFD_CONTROL_POINT_2D",
+    "DV_MARKER": ["cylinder_outer1", "cylinder_inner1", "cylinder_outer2", "cylinder_inner2", "cylinder_outer3", "cylinder_inner3"],
+    "DV_VALUE": 0.1
+}

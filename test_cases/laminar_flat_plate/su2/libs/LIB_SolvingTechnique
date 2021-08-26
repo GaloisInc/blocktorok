@@ -1,0 +1,11 @@
+{
+    "SOLVER": "NAVIER_STOKES",
+    "KIND_TURB_MODEL": "None",
+    "MATH_PROBLEM": "Direct",
+    "RESTART_SOL": false,
+    "CONV_FIELD": "RMS_DENSITY",
+    "CONV_RESIDUAL_MINVAL": -12,
+    "CONV_STARTITER": 10,
+    "CONV_CAUCHY_ELEMS": 100,
+    "CONV_CAUCHY_EPS": 1e-6
+}

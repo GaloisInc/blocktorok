@@ -1,49 +1,32 @@
 {-|
 Module      : Main
-Description : The LINK compiler entry point
+Description : Compiler stack entry point
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
 Maintainer  : cphifer@galois.com
 Stability   : experimental
 Portability : N/A
 
-The entry point to the LINK compiler. This is likely to be an ever-evolving
-module, as we identify new wants/needs in terms of command-line options,
-functionality, and behavior.
+The entry point to the Blocktorok compiler. This is likely to be an
+ever-evolving module, as we identify new wants/needs in terms of
+command-line options, functionality, and behavior.
 -}
 
 module Main (main) where
 
-import Control.Monad (zipWithM)
-import Control.Monad.Except (Except, runExcept)
+import           Options             (Options (..), parseOpts)
+import           Options.Applicative (execParser, fullDesc, header, helper,
+                                      info, progDesc, (<**>))
 
-import Data.Backends.SU2 (SU2Config)
-import Data.Class.Render
-import Language.Compile.SU2 (compile)
-import Language.Error (LinkError)
-import Language.Link (link)
-import Options
-import Text.Parse.Link (parseDecl)
+import           Link                (runTransformIO)
 
-import Options.Applicative
-
-import System.Exit
-
+-- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
 main = realMain =<< execParser opts
   where
     opts = info (parseOpts <**> helper)
-      (fullDesc <> progDesc "Compile a LINK program" <> header "steel - A LINK compiler")
+      (fullDesc <> progDesc "Transform Blocktorok data." <> header "blocktorok - A Blocktorok data transformer")
 
 realMain :: Options -> IO ()
-realMain Options { sources = inputs, target = output } =
-  do inputContents <- mapM readFile inputs
-     case runExcept $ processProg inputContents of
-       Left e -> putStrLn (render e) >> exitFailure
-       Right su2 -> writeFile output (render su2)
-  where
-    processProg :: [String] -> Except LinkError SU2Config
-    processProg contents =
-      do progs <- zipWithM parseDecl inputs contents
-         prog <- link progs
-         compile prog
+realMain Options { transformer = t, output = o, blocktorok = d} =
+  runTransformIO t d o
