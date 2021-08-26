@@ -13,7 +13,7 @@ mathematical manipulation.
 
 module Language.Common.Units.Factor where
 
-import Data.Text (Text)
+import           Data.Text (Text)
 
 -- | A unit factor (unit & exponent)
 data Factor = F Text Integer deriving (Eq, Show)
@@ -39,7 +39,7 @@ reorder fs1 [] = fs1
 reorder fs1 (h:t) =
   case extract h fs1 of
     (l, Nothing) -> reorder l t
-    (l, Just f) -> f : reorder l t
+    (l, Just f)  -> f : reorder l t
 
 -- | Remove all factors with exponent 0 from the given @[Factor]@
 normalize :: [Factor] -> [Factor]

@@ -16,22 +16,23 @@ module Language.Common.Units.Parser
   ( parseUnit
   ) where
 
-import Control.Monad.Reader (ReaderT, ask, asks, liftM, runReaderT, void)
+import           Control.Monad.Reader              (ReaderT, ask, asks, liftM,
+                                                    runReaderT, void)
 
-import qualified Data.Map.Strict as Map
-import Data.Maybe (catMaybes)
-import Data.Text (Text)
-import qualified Data.Text as Text
-import Data.Void (Void)
+import qualified Data.Map.Strict                   as Map
+import           Data.Maybe                        (catMaybes)
+import           Data.Text                         (Text)
+import qualified Data.Text                         as Text
+import           Data.Void                         (Void)
 
-import Text.Megaparsec ((<|>))
-import qualified Text.Megaparsec as MP
-import qualified Text.Megaparsec.Char as MPC
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import           Text.Megaparsec                   ((<|>))
+import qualified Text.Megaparsec                   as MP
+import qualified Text.Megaparsec.Char              as MPC
+import qualified Text.Megaparsec.Char.Lexer        as Lexer
 
-import Language.Common.Units.Combinators
-import Language.Common.Units.SymbolTable
-import Language.Common.Units.Units
+import           Language.Common.Units.Combinators ((||*), (||/), (||@), (||^))
+import           Language.Common.Units.SymbolTable (SymbolTable (prefixTable, unitTable))
+import           Language.Common.Units.Units       (Unit, number)
 
 type Parser m a = MP.ParsecT Void Text (ReaderT SymbolTable m) a
 
@@ -73,7 +74,7 @@ justUnitP =
      units <- asks unitTable
      case units fullString of
        Nothing -> fail (fullString ++ " does not match any known unit")
-       Just u -> return u
+       Just u  -> return u
 
 prefixUnitP :: Monad m => Parser m Unit
 prefixUnitP =
@@ -149,7 +150,7 @@ opP =
      case op of
        "*" -> return (||*)
        "/" -> return (||/)
-       _ -> fail "Unrecognized operator"
+       _   -> fail "Unrecognized operator"
 
 parseUnit :: Monad m => Parser m Unit
 parseUnit = chainl unitFactorP opP number

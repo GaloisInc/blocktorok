@@ -14,13 +14,13 @@ Definitions relating to the representation of abstract dimensions.
 
 module Language.Common.Units.Dimensions where
 
-import Data.Text (Text, unpack)
+import           Data.Text                    (Text, unpack)
 
-import Language.Common.Units.Factor
+import           Language.Common.Units.Factor (Factor (..))
 
 -- | The type of abstract dimensions, stored simply as their name
 data Dimension = Dimension
-  { dimensionName :: Text
+  { dimensionName    :: Text
   , dimensionFactors :: [Factor]
   }
 

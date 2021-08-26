@@ -12,13 +12,13 @@ Definitions related to a "symbol table" for unit parsing.
 
 module Language.Common.Units.SymbolTable where
 
-import Control.Arrow (left)
+import           Control.Arrow               (left)
 
-import qualified Data.Map.Strict as Map
-import qualified Data.MultiMap as MM
-import Data.Char (isLetter)
+import           Data.Char                   (isLetter)
+import qualified Data.Map.Strict             as Map
+import qualified Data.MultiMap               as MM
 
-import Language.Common.Units.Units
+import           Language.Common.Units.Units (Unit)
 
 partitionWith :: (a -> Either b c) -> [a] -> ([b], [c])
 partitionWith _ [] = ([], [])
@@ -32,7 +32,7 @@ type UnitTable = String -> Maybe Unit
 
 data SymbolTable = SymbolTable
   { prefixTable :: PrefixTable
-  , unitTable :: UnitTable
+  , unitTable   :: UnitTable
   }
 
 unambFromList :: (Ord a, Show b) => [(a, b)] -> Either [(a, [String])] (Map.Map a b)

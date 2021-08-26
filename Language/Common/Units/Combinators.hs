@@ -14,11 +14,11 @@ Operators for building new unit values from old ones (e.g. multiplication)
 
 module Language.Common.Units.Combinators where
 
-import qualified Data.Text as T
+import qualified Data.Text                        as T
 
-import Language.Common.Units.Dimensions
-import Language.Common.Units.Factor
-import Language.Common.Units.Units
+import           Language.Common.Units.Dimensions (Dimension (..))
+import           Language.Common.Units.Factor     (normalize, (@*), (@+), (@-))
+import           Language.Common.Units.Units      (Unit (..), mkDerivedUnit)
 
 infixl 7 |*
 -- | Multiply two dimensions to get another dimension

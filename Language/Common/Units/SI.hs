@@ -16,12 +16,14 @@ module Language.Common.Units.SI
   ( siTable
   ) where
 
-import Prelude hiding (length)
+import           Prelude                           hiding (length)
 
-import Language.Common.Units.Combinators
-import Language.Common.Units.Dimensions
-import Language.Common.Units.SymbolTable
-import Language.Common.Units.Units
+import           Language.Common.Units.Combinators ((|*), (|/), (|^), (||*),
+                                                    (||/), (||@), (||^))
+import           Language.Common.Units.Dimensions  (Dimension, mkDimension)
+import           Language.Common.Units.SymbolTable (SymbolTable, mkSymbolTable)
+import           Language.Common.Units.Units       (Unit, mkCanonicalUnit,
+                                                    mkDerivedUnit, number)
 
 -- Prefixes
 deca :: Rational
@@ -122,7 +124,7 @@ acceleration :: Dimension
 acceleration        = velocity          |/ time
 
 wavenumber :: Dimension
-wavenumber          = length            |^ (negate 1)
+wavenumber          = length            |^ negate 1
 
 density :: Dimension
 density             = mass              |/ volume
@@ -147,7 +149,7 @@ luminance           = luminousIntensity |/ area
 
 
 frequency :: Dimension
-frequency           = time              |^ (negate 1)
+frequency           = time              |^ negate 1
 
 force :: Dimension
 force               = mass              |* acceleration
@@ -362,7 +364,7 @@ siUnits =
 siTable :: SymbolTable
 siTable =
   case mkSymbolTable prefixes units of
-    Left e -> error e
+    Left e   -> error e
     Right st -> st
   where
     prefixes = siPrefixes
