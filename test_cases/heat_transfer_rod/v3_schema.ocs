@@ -1,9 +1,13 @@
-union thermal_diffusivity {
+block thermal_diffusivity {
   [-- Right hand side of the equation --]
-  Components { density: float, heat_capcity: float, thermal_conductivity: float };
+  .density: float
+  
+  .heat_capacity: float
+
+  .thermal_conductivity: float
 
   [-- Left hand side of the equation --]
-  Dt { dt: float };
+  .dt: float
 }
 
 union convergence {
@@ -11,15 +15,15 @@ union convergence {
   Max_iterations { iter: int };
 
   [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
-  Criterion { field: optional string, min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
+  Criterion { min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
 }
 
 union time {
   [-- Steady state simulation --]
-  Steady_state;
+  Steady_state {};
 
   [-- Transient simulation --]
-  Transient { dt: float, max_time: float, start_time: optional float, inner_iter: int, outer_iter: int };
+  Transient { dt: float, max_time: float, start_time: float, inner_iter: int, outer_iter: int };
 }
 
 union output_format {
@@ -33,25 +37,26 @@ union mesh_format {
 }
 
 block input_output {
-  [-- Output solution frequency --]
-  .write_interval: float
+  [-- Output solution frequency in iterations for su2 --]
+  .write_interval_iter: int
+
+  [-- Output solution frequency in seconds for openfoam --]
+  .write_interval_sec : float
 
   [-- Name of output file is optional (OpenFoam does not have one) --]
-  .output_file: optional string
+  .output_file: string
 
   [-- Output file format --]
   .output_format: output_format
 
   [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
-  .mesh_filename: optional string
+  .mesh_filename: string
 
   [-- The format of the mesh file --]
-  .mesh_format: optional mesh_format
+  .mesh_format: mesh_format
 }
 
 block physics {
-  [-- The governing equation/solver for the problem --]
-  .governing_equation: string
 
   [-- Parameters for physical models such as turbulence and thermophysical models are defined here --]
   .physical_models: thermal_diffusivity
@@ -79,11 +84,8 @@ block domain {
   [-- Time dependency: transient or steady state parameters are defined here --]
   .time: time
 
-  [-- Values for boundary conditions --]
-  .bc_value: boundary_condition_value*
-
   [-- Boundary conditions --]
-  .boundary_conditions: boundary_conditions*
+  .boundary_conditions: list boundary_conditions
 }
 
 root {
