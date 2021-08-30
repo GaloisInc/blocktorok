@@ -14,8 +14,7 @@ data against the schema, and runs the transformer to produce output.
 module Link
   ( -- * Invoking the compiler
     -- ** Error types
-    ParseError(..)
-  , EvalError(..)
+    LinkError(..)
     -- ** Running the transformer
   , runTransformIO
   ) where
@@ -87,16 +86,14 @@ runTransformIO txPath blokPath out = runTx
 
 -------------------------------------------------------------------------------
 
--- | The type of parse errors
-newtype ParseError = ParseError Text
-  deriving(Show)
-instance Ex.Exception ParseError where
 
--- | The type of evaluation errors
-newtype EvalError = EvalError Text
+data LinkError =
+    ParseError Text
+  | EvalError Text
   deriving(Show)
-instance Ex.Exception EvalError where
 
+
+instance Ex.Exception LinkError where
 
 -- internal
 

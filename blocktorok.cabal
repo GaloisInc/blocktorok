@@ -11,6 +11,7 @@ extra-source-files:  README.md
 
 executable blocktorok
   main-is:             Main.hs
+  hs-source-dirs:      .
   other-modules:       Language.Common
 
                        Language.Blocktorok.Syntax
