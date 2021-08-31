@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-|
 Module      : Main
 Description : Compiler stack entry point
@@ -18,7 +19,9 @@ import           Options             (Options (..), parseOpts)
 import           Options.Applicative (execParser, fullDesc, header, helper,
                                       info, progDesc, (<**>))
 
-import           Link                (runTransformIO)
+import           Link                (runTransformIO, LinkError(..))
+import qualified Control.Exception as Ex
+import qualified Data.Text.IO as TIO
 
 -- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
@@ -30,3 +33,8 @@ main = realMain =<< execParser opts
 realMain :: Options -> IO ()
 realMain Options { transformer = t, output = o, blocktorok = d} =
   runTransformIO t d o
+  `Ex.catch`
+    \case
+      ParseError ex -> TIO.putStrLn ex
+      EvalError ex -> TIO.putStrLn ex
+
