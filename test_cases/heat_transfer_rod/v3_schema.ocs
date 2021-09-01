@@ -85,7 +85,7 @@ block domain {
   .time: time
 
   [-- Boundary conditions --]
-  .boundary_conditions: list boundary_conditions
+  .boundary_conditions: boundary_conditions*
 }
 
 root {
