@@ -229,9 +229,7 @@ validateBlockLike why fieldVals fieldTys =
   where
       -- block stuff
     validateBlockField (n, bd) =
-      do  -- TODO: should there be some more normalized notion of this instead of
-          --       "pretending" `list` is a synonym for `many`
-          let gty = unloc . Schema.declType . Schema.blockDeclDecl <$> bd
+      do  let gty = unloc . Schema.declType . Schema.blockDeclDecl <$> bd
               mbVal = Map.lookup n fieldVals
               vals = maybe [] valueToList mbVal
 
