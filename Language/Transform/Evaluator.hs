@@ -235,6 +235,10 @@ evalCall lcall =
               sep' <- showValue sep
               vals' <- list showValue vals
               pure $ VDoc (location lcall) (PP.hcat $ PP.punctuate sep' vals')
+        Tx.FVJoin ->
+          do  vals <- args1 args
+              vals' <- list showValue vals
+              pure $ VDoc (location lcall) (PP.vcat vals')
         Tx.FMkSeq -> pure $ VList (location lcall) args
         Tx.FFile ->
           do  fn <- Text.unpack <$> (args1 args >>= string)
