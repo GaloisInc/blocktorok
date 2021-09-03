@@ -1,4 +1,4 @@
-schema "hello.ocs"
+schema "schema.ocs"
 
 output = file("hello.out")
 

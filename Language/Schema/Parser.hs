@@ -103,11 +103,11 @@ brackets p = symbol' "{" *> p <* symbol' "}"
 stype :: Parser SType
 stype = MP.choice [int, float, i, string, named]
   where
-    int       = symbol' "int"      $> SInt
-    float     = symbol' "float"    $> SFloat
-    i         = symbol' "ident"    $> SIdent
-    string    = symbol' "string"   $> SString
-    named     = SNamed <$> ident
+    int    = symbol' "int"    $> SInt
+    float  = symbol' "float"  $> SFloat
+    i      = symbol' "ident"  $> SIdent
+    string = symbol' "string" $> SString
+    named  = SNamed <$> ident
 
 decl :: Parser Ident -> Parser Decl
 decl p =
@@ -199,7 +199,7 @@ blockS =
 root :: Parser Root
 root =
   do symbol' "root"
-     fs <- brackets $ MP.some $ globbed blockDecl
+     fs <- brackets $ MP.many $ globbed blockDecl
      if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
        fail "The root specifiation contains duplicated field names."
      else

@@ -1,4 +1,4 @@
-schema "schema-neural.ocs"
+schema "schema.ocs"
 
 output = file("neural.txt")
 

@@ -22,6 +22,7 @@ import           Options.Applicative (execParser, fullDesc, header, helper,
 import           Link                (runTransformIO, LinkError(..))
 import qualified Control.Exception as Ex
 import qualified Data.Text.IO as TIO
+import qualified System.Exit as Exit
 
 -- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
@@ -35,6 +36,6 @@ realMain Options { transformer = t, output = o, blocktorok = d} =
   runTransformIO t d o
   `Ex.catch`
     \case
-      ParseError ex -> TIO.putStrLn ex
-      EvalError ex -> TIO.putStrLn ex
+      ParseError ex -> TIO.putStrLn ex >> Exit.exitFailure
+      EvalError ex -> TIO.putStrLn ex  >> Exit.exitFailure
 

@@ -1,0 +1,7 @@
+schema "schema.ocs"
+
+output = file("out.txt")
+
+output << |Hello world
+          |
+          |How are you?

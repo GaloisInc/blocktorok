@@ -42,11 +42,11 @@ data SType
   deriving(Eq)
 
 instance Show SType where
-  show SInt          = "int"
-  show SFloat        = "float"
-  show SIdent        = "ident"
-  show SString       = "string"
-  show (SNamed i)    = unpack i
+  show SInt       = "int"
+  show SFloat     = "float"
+  show SIdent     = "ident"
+  show SString    = "string"
+  show (SNamed i) = unpack i
 
 -- | Globs for block layout definitions
 data Globbed a
