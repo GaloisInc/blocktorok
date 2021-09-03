@@ -63,7 +63,7 @@ runTransformIO txPath blokPath out = runTx
 
           -- load schema
           let schemaRelPath = Text.unpack . locValue $ Tx.transformSchema tx
-              schemaPath = rel transformDir schemaRelPath
+              schemaPath = transformDir Path.</> schemaRelPath
           schemaEnv <- schemaFromFile schemaPath `orThrow` ParseError
 
 
@@ -79,9 +79,9 @@ runTransformIO txPath blokPath out = runTx
           writeOutput `traverse_` Map.toList outputs
 
     absDir p = Path.takeDirectory <$> Dir.makeAbsolute p
-    writeOutput (file, contents) = writeFile (rel out file) (show contents)
-    rel p1 p2 | Path.isRelative p2 = p1 Path.</> p2
-              | otherwise          = p2
+    writeOutput (file, contents) =
+      do Dir.createDirectoryIfMissing True $ out Path.</> Path.takeDirectory file
+         writeFile (out Path.</> file) (show contents)
 
 
 -------------------------------------------------------------------------------

@@ -6,4 +6,6 @@
 *.csv
 *.su2
 *.dat
+*.pdf
 dist-newstyle/
+*ReferenceExecutable*
