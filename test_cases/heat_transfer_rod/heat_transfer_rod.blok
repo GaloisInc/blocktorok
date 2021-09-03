@@ -35,7 +35,7 @@ simulation {
   }
 
   boundary_conditions: [ Isothermal { marker = "left", value = 573.0 }
-                       , Isothermal { marker = "right", value = 573.0 }
+                       , Isothermal { marker = "right", value = 273.0 }
                        , Heatflux {marker = "bottom", value = 0}
                        , Heatflux {marker = "top", value = 0}
                        ]

@@ -14,8 +14,7 @@ data against the schema, and runs the transformer to produce output.
 module Link
   ( -- * Invoking the compiler
     -- ** Error types
-    ParseError(..)
-  , EvalError(..)
+    LinkError(..)
     -- ** Running the transformer
   , runTransformIO
   ) where
@@ -64,7 +63,7 @@ runTransformIO txPath blokPath out = runTx
 
           -- load schema
           let schemaRelPath = Text.unpack . locValue $ Tx.transformSchema tx
-              schemaPath = rel transformDir schemaRelPath
+              schemaPath = transformDir Path.</> schemaRelPath
           schemaEnv <- schemaFromFile schemaPath `orThrow` ParseError
 
 
@@ -80,23 +79,21 @@ runTransformIO txPath blokPath out = runTx
           writeOutput `traverse_` Map.toList outputs
 
     absDir p = Path.takeDirectory <$> Dir.makeAbsolute p
-    writeOutput (file, contents) = writeFile (rel out file) (show contents)
-    rel p1 p2 | Path.isRelative p2 = p1 Path.</> p2
-              | otherwise          = p2
+    writeOutput (file, contents) =
+      do Dir.createDirectoryIfMissing True $ out Path.</> Path.takeDirectory file
+         writeFile (out Path.</> file) (show contents)
 
 
 -------------------------------------------------------------------------------
 
--- | The type of parse errors
-newtype ParseError = ParseError Text
-  deriving(Show)
-instance Ex.Exception ParseError where
 
--- | The type of evaluation errors
-newtype EvalError = EvalError Text
+data LinkError =
+    ParseError Text
+  | EvalError Text
   deriving(Show)
-instance Ex.Exception EvalError where
 
+
+instance Ex.Exception LinkError where
 
 -- internal
 

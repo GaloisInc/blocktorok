@@ -35,7 +35,7 @@ import           Language.Common            (Located (..),
                                              SourceRange (SourceRange), unloc,
                                              withSameLocAs)
 import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat),
+                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin),
                                              Lit (LitString), Selector (..),
                                              Transform (Transform))
 
@@ -106,7 +106,7 @@ barStringExprParser =
         _   -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
-        do  MP.try (symbol' "|")
+        do  MP.try (void $ MP.chunk "|")
             elts <- located' (many stringElt)
             case unloc elts of
               [a] -> pure a
@@ -138,6 +138,7 @@ strLitParser =
 exprParser :: Parser Expr
 exprParser =
     MP.choice [ mkSeq
+              , fn "vjoin" FVJoin
               , fn "join" FJoin
               , fn "file" FFile
               , ExprLit . LitString <$> located strLitParser

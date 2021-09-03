@@ -1,0 +1,7 @@
+block x_b {
+    .x: int
+}
+
+root {
+    .top: x_b
+}

@@ -6,4 +6,7 @@
 *.csv
 *.su2
 *.dat
+*.pdf
 dist-newstyle/
+*ReferenceExecutable*
+test_cases/automated/**/output

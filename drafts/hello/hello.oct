@@ -1,6 +1,0 @@
-schema "hello.ocs"
-
-output = file("hello.out")
-
-output << |Hello World!
-          |Nice to see you!

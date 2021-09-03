@@ -11,7 +11,14 @@ extra-source-files:  README.md
 
 executable blocktorok
   main-is:             Main.hs
-  other-modules:       Language.Common
+  hs-source-dirs:      .
+  other-modules:       Language.Blocktorok.BlockM
+                       Language.Blocktorok.Parser
+                       Language.Blocktorok.PPDemo
+                       Language.Blocktorok.Syntax
+
+                       Language.Common
+                       Language.Common
                        Language.Common.Units.Combinators
                        Language.Common.Units.Dimensions
                        Language.Common.Units.Factor
@@ -19,11 +26,6 @@ executable blocktorok
                        Language.Common.Units.SI
                        Language.Common.Units.SymbolTable
                        Language.Common.Units.Units
-
-                       Language.Blocktorok.Syntax
-                       Language.Blocktorok.Parser
-                       Language.Blocktorok.BlockM
-                       Language.Blocktorok.PPDemo
 
                        Language.Schema.Env
                        Language.Schema.Parser
@@ -51,17 +53,3 @@ executable blocktorok
                      , text
   default-language:    Haskell2010
   ghc-options: -Wall
-
-test-suite test
-    type:               exitcode-stdio-1.0
-    hs-source-dirs:     test
-    main-is:            Main.hs
-    default-language:   Haskell2010
-    build-depends:      base >= 3 && < 5
-                      , steel
-                      , tasty
-                      , tasty-hunit
-                      , parsec
-                      , mtl
-                      , prettyprinter
-
