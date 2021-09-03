@@ -38,7 +38,6 @@ data SType
   | SFloat
   | SIdent
   | SString
-  | SList SType
   | SNamed Ident
   deriving(Eq)
 
@@ -47,7 +46,6 @@ instance Show SType where
   show SFloat     = "float"
   show SIdent     = "ident"
   show SString    = "string"
-  show (SList t)  = "list " ++ show t
   show (SNamed i) = unpack i
 
 -- | Globs for block layout definitions
@@ -91,7 +89,6 @@ ppGlob g = show (unGlob g) ++ globStr
 -- | Return true iff the type contains a named type
 containsNamed :: SType -> Bool
 containsNamed (SNamed _) = True
-containsNamed (SList t)  = containsNamed t
 containsNamed _          = False
 
 -- | If the type @t@ contains a named type (i.e. @containsNamed t@ returns
@@ -99,5 +96,4 @@ containsNamed _          = False
 -- fail to return true when passed to 'containsNamed'.
 containedName :: SType -> Ident
 containedName (SNamed i) = i
-containedName (SList t)  = containedName t
 containedName _          = error "Type contains no named type"

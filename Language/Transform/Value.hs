@@ -229,12 +229,7 @@ validateBlockLike why fieldVals fieldTys =
   where
       -- block stuff
     validateBlockField (n, bd) =
-      do  -- TODO: should there be some more normalized notion of this instead of
-          --       "pretending" `list` is a synonym for `many`
-          let gty =
-                case unloc . Schema.declType . Schema.blockDeclDecl <$> bd of
-                  Schema.One (Schema.SList ty') -> Schema.Many ty'
-                  oty -> oty
+      do  let gty = unloc . Schema.declType . Schema.blockDeclDecl <$> bd
               mbVal = Map.lookup n fieldVals
               vals = maybe [] valueToList mbVal
 
@@ -270,11 +265,7 @@ validateValue ty val =
     VInt {} -> req Schema.SInt
     VIdent {} -> req Schema.SIdent
     VString {} -> req Schema.SString
-    VList r elts ->
-      case ty of
-        Schema.SList ty' ->
-          VList r <$> (validateValue ty' `traverse` elts)
-        _ -> unexpected "list"
+    VList {} -> unexpected "list"
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VConstruct cns ->
