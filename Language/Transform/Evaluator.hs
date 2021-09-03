@@ -114,7 +114,6 @@ showValue v0 =
     VDouble _ d -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
-    VIdent _ i -> pure $ PP.pretty i
     VList _ l -> PP.hcat <$> showValue `traverse` l
     VDoc _ d -> pure d
     VFile _ p -> pure $ PP.pretty p
@@ -261,7 +260,6 @@ describeValueType v0 =
   case v0 of
     VInt {} -> "integer"
     VDouble {} -> "decimal"
-    VIdent {} -> "identifier"
     VList {} -> "list"
     VString {} -> "string"
     VDoc {} -> "doc"

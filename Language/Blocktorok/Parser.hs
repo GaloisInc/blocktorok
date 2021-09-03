@@ -112,7 +112,6 @@ value =
   <|> Number <$> located (SciN.toRealFloat <$> signedNum)  -- use 'scientific instead?
   <|> List <$> located (symbol' "[" *> MP.sepBy value (symbol' ",")   <* symbol' "]")
   <|> str
-  <|> Ident <$> located ident
   where
     cns = Constructor <$> (located ident <* symbol' "{") <*> (termBy nv (symbol ",") <* symbol "}")
     str =
