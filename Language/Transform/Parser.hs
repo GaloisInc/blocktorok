@@ -106,7 +106,7 @@ barStringExprParser =
         _   -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
-        do  MP.try (symbol' "|")
+        do  MP.try (void $ MP.chunk "|")
             elts <- located' (many stringElt)
             case unloc elts of
               [a] -> pure a

@@ -13,6 +13,7 @@ for TEST in "$@"
 do
   if [ -d $TEST ]; then
     OUT="output"
+    rm -rf $OUT
     pushd $TEST > /dev/null && \
       mkdir -p expected && \
       $BLOCKTOROK -t transform.oct -o $OUT input.blok &&  \
@@ -30,4 +31,4 @@ done
 
 echo "Failures: $FAILURE_COUNT"
 echo "Tests Failed:"
-echo $FAILURES
+echo -e $FAILURES
