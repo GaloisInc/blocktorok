@@ -45,9 +45,7 @@ data SType
 instance Eq SType where
   SInt _ == SInt _      = True
   SFloat _ == SFloat _  = True
-  SIdent == SIdent      = True
   SString == SString    = True
-  SList t == SList t'   = t == t'
   SNamed i == SNamed i' = i == i'
   _ == _                = False
 
