@@ -114,7 +114,6 @@ showValue v0 =
     VDouble _ d -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
-    VIdent _ i -> pure $ PP.pretty i
     VList _ l -> PP.hcat <$> showValue `traverse` l
     VDoc _ d -> pure d
     VFile _ p -> pure $ PP.pretty p
@@ -235,6 +234,10 @@ evalCall lcall =
               sep' <- showValue sep
               vals' <- list showValue vals
               pure $ VDoc (location lcall) (PP.hcat $ PP.punctuate sep' vals')
+        Tx.FVJoin ->
+          do  vals <- args1 args
+              vals' <- list showValue vals
+              pure $ VDoc (location lcall) (PP.vcat vals')
         Tx.FMkSeq -> pure $ VList (location lcall) args
         Tx.FFile ->
           do  fn <- Text.unpack <$> (args1 args >>= string)
@@ -261,7 +264,6 @@ describeValueType v0 =
   case v0 of
     VInt {} -> "integer"
     VDouble {} -> "decimal"
-    VIdent {} -> "identifier"
     VList {} -> "list"
     VString {} -> "string"
     VDoc {} -> "doc"

@@ -99,7 +99,6 @@ instance HasLocation BlockValue where
 data Value =
     VDouble SourceRange Double
   | VInt SourceRange Integer
-  | VIdent SourceRange Text
   | VList SourceRange [Value]
   | VString SourceRange Text
 
@@ -114,7 +113,6 @@ instance HasLocation Value where
     case v of
       VDouble r _  -> r
       VInt r _     -> r
-      VIdent r _   -> r
       VList r _    -> r
       VString r _  -> r
 
@@ -128,7 +126,6 @@ traverseValue f v =
   case v of
     VDouble {} -> f v
     VInt {} -> f v
-    VIdent {} -> f v
     VString {} -> f v
     VFile {} -> f v
     VList r l ->
@@ -150,7 +147,6 @@ describeValue v =
   case v of
     VBlock b     -> "block " <> unloc (blockType b)
     VConstruct c -> "constructor " <> unloc (tagTag c)
-    VIdent _ i   -> "identifier " <> showT i
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
     VDouble _ i  -> "double " <> showT i
@@ -263,7 +259,6 @@ validateValue ty val =
         Schema.SInt -> pure $ VInt loc (floor d)
         _           -> req Schema.SFloat
     VInt {} -> req Schema.SInt
-    VIdent {} -> req Schema.SIdent
     VString {} -> req Schema.SString
     VList {} -> unexpected "list"
     VDoc {} -> unexpected "doc"
@@ -337,7 +332,6 @@ blockValueToValue :: Blok.Value -> Val Value
 blockValueToValue e =
   case e of
     Blok.Number n -> pure $ VDouble (location n) (unloc n)
-    Blok.Ident i -> pure $ VIdent (location i) (unloc i)
     Blok.String s -> pure $ VString (location s) (unloc s)
     Blok.List l -> VList (location l)  <$> (blockValueToValue `traverse` unloc l)
     Blok.Construct cns ->

@@ -10,7 +10,7 @@ blockMeshDict = file("system/blockMeshDict")
 render boundary_conditions.Isothermal |    ${marker}
                                       |    {
                                       |        type            fixedValue;
-                                      |        value           uniform ${value}; 
+                                      |        value           uniform ${value};
                                       |    }
 
 -- TODO: if ${value} == 0, then use zeroGradient, if not use fixedGradient with ${value}
@@ -30,7 +30,7 @@ output_var <<                         |FoamFile
                                       |internalField   uniform ${simulation.initial_temp};
                                       |boundaryField
                                       |{
-                                      |    ${simulation.boundary_conditions}
+                                      |${vjoin(simulation.boundary_conditions)}
                                       |}
 
 render thermal_diffusivity            |FoamFile

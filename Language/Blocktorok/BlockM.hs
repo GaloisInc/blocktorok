@@ -111,12 +111,6 @@ list spec v =
     List l -> spec `traverse` locValue l
     _      -> err (locateValue v) "expecting list value here"
 
-ident :: ValueSpec Ident
-ident v =
-  case v of
-    Ident i -> pure (locValue i)
-    _       -> err (locateValue v) "expecting identifier here"
-
 
 cnsToBlock :: Constructor -> Block
 cnsToBlock (Constructor name fields) =

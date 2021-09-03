@@ -101,11 +101,10 @@ brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
-stype = MP.choice [int, float, i, string, named]
+stype = MP.choice [int, float, string, named]
   where
     int    = symbol' "int"    $> SInt
     float  = symbol' "float"  $> SFloat
-    i      = symbol' "ident"  $> SIdent
     string = symbol' "string" $> SString
     named  = SNamed <$> ident
 

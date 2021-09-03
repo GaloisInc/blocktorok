@@ -35,7 +35,7 @@ import           Language.Common            (Located (..),
                                              SourceRange (SourceRange), unloc,
                                              withSameLocAs)
 import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat),
+                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin),
                                              Lit (LitString), Selector (..),
                                              Transform (Transform))
 
@@ -138,6 +138,7 @@ strLitParser =
 exprParser :: Parser Expr
 exprParser =
     MP.choice [ mkSeq
+              , fn "vjoin" FVJoin
               , fn "join" FJoin
               , fn "file" FFile
               , ExprLit . LitString <$> located strLitParser

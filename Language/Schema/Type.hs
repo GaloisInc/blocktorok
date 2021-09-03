@@ -36,7 +36,6 @@ type Ident = Text
 data SType
   = SInt
   | SFloat
-  | SIdent
   | SString
   | SNamed Ident
   deriving(Eq)
@@ -44,7 +43,6 @@ data SType
 instance Show SType where
   show SInt       = "int"
   show SFloat     = "float"
-  show SIdent     = "ident"
   show SString    = "string"
   show (SNamed i) = unpack i
 

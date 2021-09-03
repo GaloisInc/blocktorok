@@ -95,8 +95,11 @@ data FName =
   -- | Make a sequence
   | FMkSeq
 
-  -- | Join docs with a separator
+  -- | Join docs horizontally with a separator
   | FJoin
+
+  -- | Join docs vertically with some number of newlines
+  | FVJoin
 
   -- | Open a file for output
   | FFile

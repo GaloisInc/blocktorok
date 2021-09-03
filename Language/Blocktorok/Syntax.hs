@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 {-|
 Module      : Language.Blocktorok.Syntax
 Description : Blocktorok data language syntax definition
@@ -55,7 +53,6 @@ data BlockElement =
 -- have in a valid schema
 data Value =
     Number (Located Double)
-  | Ident (Located Ident)
   | List (Located [Value])
   | Construct (Located Constructor)
   | String (Located Text)
@@ -73,7 +70,6 @@ locateValue :: Value -> Located Value
 locateValue v =
   case v of
     Number n    -> v `withSameLocAs` n
-    Ident i     -> v `withSameLocAs` i
     List l      -> v `withSameLocAs` l
     Construct c -> v `withSameLocAs` c
     String s    -> v `withSameLocAs` s
