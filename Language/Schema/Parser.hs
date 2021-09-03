@@ -200,7 +200,7 @@ blockS =
 root :: Parser Root
 root =
   do symbol' "root"
-     fs <- brackets $ MP.some $ globbed blockDecl
+     fs <- brackets $ MP.many $ globbed blockDecl
      if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
        fail "The root specifiation contains duplicated field names."
      else
