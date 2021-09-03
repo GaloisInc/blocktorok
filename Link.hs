@@ -79,7 +79,9 @@ runTransformIO txPath blokPath out = runTx
           writeOutput `traverse_` Map.toList outputs
 
     absDir p = Path.takeDirectory <$> Dir.makeAbsolute p
-    writeOutput (file, contents) = writeFile (rel out file) (show contents)
+    writeOutput (file, contents) =
+      do Dir.createDirectoryIfMissing True (rel out $ Path.takeDirectory file)
+         writeFile (rel out file) (show contents)
     rel p1 p2 | Path.isRelative p2 = p1 Path.</> p2
               | otherwise          = p2
 
