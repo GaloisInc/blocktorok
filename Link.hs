@@ -80,7 +80,7 @@ runTransformIO txPath blokPath out = runTx
 
     absDir p = Path.takeDirectory <$> Dir.makeAbsolute p
     writeOutput (file, contents) =
-      do Dir.createDirectoryIfMissing True (rel out $ Path.takeDirectory file)
+      do Dir.createDirectoryIfMissing True $ rel out $ Path.takeDirectory file
          writeFile (rel out file) (show contents)
     rel p1 p2 | Path.isRelative p2 = p1 Path.</> p2
               | otherwise          = p2
