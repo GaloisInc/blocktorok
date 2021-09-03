@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 {-|
 Module      : Language.Blocktorok.Syntax
 Description : Blocktorok data language syntax definition
