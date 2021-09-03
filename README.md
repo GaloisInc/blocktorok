@@ -88,16 +88,23 @@ cabal run blocktorok -- --transformer transform.oct --output out/ data.blok
 Which will transform `data.blok` according to the rules in `transform.oct`,
 placing any output files in the director `out/`.
 
-## Samples and Documentation
+## Tests and Documentation
 
-The directories `hello/` and `battle/` under `drafts/` contain some very
-simple data and transformers to test out the compiler and get a feel for the
-language syntax: `hello/` contains an empty data file whose transformer
-produces all of the output, while `battle/` is a more complex data format
-describing fantasy RPG battle scenarios together with a transformer that emits
-Python code which simulates the battle scenario described. The `b1.py` file
-unde `drafts/` contains the simulation code referred to by the output of the
-latter example.
+Within the directory `test_cases/` is a subdirectory named `automated`, which
+contains a number of small examples of data and transformers to exercise the
+compiler and get a feel for the language syntax.
+
+To run an example, from a Bash-compatible shell, simply run:
+
+```text
+./run_test.sh <directory name of test case>
+```
+
+For example, to run the RPG battle example, you would type:
+
+```text
+./run_test.sh battle
+```
 
 Documentation for the Blocktorok's data, schema, and transformer language can
 be found in the report distributed with this code release.
