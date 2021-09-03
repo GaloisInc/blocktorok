@@ -10,7 +10,7 @@ blockMeshDict = file("system/blockMeshDict")
 render boundary_conditions.Isothermal |    ${marker}
                                       |    {
                                       |        type            fixedValue;
-                                      |        value           uniform ${value}; 
+                                      |        value           uniform ${value};
                                       |    }
 
 -- TODO: if ${value} == 0, then use zeroGradient, if not use fixedGradient with ${value}
