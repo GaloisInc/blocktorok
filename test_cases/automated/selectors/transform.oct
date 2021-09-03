@@ -1,0 +1,7 @@
+schema "schema.ocs"
+
+output = file("roots.out")
+
+render x_b |The int is ${x}
+
+output << top
