@@ -30,8 +30,10 @@ import qualified System.Exit         as Exit
 main :: IO ()
 main = realMain =<< execParser opts
   where
-    opts = info (parseOpts <**> helper)
-      (fullDesc <> progDesc "Transform Blocktorok data." <> header "blocktorok - A Blocktorok data transformer")
+    opts = info (parseOpts <**> helper) $
+                fullDesc
+             <> progDesc "Transform Blocktorok data."
+             <> header "blocktorok - A Blocktorok data transformer"
 
 realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =

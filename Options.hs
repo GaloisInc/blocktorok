@@ -48,14 +48,26 @@ newtype Options = Options { optCommand :: Command }
 -- | A parser for documentation generation command line options
 parseDocOpts :: Parser DocOptions
 parseDocOpts =
-  DocOptions <$> argument str (metavar "FILE" <> help "The schema to generate documentation from")
+  DocOptions <$> argument str ( metavar "FILE"
+                             <> help "The schema to generate documentation from"
+                              )
 
 -- | A parser for build command line options
 parseBuildOpts :: Parser BuildOptions
 parseBuildOpts =
-  BuildOptions <$> strOption (long "transformer" <> short 't' <> metavar "FILE" <> help "The transformer to apply to the input data")
-               <*> strOption (long "output" <> short 'o' <> metavar "DIR" <> help "The directory to send outputs to")
-               <*> argument str (metavar "FILE" <> help "The data to be transformed")
+  BuildOptions <$> strOption ( long "transformer"
+                            <> short 't'
+                            <> metavar "FILE"
+                            <> help "The transformer to apply to the input data"
+                             )
+               <*> strOption ( long "output"
+                            <> short 'o'
+                            <> metavar "DIR"
+                            <> help "The directory to send outputs to"
+                             )
+               <*> argument str ( metavar "FILE"
+                               <> help "The data to be transformed"
+                                )
 
 -- | A parser for all command line options
 parseOpts :: Parser Options
