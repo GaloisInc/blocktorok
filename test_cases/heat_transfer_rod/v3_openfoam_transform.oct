@@ -30,7 +30,7 @@ output_var <<                         |FoamFile
                                       |internalField   uniform ${simulation.initial_temp};
                                       |boundaryField
                                       |{
-                                      |    ${simulation.boundary_conditions}
+                                      |${vjoin(simulation.boundary_conditions)}
                                       |}
 
 render thermal_diffusivity            |FoamFile
