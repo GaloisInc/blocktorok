@@ -106,5 +106,10 @@ For example, to run the RPG battle example, you would type:
 ./run_test.sh battle
 ```
 
+Of particular interest are the tests `heated_rod_su2` and
+`heated_rod_openfoam`, which use identical schemas and data inputs but
+different transforms to produce very different simulation codes for the same
+problem, demonstrating the power of the Blocktorok workflow.
+
 Documentation for the Blocktorok's data, schema, and transformer language can
 be found in the report distributed with this code release.
