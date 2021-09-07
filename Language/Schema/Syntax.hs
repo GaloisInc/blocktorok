@@ -72,7 +72,6 @@ instance Show BlockDecl where
 -- | Block layout definition
 data BlockS = BlockS
   { blockSType   :: Located Ident
-  , blockSName   :: Maybe (Located Ident)
   , blockSFields :: Map Ident (Globbed BlockDecl)
   } deriving (Show)
 
