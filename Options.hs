@@ -15,20 +15,13 @@ needs, wants, and what is useful for demos etc.
 module Options
   ( BuildOptions(..)
   , Command(..)
-  , DocOptions(..)
   , Options(..)
-  , parseBuildOpts
-  , parseDocOpts
   , parseOpts
   ) where
 
 import           Options.Applicative (Parser, argument, command, help,
                                       hsubparser, info, long, metavar, progDesc,
                                       short, str, strOption)
-
--- | The options provided at the command line to control documentation
--- generation
-newtype DocOptions = DocOptions { schema :: FilePath }
 
 -- | The options provided at the command line to control compilation
 data BuildOptions = BuildOptions
@@ -39,18 +32,26 @@ data BuildOptions = BuildOptions
 
 -- | Commands recognized at the command line (like git add, git commit, etc)
 data Command
-  = Doc DocOptions
+  = Doc FilePath
+  | Template FilePath
   | Build BuildOptions
 
 -- | Options provided at the command line, generally (i.e. all known commands)
 newtype Options = Options { optCommand :: Command }
 
 -- | A parser for documentation generation command line options
-parseDocOpts :: Parser DocOptions
+parseDocOpts :: Parser FilePath
 parseDocOpts =
-  DocOptions <$> argument str ( metavar "FILE"
-                             <> help "The schema to generate documentation from"
-                              )
+  argument str ( metavar "FILE"
+              <> help "The schema to generate documentation from"
+               )
+
+-- | A parser for template generation command line options
+parseTemplateOpts :: Parser FilePath
+parseTemplateOpts =
+  argument str ( metavar "FILE"
+              <> help "The schema to generate a data template from"
+               )
 
 -- | A parser for build command line options
 parseBuildOpts :: Parser BuildOptions
@@ -74,5 +75,6 @@ parseOpts :: Parser Options
 parseOpts = Options <$>
   hsubparser
     ( command "doc" (info (Doc <$> parseDocOpts) (progDesc "Generate documentation from a schema"))
+   <> command "template" (info (Template <$> parseTemplateOpts) (progDesc "Generate a data template from a schema"))
    <> command "build" (info (Build <$> parseBuildOpts) (progDesc "Run a transformer on data"))
     )
