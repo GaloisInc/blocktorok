@@ -15,7 +15,8 @@ be used in the glue code connecting schemas to the transformer language.
 
 module Language.Schema.Parser
   ( -- * Parsing Blocktorok schemas
-    schemaFromFile
+    parseSchemaAST
+  , schemaFromFile
   ) where
 
 import           Control.Monad              (void)
@@ -212,21 +213,27 @@ schemaDefsP =  UnionDef <$> union
            <|> BlockDef <$> blockS
 
 schema :: Parser Schema
-schema = spc *>
-  (Schema <$> (schemaDefMap <$> MP.many schemaDefsP)
-          <*> root)
+schema = spc *> (Schema <$> (schemaDefMap <$> MP.many schemaDefsP) <*> root) <* MP.eof
 
 -------------------------------------------------------------------------------
 
-parseSchema :: FilePath -> Text -> Either Text Env
-parseSchema fp t =
+parseSchemaAST :: FilePath -> Text -> Either Text Schema
+parseSchemaAST fp t =
+  case result of
+    (Left err, _) -> Left (Text.pack $ MP.errorBundlePretty err)
+    (Right s, _) -> Right s
+  where
+    result = State.runState (MP.runParserT schema fp t) emptyEnv
+
+parseSchemaEnv :: FilePath -> Text -> Either Text Env
+parseSchemaEnv fp t =
     case result of
       (Left err, _) -> Left (Text.pack $ MP.errorBundlePretty err)
       (Right _, s)  -> Right s
   where
-    result = State.runState (MP.runParserT (schema >> MP.eof) fp t) emptyEnv
+    result = State.runState (MP.runParserT schema fp t) emptyEnv
 
 -- | Parse a 'Schema' from the given file, returning the typing 'Env' it
 -- specifies
 schemaFromFile :: FilePath -> IO (Either Text Env)
-schemaFromFile fp = parseSchema fp <$> TIO.readFile fp
+schemaFromFile fp = parseSchemaEnv fp <$> TIO.readFile fp
