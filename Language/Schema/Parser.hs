@@ -175,12 +175,11 @@ blockS :: Parser BlockS
 blockS =
   do symbol' "block"
      t  <- located ident
-     nm <- optional (located selector)
      fs <- brackets $ MP.many $ globbed blockDecl
      if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
        fail "The preceding block definition contains duplicated field names."
      else
-       do let b = BlockS t nm (globbedDeclsMap fs)
+       do let b = BlockS t (globbedDeclsMap fs)
           addTypeDef (locValue t) (BlockDef b)
           pure b
   where
