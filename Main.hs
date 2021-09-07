@@ -39,7 +39,7 @@ realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =
   case cmd of
     Doc {} -> putStrLn "Documentation generation not yet implemented" >> Exit.exitFailure
-    Template {} -> putStrLn "Template generation not yet implemented" >> Exit.exitFailure 
+    Template {} -> putStrLn "Template generation not yet implemented" >> Exit.exitFailure
     Build BuildOptions { transformer = t, output = o, blocktorok = d} ->
       runTransformIO t d o
       `Ex.catch`
