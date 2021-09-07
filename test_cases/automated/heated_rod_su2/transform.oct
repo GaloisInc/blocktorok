@@ -1,0 +1,71 @@
+schema "schema.ocs"
+
+output = file("v3_solid_rod.cfg")
+
+-- su2 takes the individual components and openfoam takes dt
+-- TODO: use require at a later point to throw an error when this isn't given by the user
+render physical_models.Components     |SOLID_DENSITY= ${density}
+                                      |SPECIFIC_HEAT_CP= ${heat_capacity}
+                                      |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
+
+render convergence.Criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
+                                      |CONV_STARTITER= ${start_iter}
+                                      |CONV_CAUCHY_ELEMS= ${cauchy_elements}
+                                      |CONV_CAUCHY_EPS= ${cauchy_epsilon}
+-- max iterations is only for steady state (does not indicate how to deal with time)
+-- TODO: it's OUTER_ITER for multi-physics, ITER for single physics
+render convergence.max_iterations     |ITER= ${max_iterations}
+
+-- is this the correct way to refer to record syntax?
+render time.Steady_state              |TIME_DOMAIN= NO
+render time.Transient                 |TIME_DOMAIN= YES
+                                      |TIME_STEP= ${dt}
+                                      |MAX_TIME= ${max_time}
+                                      |INNER_ITER= ${inner_iter}
+                                      |TIME_ITER= ${outer_iter}
+
+render input_output                   |MESH_FILENAME= ${mesh_filename}
+                                      |MESH_FORMAT= ${mesh_format}
+                                      |TABULAR_FORMAT= ${output_format}
+                                      |CONV_FILENAME= history
+-- TODO: how do I make it if it exists use the user defined value, if not use flow?
+                                      |VOLUME_FILENAME= flow
+                                      |SURFACE_FILENAME= surface_flow
+                                      |OUTPUT_WRT_FREQ = ${write_interval_iter}
+                                      |SCREEN_WRT_FREQ_TIME = 1
+
+render physics                        |SOLVER= HEAT_EQUATION
+                                      |MATH_PROBLEM= DIRECT
+                                      |RESTART_SOL= NO
+                                      |OBJECTIVE_FUNCTION= TOTAL_HEATFLUX
+
+render boundary_conditions.Isothermal |${marker}, ${value}
+render boundary_conditions.Heatflux   |${marker}, ${value}
+
+render mesh_format.SU2                |SU2
+render mesh_format.CGNS               |CGNS
+
+render output_format.CSV              |CSV
+render output_format.TECPLOT          |TECPLOT
+
+conduction_condition =                |INC_NONDIM = DIMENSIONAL
+                                      |SOLID_TEMPERATURE_INIT = ${simulation.initial_temp}
+                                      |${simulation.physics.physical_models.Components}
+
+-- should this be root.simulation or domain?
+render domain                         |${physics}
+                                      |${time}
+                                      |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.Isothermal)} )
+                                      |MARKER_HEATFLUX= ( ${join(", ", boundary_conditions.Heatflux)} )
+                                      |MARKER_PLOTTING= ( ${join(", ", boundary_conditions.Isothermal.marker)}, ${join(", ", boundary_conditions.Heatflux.marker)} )
+                                      |${conduction_condition}
+                                      |NUM_METHOD_GRAD= GREEN_GAUSS
+                                      |LINEAR_SOLVER= FGMRES
+                                      |LINEAR_SOLVER_PREC= ILU
+                                      |LINEAR_SOLVER_ILU_FILL_IN= 0
+                                      |LINEAR_SOLVER_ERROR= 1E-15
+                                      |LINEAR_SOLVER_ITER= 5
+                                      |${convergence}
+                                      |${input_output}
+
+output << simulation
