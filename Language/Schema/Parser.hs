@@ -15,7 +15,7 @@ be used in the glue code connecting schemas to the transformer language.
 
 module Language.Schema.Parser
   ( -- * Parsing Blocktorok schemas
-    parseSchemaAST
+    schemaASTFromFile
   , schemaFromFile
   ) where
 
@@ -220,10 +220,14 @@ schema = spc *> (Schema <$> (schemaDefMap <$> MP.many schemaDefsP) <*> root) <* 
 parseSchemaAST :: FilePath -> Text -> Either Text Schema
 parseSchemaAST fp t =
   case result of
-    (Left err, _) -> Left (Text.pack $ MP.errorBundlePretty err)
-    (Right s, _) -> Right s
+    Left err -> Left (Text.pack $ MP.errorBundlePretty err)
+    Right s  -> Right s
   where
-    result = State.runState (MP.runParserT schema fp t) emptyEnv
+    result = State.evalState (MP.runParserT schema fp t) emptyEnv
+
+-- | Parse a 'Schema' from the given file, returning the AST itself
+schemaASTFromFile :: FilePath -> IO (Either Text Schema)
+schemaASTFromFile fp = parseSchemaAST fp <$> TIO.readFile fp
 
 parseSchemaEnv :: FilePath -> Text -> Either Text Env
 parseSchemaEnv fp t =
