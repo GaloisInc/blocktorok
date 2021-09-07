@@ -16,7 +16,7 @@ do
     rm -rf $OUT
     pushd $TEST > /dev/null && \
       mkdir -p expected && \
-      $BLOCKTOROK -t transform.oct -o $OUT input.blok &&  \
+      $BLOCKTOROK build -t transform.oct -o $OUT input.blok &&  \
       diff -r -q expected $OUT
     if [ $? -ne 0 ]; then
       FAILURE_COUNT=$(($FAILURE_COUNT + 1))
