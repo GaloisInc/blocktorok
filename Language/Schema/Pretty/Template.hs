@@ -1,5 +1,5 @@
 {-|
-Module      : Language.Schema.TemplateGen
+Module      : Language.Schema.Pretty.Template
 Description : Blocktorok data template generation from schemas
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
@@ -12,6 +12,6 @@ schema. This is an experimental feature that will certainly require tuning to
 make sure the generated template is correct.
 -}
 
-module Language.Schema.TemplateGen
+module Language.Schema.Pretty.Template
   (
   ) where

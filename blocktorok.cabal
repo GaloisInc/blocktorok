@@ -19,11 +19,11 @@ executable blocktorok
 
                        Language.Common
 
-                       Language.Schema.DocGen
                        Language.Schema.Env
                        Language.Schema.Parser
+                       Language.Schema.Pretty.Doc
+                       Language.Schema.Pretty.Template
                        Language.Schema.Syntax
-                       Language.Schema.TemplateGen
                        Language.Schema.Type
 
                        Language.Transform.Evaluator

@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 {-|
-Module      : Language.Schema.DocGen
+Module      : Language.Schema.Pretty.Doc
 Description : Markdown documentation generation from schemas
 Copyright   : (c) Galois, Inc. 2021
 License     : N/A
@@ -15,7 +15,7 @@ This is an experimental feature that will certainly require tuning to make sure
 the generated documentation is clear and well laid-out.
 -}
 
-module Language.Schema.DocGen
+module Language.Schema.Pretty.Doc
   ( ppSchemaDocs
   ) where
 
@@ -26,13 +26,14 @@ import qualified Data.Map.Strict           as Map
 
 import           Data.Text                 (Text)
 
-import           Prettyprinter             (Doc, Pretty (pretty), emptyDoc,
-                                            enclose, hardline, (<+>))
+import           Prettyprinter             (Doc, Pretty (pretty), align,
+                                            concatWith, emptyDoc, enclose,
+                                            hardline, (<+>))
 import           Prettyprinter.Render.Text (putDoc)
 
 import qualified System.FilePath           as Path
 
-import           Language.Common           (unloc, Located)
+import           Language.Common           (Located, unloc)
 import           Language.Schema.Parser    (schemaASTFromFile)
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
@@ -47,10 +48,9 @@ ppSchemaDocs :: FilePath -> IO ()
 ppSchemaDocs fp =
   do Schema { schemaDefs, schemaRoot } <- schemaASTFromFile fp `orThrow` ParseError
      let docs = h1 "Documentation for" <+> pretty (Path.dropExtensions fp)
-             <> blankLine
-             <> rootDoc schemaRoot
-             <> schemaDefsDoc schemaDefs
-
+           <//> rootDoc schemaRoot
+           <//> schemaDefsDoc schemaDefs
+             <> hardline
      putDoc docs
 
 -------------------------------------------------------------------------------
@@ -58,11 +58,9 @@ ppSchemaDocs fp =
 
 rootDoc :: Root -> Doc ann
 rootDoc Root { rootFields = rfs } =
-     h2 "Top-level structure"
-  <> blankLine
-  <> "The following must appear at the top-level of your data file:"
-  <> blankLine
-  <> fieldsDoc rfs
+       h2 "Top-level structure"
+  <//> "The following must appear at the top-level of your data file:"
+  <//> fieldsDoc rfs
 
 stypeDoc :: SType -> Doc ann
 stypeDoc t =
@@ -73,7 +71,7 @@ stypeDoc t =
     SNamed txt -> pretty txt
 
 fieldsDoc :: Map Ident (Globbed BlockDecl) -> Doc ann
-fieldsDoc = Map.foldr (\x y -> fieldDoc x <> y) emptyDoc
+fieldsDoc gbds = concatWith (</>) (Map.elems (Map.map fieldDoc gbds))
   where
     fieldDoc :: Globbed BlockDecl -> Doc ann
     fieldDoc gbd = item $
@@ -84,11 +82,9 @@ fieldsDoc = Map.foldr (\x y -> fieldDoc x <> y) emptyDoc
         Many bd     -> globbedFieldDoc "Any number of fields" bd
 
     globbedFieldDoc :: Text -> BlockDecl -> Doc ann
-    globbedFieldDoc msg BlockDecl { blockDeclDoc, blockDeclDecl } =
+    globbedFieldDoc msg BlockDecl { blockDeclDoc, blockDeclDecl } = align $
           pretty msg
-      <+> declDoc blockDeclDecl
-       <> hardline
-       <> maybe hardline (pretty . unloc) blockDeclDoc
+      <+> declDoc blockDeclDecl <> maybe emptyDoc (\bdd -> hardline <> noLocDoc bdd) blockDeclDoc
 
     declDoc :: Decl -> Doc ann
     declDoc Decl { declName , declType } =
@@ -98,49 +94,52 @@ fieldsDoc = Map.foldr (\x y -> fieldDoc x <> y) emptyDoc
        <> "."
 
 noLocDoc :: Pretty a => Located a -> Doc ann
-noLocDoc a = (pretty . unloc) a <> blankLine
+noLocDoc = pretty . unloc
 
 schemaDefsDoc :: Map Ident SchemaDef -> Doc ann
 schemaDefsDoc defs =
-     h2 "Block and union types"
-  <> blankLine
-  <> Map.foldr (\x y -> schemaDefDoc x <> y) emptyDoc defs
+       h2 "Block and union types"
+  <//> concatWith (<//>) (Map.map schemaDefDoc defs)
   where
     schemaDefDoc :: SchemaDef -> Doc ann
     schemaDefDoc (UnionDef Union { unionName, unionVariants }) =
-         h3 (bold (pretty (unloc unionName)))
-      <> blankLine
-      <> "Which has constructors:"
-      <> blankLine
-      <> variantsDoc unionVariants
+           h3 (bold (pretty (unloc unionName)))
+      <//> "Which has constructors:"
+      <//> variantsDoc unionVariants
     schemaDefDoc (BlockDef BlockS { blockSType, blockSFields }) =
-         h3 (bold (pretty (unloc blockSType)))
-      <> blankLine
-      <> "Blocks of this type must contain:"
-      <> blankLine
-      <> fieldsDoc blockSFields
+           h3 (bold (pretty (unloc blockSType)))
+      <//> "Blocks of this type must contain:"
+      <//> fieldsDoc blockSFields
 
     variantsDoc :: Map Ident Variant -> Doc ann
-    variantsDoc = Map.foldr (\x y -> variantDoc' x <> y) emptyDoc
+    variantsDoc variants =
+      concatWith (<//>) (Map.elems (Map.map variantDoc' variants))
 
     variantDoc' :: Variant -> Doc ann
     variantDoc' Variant { variantDoc, variantTag, variantFields} =
-         h4 (italic (pretty (unloc variantTag)))
-      <> blankLine
-      <> maybe emptyDoc noLocDoc variantDoc
-      <> if Map.null variantFields
-         then emptyDoc
-         else "This variant carries data:"
-           <> blankLine
-           <> variantFieldsDoc variantFields
+           h4 (italic (pretty (unloc variantTag)))
+        <> maybe emptyDoc (\vd -> blankLine <> noLocDoc vd) variantDoc
+        <> if Map.null variantFields
+           then emptyDoc
+           else blankLine
+             <> "This variant carries data:"
+           <//> variantFieldsDoc variantFields
 
     variantFieldsDoc :: Map Ident SType -> Doc ann
-    variantFieldsDoc = Map.foldrWithKey (\nm t y -> item (italic (pretty nm)
-                                                <+> "with type"
-                                                <+> bold (stypeDoc t)
-                                                 <> blankLine
-                                                 <> y))
-                                        emptyDoc
+    variantFieldsDoc types =
+      concatWith (</>) (Map.elems (Map.mapWithKey tyDeclDoc types))
+
+    tyDeclDoc :: Ident -> SType -> Doc ann
+    tyDeclDoc nm t =
+          item (italic (pretty nm))
+      <+> "with type"
+      <+> bold (stypeDoc t)
+
+(</>) :: Doc ann -> Doc ann -> Doc ann
+x </> y = x <> hardline <> y
+
+(<//>) :: Doc ann -> Doc ann -> Doc ann
+x <//> y = x <> blankLine <> y
 
 blankLine :: Doc ann
 blankLine = hardline <> hardline
