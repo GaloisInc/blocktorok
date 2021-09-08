@@ -56,10 +56,10 @@ ppSchemaDocs fp =
 -- Generating 'Doc's from 'Schema's
 
 ppRoot :: Root -> Doc ann
-ppRoot Root { rootFields = rfs } =
+ppRoot Root { rootFields } =
        h2 "Top-level structure"
   <//> "The following must appear at the top-level of your data file:"
-  <//> ppFields rfs
+  <//> ppFields rootFields
 
 ppStype :: SType -> Doc ann
 ppStype t =
