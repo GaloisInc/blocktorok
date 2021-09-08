@@ -123,7 +123,7 @@ decl p =
      else pure $ Decl n t
 
 doc :: Parser Text
-doc = Text.pack <$> (symbol' "[--" *> MP.manyTill Lexer.charLiteral (symbol' "--]"))
+doc = Text.pack <$> (symbol' "[-- " *> MP.manyTill Lexer.charLiteral (symbol' " --]"))
 
 -- | TODO: Better detection of / error for duplicate fields?
 variant :: Parser Variant
