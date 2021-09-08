@@ -21,6 +21,7 @@ executable blocktorok
 
                        Language.Schema.Env
                        Language.Schema.Parser
+                       Language.Schema.Pretty
                        Language.Schema.Pretty.Doc
                        Language.Schema.Pretty.Template
                        Language.Schema.Syntax

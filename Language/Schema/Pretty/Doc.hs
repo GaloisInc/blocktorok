@@ -33,8 +33,9 @@ import           Prettyprinter.Render.Text (putDoc)
 
 import qualified System.FilePath           as Path
 
-import           Language.Common           (Located, unloc)
+import           Language.Common           (unloc)
 import           Language.Schema.Parser    (schemaASTFromFile)
+import           Language.Schema.Pretty    (blankLine, noLocDoc, (<//>), (</>))
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
                                             SchemaDef (..), Union (..),
@@ -84,7 +85,8 @@ fieldsDoc gbds = concatWith (</>) (Map.elems (Map.map fieldDoc gbds))
     globbedFieldDoc :: Text -> BlockDecl -> Doc ann
     globbedFieldDoc msg BlockDecl { blockDeclDoc, blockDeclDecl } = align $
           pretty msg
-      <+> declDoc blockDeclDecl <> maybe emptyDoc (\bdd -> hardline <> noLocDoc bdd) blockDeclDoc
+      <+> declDoc blockDeclDecl
+       <> maybe emptyDoc (\bdd -> hardline <> noLocDoc bdd) blockDeclDoc
 
     declDoc :: Decl -> Doc ann
     declDoc Decl { declName , declType } =
@@ -92,9 +94,6 @@ fieldsDoc gbds = concatWith (</>) (Map.elems (Map.map fieldDoc gbds))
       <+> "with type"
       <+> bold (stypeDoc (unloc declType))
        <> "."
-
-noLocDoc :: Pretty a => Located a -> Doc ann
-noLocDoc = pretty . unloc
 
 schemaDefsDoc :: Map Ident SchemaDef -> Doc ann
 schemaDefsDoc defs =
@@ -134,15 +133,6 @@ schemaDefsDoc defs =
           item (italic (pretty nm))
       <+> "with type"
       <+> bold (stypeDoc t)
-
-(</>) :: Doc ann -> Doc ann -> Doc ann
-x </> y = x <> hardline <> y
-
-(<//>) :: Doc ann -> Doc ann -> Doc ann
-x <//> y = x <> blankLine <> y
-
-blankLine :: Doc ann
-blankLine = hardline <> hardline
 
 -------------------------------------------------------------------------------
 -- Simple Markdown annotations
