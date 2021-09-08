@@ -32,7 +32,7 @@ import           Prettyprinter.Render.Text (putDoc)
 
 import qualified System.FilePath           as Path
 
-import           Language.Common           (unloc)
+import           Language.Common           (unloc, Located)
 import           Language.Schema.Parser    (schemaASTFromFile)
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
@@ -73,7 +73,7 @@ stypeDoc t =
     SNamed txt -> pretty txt
 
 fieldsDoc :: Map Ident (Globbed BlockDecl) -> Doc ann
-fieldsDoc = Map.foldr (\x y -> fieldDoc x <> blankLine <> y) emptyDoc
+fieldsDoc = Map.foldr (\x y -> fieldDoc x <> y) emptyDoc
   where
     fieldDoc :: Globbed BlockDecl -> Doc ann
     fieldDoc gbd = item $
@@ -88,7 +88,7 @@ fieldsDoc = Map.foldr (\x y -> fieldDoc x <> blankLine <> y) emptyDoc
           pretty msg
       <+> declDoc blockDeclDecl
        <> hardline
-       <> pretty (unloc <$> blockDeclDoc)
+       <> maybe hardline (pretty . unloc) blockDeclDoc
 
     declDoc :: Decl -> Doc ann
     declDoc Decl { declName , declType } =
@@ -96,6 +96,9 @@ fieldsDoc = Map.foldr (\x y -> fieldDoc x <> blankLine <> y) emptyDoc
       <+> "with type"
       <+> bold (stypeDoc (unloc declType))
        <> "."
+
+noLocDoc :: Pretty a => Located a -> Doc ann
+noLocDoc a = (pretty . unloc) a <> blankLine
 
 schemaDefsDoc :: Map Ident SchemaDef -> Doc ann
 schemaDefsDoc defs =
@@ -124,10 +127,9 @@ schemaDefsDoc defs =
     variantDoc' Variant { variantDoc, variantTag, variantFields} =
          h4 (italic (pretty (unloc variantTag)))
       <> blankLine
-      <> pretty (unloc <$> variantDoc)
-      <> blankLine
+      <> maybe emptyDoc noLocDoc variantDoc
       <> if Map.null variantFields
-         then ""
+         then emptyDoc
          else "This variant carries data:"
            <> blankLine
            <> variantFieldsDoc variantFields
@@ -165,7 +167,7 @@ bold :: Doc ann -> Doc ann
 bold = enclose "**" "**"
 
 item :: Doc ann -> Doc ann
-item = ("*" <+>)
+item = ("-" <+>)
 
 -------------------------------------------------------------------------------
 -- Internals
