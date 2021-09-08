@@ -31,7 +31,7 @@ import qualified System.FilePath              as Path
 
 import           Language.Blocktorok.Parser   (elementsFromFile)
 import           Language.Common              (Located (..), orThrow, orThrow')
-import           Language.Schema.Parser       (schemaFromFile)
+import           Language.Schema.Parser       (schemaEnvFromFile)
 import qualified Language.Transform.Evaluator as TxEval
 import           Language.Transform.Parser    (transformFromFile)
 import qualified Language.Transform.Syntax    as Tx
@@ -64,7 +64,7 @@ runTransformIO txPath blokPath out = runTx
           -- load schema
           let schemaRelPath = Text.unpack . locValue $ Tx.transformSchema tx
               schemaPath = transformDir Path.</> schemaRelPath
-          schemaEnv <- schemaFromFile schemaPath `orThrow` ParseError
+          schemaEnv <- schemaEnvFromFile schemaPath `orThrow` ParseError
 
 
           -- validate and typecheck input
