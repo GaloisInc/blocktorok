@@ -45,30 +45,87 @@ To build Blocktorok, simply run `cabal build` from within the directory
 containing this README. Any Haskell dependencies necessary will be fetched and
 built automatically.
 
+## Installing Blocktorok
+
+From the directory containing this README, simply run
+`cabal install blocktorok`. This will create a symbolic link to the executable
+in your `.cabal/bin` directory; if this directory is on your `$PATH`, you will
+be able to invoke `blocktorok` by its name alone. The following sections assume
+this is the case.
+
 ## Running Blocktorok
 
-Because Blocktorok is in a prototype state, it is best and easiest to run it
-using `cabal`.
-
-Executing `cabal run blocktorok` within the directory containing this README
-results in this output:
-
-```bash
-Missing: (-t|--transformer FILE) (-o|--output DIR) FILE
-
-Usage: blocktorok (-t|--transformer FILE) (-o|--output DIR) FILE
-  Transform Blocktorok data.
-```
-
-More detailed help can be displayed by executing `cabal run blocktorok -- -h`
-or `cabal run blocktorok -- --help`. The `--` passes the flags following to the
-Blocktorok executable rather than `cabal`. Here is the help output:
+Executing `blocktorok` at the command line results in this output:
 
 ```text
-blocktorok - A Blocktorok data transformer
+Missing: COMMAND
 
-Usage: blocktorok (-t|--transformer FILE) (-o|--output DIR) FILE
-  Transform Blocktorok data.
+Usage: blocktorok COMMAND
+  Work with Blocktorok data.
+```
+
+This isn't particularly helpful; more detailed information can be displayed by
+passing the `-h` or `--help` flags. Here is the help output:
+
+```text
+blocktorok - A Blocktorok data transformer suite
+
+Usage: blocktorok COMMAND
+  Work with Blocktorok data.
+
+Available options:
+  -h,--help                Show this help text
+
+Available commands:
+  doc                      Generate documentation from a schema
+  template                 Generate a data template from a schema
+  build                    Run a transformer on data
+```
+
+Each of the available commands (`doc`, `template`, `build`) has its own
+`--help` flag.
+
+### `blocktorok doc`
+
+```text
+Usage: blocktorok doc FILE
+  Generate documentation from a schema
+
+Available options:
+  FILE                     The schema to generate documentation from
+  -h,--help                Show this help text
+```
+
+Given a schema `schema.ocs`, automatically generated documentation for it can
+be displayed on standard output (and thus directed elsewhere) like so:
+
+```bash
+blocktorok doc schema.ocs
+```
+
+### `blocktorok template`
+
+```text
+Usage: blocktorok template FILE
+  Generate a data template from a schema
+
+Available options:
+  FILE                     The schema to generate a data template from
+  -h,--help                Show this help text
+```
+
+Given a schema `schema.ocs`, an automatically generated blank data template can
+be displayed on standard output (and thus directed elsewhere) like so:
+
+```bash
+blocktorok template schema.ocs
+```
+
+### `blocktorok build`
+
+```text
+Usage: blocktorok build (-t|--transformer FILE) (-o|--output DIR) FILE
+  Run a transformer on data
 
 Available options:
   -t,--transformer FILE    The transformer to apply to the input data
@@ -77,16 +134,15 @@ Available options:
   -h,--help                Show this help text
 ```
 
-So, given a transformer definition (e.g. `transform.oct`), some data (e.g.
-`data.blok`), and an output directory name (e.g. `out/`) the compiler can be
-run like so:
+Given a transformer definition `transform.oct`, some data `data.blok`, and an
+output directory name `out/` the compiler can be run like so:
 
 ```bash
-cabal run blocktorok -- --transformer transform.oct --output out/ data.blok
+blocktorok --transformer transform.oct --output out/ data.blok
 ```
 
 Which will transform `data.blok` according to the rules in `transform.oct`,
-placing any output files in the director `out/`.
+placing any output files in the directory `out/`.
 
 ## Tests and Documentation
 

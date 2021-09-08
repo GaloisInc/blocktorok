@@ -40,8 +40,8 @@ main = realMain =<< execParser opts
   where
     opts = info (parseOpts <**> helper) $
                 fullDesc
-             <> progDesc "Transform Blocktorok data."
-             <> header "blocktorok - A Blocktorok data transformer"
+             <> progDesc "Work with Blocktorok data."
+             <> header "blocktorok - A Blocktorok data transformer suite"
 
 realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =
