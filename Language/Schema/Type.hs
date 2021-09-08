@@ -38,7 +38,7 @@ data SType
   | SFloat
   | SString
   | SNamed Ident
-  deriving(Eq)
+  deriving (Eq)
 
 instance Show SType where
   show SInt       = "int"
