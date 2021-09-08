@@ -49,90 +49,90 @@ ppSchemaDocs :: FilePath -> IO ()
 ppSchemaDocs fp =
   do Schema { schemaDefs, schemaRoot } <- schemaASTFromFile fp `orThrow` ParseError
      let docs = h1 "Documentation for" <+> pretty (Path.dropExtensions fp)
-           <//> rootDoc schemaRoot
-           <//> schemaDefsDoc schemaDefs
+           <//> ppRoot schemaRoot
+           <//> ppSchemaDefs schemaDefs
              <> hardline
      putDoc docs
 
 -------------------------------------------------------------------------------
 -- Generating 'Doc's from 'Schema's
 
-rootDoc :: Root -> Doc ann
-rootDoc Root { rootFields = rfs } =
+ppRoot :: Root -> Doc ann
+ppRoot Root { rootFields = rfs } =
        h2 "Top-level structure"
   <//> "The following must appear at the top-level of your data file:"
-  <//> fieldsDoc rfs
+  <//> ppFields rfs
 
-stypeDoc :: SType -> Doc ann
-stypeDoc t =
+ppStype :: SType -> Doc ann
+ppStype t =
   case t of
     SInt       -> "int"
     SFloat     -> "float"
     SString    -> "string"
     SNamed txt -> pretty txt
 
-fieldsDoc :: Map Ident (Globbed BlockDecl) -> Doc ann
-fieldsDoc gbds = concatWith (</>) (Map.elems (Map.map fieldDoc gbds))
+ppFields :: Map Ident (Globbed BlockDecl) -> Doc ann
+ppFields gbds = concatWith (</>) (Map.elems (Map.map ppField gbds))
   where
-    fieldDoc :: Globbed BlockDecl -> Doc ann
-    fieldDoc gbd = item $
+    ppField :: Globbed BlockDecl -> Doc ann
+    ppField gbd = item $
       case gbd of
-        One bd      -> globbedFieldDoc "Exactly one field" bd
-        Optional bd -> globbedFieldDoc "At most one field" bd
-        Some bd     -> globbedFieldDoc "At least one field" bd
-        Many bd     -> globbedFieldDoc "Any number of fields" bd
+        One bd      -> ppDeclWith "Exactly one field" bd
+        Optional bd -> ppDeclWith "At most one field" bd
+        Some bd     -> ppDeclWith "At least one field" bd
+        Many bd     -> ppDeclWith "Any number of fields" bd
 
-    globbedFieldDoc :: Text -> BlockDecl -> Doc ann
-    globbedFieldDoc msg BlockDecl { blockDeclDoc, blockDeclDecl } = align $
+    ppDeclWith :: Text -> BlockDecl -> Doc ann
+    ppDeclWith msg BlockDecl { blockDeclDoc, blockDeclDecl } = align $
           pretty msg
-      <+> declDoc blockDeclDecl
+      <+> ppDecl blockDeclDecl
        <> maybe emptyDoc (\bdd -> hardline <> noLocDoc bdd) blockDeclDoc
 
-    declDoc :: Decl -> Doc ann
-    declDoc Decl { declName , declType } =
+    ppDecl :: Decl -> Doc ann
+    ppDecl Decl { declName , declType } =
           italic (pretty (unloc declName))
       <+> "with type"
-      <+> bold (stypeDoc (unloc declType))
+      <+> bold (ppStype (unloc declType))
        <> "."
 
-schemaDefsDoc :: Map Ident SchemaDef -> Doc ann
-schemaDefsDoc defs =
+ppSchemaDefs :: Map Ident SchemaDef -> Doc ann
+ppSchemaDefs defs =
        h2 "Block and union types"
-  <//> concatWith (<//>) (Map.map schemaDefDoc defs)
+  <//> concatWith (<//>) (Map.map ppSchemaDef defs)
   where
-    schemaDefDoc :: SchemaDef -> Doc ann
-    schemaDefDoc (UnionDef Union { unionName, unionVariants }) =
+    ppSchemaDef :: SchemaDef -> Doc ann
+    ppSchemaDef (UnionDef Union { unionName, unionVariants }) =
            h3 (bold (pretty (unloc unionName)))
       <//> "Which has constructors:"
-      <//> variantsDoc unionVariants
-    schemaDefDoc (BlockDef BlockS { blockSType, blockSFields }) =
+      <//> ppVariants unionVariants
+    ppSchemaDef (BlockDef BlockS { blockSType, blockSFields }) =
            h3 (bold (pretty (unloc blockSType)))
       <//> "Blocks of this type must contain:"
-      <//> fieldsDoc blockSFields
+      <//> ppFields blockSFields
 
-    variantsDoc :: Map Ident Variant -> Doc ann
-    variantsDoc variants =
-      concatWith (<//>) (Map.elems (Map.map variantDoc' variants))
+    ppVariants :: Map Ident Variant -> Doc ann
+    ppVariants variants =
+      concatWith (<//>) (Map.elems (Map.map ppVariant variants))
 
-    variantDoc' :: Variant -> Doc ann
-    variantDoc' Variant { variantDoc, variantTag, variantFields} =
+    ppVariant :: Variant -> Doc ann
+    ppVariant Variant { variantDoc, variantTag, variantFields} =
            h4 (italic (pretty (unloc variantTag)))
         <> maybe emptyDoc (\vd -> blankLine <> noLocDoc vd) variantDoc
         <> if Map.null variantFields
            then emptyDoc
            else blankLine
              <> "This variant carries data:"
-           <//> variantFieldsDoc variantFields
+           <//> ppVariantFields variantFields
 
-    variantFieldsDoc :: Map Ident SType -> Doc ann
-    variantFieldsDoc types =
-      concatWith (</>) (Map.elems (Map.mapWithKey tyDeclDoc types))
+    ppVariantFields :: Map Ident SType -> Doc ann
+    ppVariantFields types =
+      concatWith (</>) (Map.elems (Map.mapWithKey ppTypeDecl types))
 
-    tyDeclDoc :: Ident -> SType -> Doc ann
-    tyDeclDoc nm t =
+    ppTypeDecl :: Ident -> SType -> Doc ann
+    ppTypeDecl nm t =
           item (italic (pretty nm))
       <+> "with type"
-      <+> bold (stypeDoc t)
+      <+> bold (ppStype t)
 
 -------------------------------------------------------------------------------
 -- Simple Markdown annotations
