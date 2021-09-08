@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Language.Schema.Pretty
 Description : Common pretty-printing combinators
@@ -13,7 +15,8 @@ template generation.
 
 module Language.Schema.Pretty
   ( blankLine
-  , noLocDoc
+  , ppStype
+  , ppNoLoc
   , (</>)
   , (<//>)
   ) where
@@ -21,6 +24,7 @@ module Language.Schema.Pretty
 import           Prettyprinter   (Doc, Pretty (pretty), hardline)
 
 import           Language.Common (Located, unloc)
+import Language.Schema.Type (SType (..))
 
 -- | Combine two 'Doc' @ann@, separating with 'hardline'
 (</>) :: Doc ann -> Doc ann -> Doc ann
@@ -35,5 +39,14 @@ blankLine :: Doc ann
 blankLine = hardline <> hardline
 
 -- | Pretty-print a 'Located' value, ignoring the location data
-noLocDoc :: Pretty a => Located a -> Doc ann
-noLocDoc = pretty . unloc
+ppNoLoc :: Pretty a => Located a -> Doc ann
+ppNoLoc = pretty . unloc
+
+-- | Pretty-print an 'SType'
+ppStype :: SType -> Doc ann
+ppStype t =
+  case t of
+    SInt       -> "int"
+    SFloat     -> "float"
+    SString    -> "string"
+    SNamed txt -> pretty txt

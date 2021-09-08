@@ -33,7 +33,7 @@ import qualified System.FilePath           as Path
 
 import           Language.Common           (orThrow, unloc)
 import           Language.Schema.Parser    (schemaASTFromFile)
-import           Language.Schema.Pretty    (blankLine, noLocDoc, (<//>), (</>))
+import           Language.Schema.Pretty    (blankLine, ppNoLoc, ppStype, (<//>), (</>))
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
                                             SchemaDef (..), Union (..),
@@ -61,14 +61,6 @@ ppRoot Root { rootFields } =
   <//> "The following must appear at the top-level of your data file:"
   <//> ppFields rootFields
 
-ppStype :: SType -> Doc ann
-ppStype t =
-  case t of
-    SInt       -> "int"
-    SFloat     -> "float"
-    SString    -> "string"
-    SNamed txt -> pretty txt
-
 ppFields :: Map Ident (Globbed BlockDecl) -> Doc ann
 ppFields gbds = concatWith (</>) (Map.elems (Map.map ppField gbds))
   where
@@ -84,7 +76,7 @@ ppFields gbds = concatWith (</>) (Map.elems (Map.map ppField gbds))
     ppDeclWith msg BlockDecl { blockDeclDoc, blockDeclDecl } = align $
           pretty msg
       <+> ppDecl blockDeclDecl
-       <> maybe emptyDoc (\bdd -> hardline <> noLocDoc bdd) blockDeclDoc
+       <> maybe emptyDoc (\bdd -> hardline <> ppNoLoc bdd) blockDeclDoc
 
     ppDecl :: Decl -> Doc ann
     ppDecl Decl { declName , declType } =
@@ -115,7 +107,7 @@ ppSchemaDefs defs =
     ppVariant :: Variant -> Doc ann
     ppVariant Variant { variantDoc, variantTag, variantFields} =
            h4 (italic (pretty (unloc variantTag)))
-        <> maybe emptyDoc (\vd -> blankLine <> noLocDoc vd) variantDoc
+        <> maybe emptyDoc (\vd -> blankLine <> ppNoLoc vd) variantDoc
         <> if Map.null variantFields
            then emptyDoc
            else blankLine
