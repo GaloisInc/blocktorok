@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Language.Common
 Description : Common types / functions for languages
@@ -21,6 +22,8 @@ module Language.Common
     -- ** Computing with locations
   , locUnknown
   , msgWithLoc
+  , orThrow
+  , orThrow'
   , sourceRangeSpan
   , sourceRangeSpan'
   , unloc
@@ -28,6 +31,8 @@ module Language.Common
     -- ** Pretty-printing
   , ppRange
   ) where
+
+import qualified Control.Exception         as Ex
 
 import           Data.Text (Text, pack)
 
@@ -102,3 +107,17 @@ sourceRangeSpan (SourceRange f1 s1 e1) (SourceRange _ s2 e2) =
 -- location data
 sourceRangeSpan' :: (HasLocation a, HasLocation b) => a -> b -> SourceRange
 sourceRangeSpan' e1 e2 = sourceRangeSpan (location e1) (location e2)
+
+-- | @ioe `orThrow` f@ runs the 'IO' action @ioe@, throwing an exception via
+-- @f@ if the result is @Left@ and unwrapping the @Right@ value otherwise
+orThrow :: Ex.Exception c => IO (Either a b) -> (a -> c) -> IO b
+orThrow io mkC  =
+  do  eitherB <- io
+      case eitherB of
+        Left a  -> Ex.throwIO (mkC a)
+        Right b -> pure b
+
+-- | The same as 'orThrow', except taking a pure 'Either' value rather than an
+-- 'IO' action
+orThrow' :: Ex.Exception c => Either a b -> (a -> c) -> IO b
+orThrow' e = orThrow (pure e)

@@ -19,8 +19,6 @@ module Language.Schema.Pretty.Doc
   ( ppSchemaDocs
   ) where
 
-import qualified Control.Exception         as Ex
-
 import           Data.Map.Strict           (Map)
 import qualified Data.Map.Strict           as Map
 
@@ -33,7 +31,7 @@ import           Prettyprinter.Render.Text (putDoc)
 
 import qualified System.FilePath           as Path
 
-import           Language.Common           (unloc)
+import           Language.Common           (orThrow, unloc)
 import           Language.Schema.Parser    (schemaASTFromFile)
 import           Language.Schema.Pretty    (blankLine, noLocDoc, (<//>), (</>))
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
@@ -157,13 +155,3 @@ bold = enclose "**" "**"
 
 item :: Doc ann -> Doc ann
 item = ("-" <+>)
-
--------------------------------------------------------------------------------
--- Internals
-
-orThrow :: Ex.Exception c => IO (Either a b) -> (a -> c) -> IO b
-orThrow io mkC  =
-  do  eitherB <- io
-      case eitherB of
-        Left a  -> Ex.throwIO (mkC a)
-        Right b -> pure b

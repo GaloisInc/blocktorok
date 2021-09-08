@@ -30,7 +30,7 @@ import qualified System.Directory             as Dir
 import qualified System.FilePath              as Path
 
 import           Language.Blocktorok.Parser   (elementsFromFile)
-import           Language.Common              (Located (..))
+import           Language.Common              (Located (..), orThrow, orThrow')
 import           Language.Schema.Parser       (schemaFromFile)
 import qualified Language.Transform.Evaluator as TxEval
 import           Language.Transform.Parser    (transformFromFile)
@@ -97,12 +97,4 @@ instance Ex.Exception LinkError where
 
 -- internal
 
-orThrow :: Ex.Exception c => IO (Either a b) -> (a -> c) -> IO b
-orThrow io mkC  =
-  do  eitherB <- io
-      case eitherB of
-        Left a  -> Ex.throwIO (mkC a)
-        Right b -> pure b
 
-orThrow' :: Ex.Exception c => Either a b -> (a -> c) -> IO b
-orThrow' e = orThrow (pure e)
