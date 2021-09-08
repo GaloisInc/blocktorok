@@ -16,15 +16,19 @@ command-line options, functionality, and behavior.
 
 module Main (main) where
 
-import           Options             (BuildOptions (..), Command (..),
-                                      Options (..), parseOpts)
-import           Options.Applicative (execParser, fullDesc, header, helper,
-                                      info, progDesc, (<**>))
+import qualified Control.Exception      as Ex
 
-import qualified Control.Exception   as Ex
-import qualified Data.Text.IO        as TIO
-import           Link                (LinkError (..), runTransformIO)
-import qualified System.Exit         as Exit
+import qualified Data.Text.IO           as TIO
+
+import           Options                (BuildOptions (..), Command (..),
+                                         Options (..), parseOpts)
+import           Options.Applicative    (execParser, fullDesc, header, helper,
+                                         info, progDesc, (<**>))
+
+import qualified System.Exit            as Exit
+
+import           Language.Schema.DocGen (ppSchemaDocs)
+import           Link                   (LinkError (..), runTransformIO)
 
 -- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
@@ -38,11 +42,14 @@ main = realMain =<< execParser opts
 realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =
   case cmd of
-    Doc {} -> putStrLn "Documentation generation not yet implemented" >> Exit.exitFailure
+    Doc fp ->
+      ppSchemaDocs fp
     Template {} -> putStrLn "Template generation not yet implemented" >> Exit.exitFailure
     Build BuildOptions { transformer = t, output = o, blocktorok = d} ->
       runTransformIO t d o
-      `Ex.catch`
-        \case
-          ParseError ex -> TIO.putStrLn ex >> Exit.exitFailure
-          EvalError ex  -> TIO.putStrLn ex >> Exit.exitFailure
+
+  `Ex.catch`
+
+  \case
+    ParseError ex -> TIO.putStrLn ex >> Exit.exitFailure
+    EvalError ex  -> TIO.putStrLn ex >> Exit.exitFailure
