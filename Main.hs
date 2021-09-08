@@ -16,19 +16,23 @@ command-line options, functionality, and behavior.
 
 module Main (main) where
 
-import qualified Control.Exception          as Ex
+import qualified Control.Exception               as Ex
 
-import qualified Data.Text.IO               as TIO
+import qualified Data.Text.IO                    as TIO
 
-import           Options                    (BuildOptions (..), Command (..),
-                                             Options (..), parseOpts)
-import           Options.Applicative        (execParser, fullDesc, header,
-                                             helper, info, progDesc, (<**>))
+import           Options                         (BuildOptions (..),
+                                                  Command (..), Options (..),
+                                                  parseOpts)
+import           Options.Applicative             (execParser, fullDesc, header,
+                                                  helper, info, progDesc,
+                                                  (<**>))
 
-import qualified System.Exit                as Exit
+import qualified System.Exit                     as Exit
 
-import           Language.Schema.Pretty.Doc (ppSchemaDocs)
-import           Link                       (LinkError (..), runTransformIO)
+import           Language.Schema.Pretty.Doc      (ppSchemaDocs)
+import           Language.Schema.Pretty.Template (ppSchemaTemplate)
+import           Link                            (LinkError (..),
+                                                  runTransformIO)
 
 -- | Program entrypoint - Consume command line arguments and run the compiler
 main :: IO ()
@@ -42,9 +46,8 @@ main = realMain =<< execParser opts
 realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =
   case cmd of
-    Doc fp ->
-      ppSchemaDocs fp
-    Template {} -> putStrLn "Template generation not yet implemented" >> Exit.exitFailure
+    Doc fp -> ppSchemaDocs fp
+    Template fp -> ppSchemaTemplate fp
     Build BuildOptions { transformer = t, output = o, blocktorok = d} ->
       runTransformIO t d o
 
