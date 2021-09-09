@@ -104,6 +104,14 @@ withBlockEnv env' eval =
       State.modify (\s -> s { envBlockEnv = env})
       pure result
 
+scoped :: Eval a -> Eval a
+scoped eval =
+  do  vars <- State.gets envBindings
+      result <- eval
+      State.modify (\s -> s { envBindings = vars})
+      pure result
+
+
 -------------------------------------------------------------------------------
 -- Evaluator
 
@@ -140,6 +148,13 @@ evalDecl d0 =
       do  f' <- getVarVal f >>= file
           doc <- evalExpr e >>= showValue
           appendToFile f' doc
+    Tx.DeclIn _ sel decls ->
+      do  envs <- evalSelector sel >>= asList envValue
+          evalIn decls `traverse_` envs
+  where
+    evalIn decls env =
+      scoped $ withBlockEnv env (evalDecl `traverse_` decls)
+
 
 evalRender :: Tx.Selector -> Tx.Expr -> Value -> Eval Value
 evalRender s0 e = Value.traverseSchemaValues (Value.mapSelected render path) schema
@@ -240,8 +255,14 @@ evalCall lcall =
               pure $ VDoc (location lcall) (PP.vcat vals')
         Tx.FMkSeq -> pure $ VList (location lcall) args
         Tx.FFile ->
-          do  fn <- Text.unpack <$> (args1 args >>= string)
-              pure (VFile (location lcall) fn)
+          do  fstr <- args1 args >>= showAsString
+              case Text.lines fstr of
+                [] -> throw lcall "Tranform error: cannot create file with empty name"
+                [fn] -> pure (VFile (location lcall) (Text.unpack fn))
+                line1:line2:_ ->
+                  throw lcall
+                    ("Transform error: refusing to create file with multiple line name "
+                     <> q (line1 <> "\n" <> line2 <> "\n" <> "..."))
   where
     Tx.Call name largExprs = unloc lcall
     argExprs = unloc largExprs
@@ -280,11 +301,28 @@ list f v =
     VList _ l -> f `traverse` l
     _         -> throw v "Expecting a list here"
 
+asList :: (Value -> Eval a) -> Value -> Eval [a]
+asList f v =
+  case v of
+    VList _ l -> f `traverse` l
+    _         -> f `traverse` [v]
+
+envValue :: Value -> Eval (Map Text Value)
+envValue v =
+  case v of
+    VBlock b -> pure $ Value.blockValues b
+    VConstruct c -> pure $ Value.tagValue c
+    _ -> throw v "Expecting some kind of block or constructor here"
+
+
 string :: Value -> Eval Text
 string v =
   case v of
     VString _ s -> pure s
     _           -> throw v "Expecting a string here"
+
+showAsString :: Value -> Eval Text
+showAsString s = Text.pack . show <$> showValue s
 
 file :: Value -> Eval FilePath
 file v =

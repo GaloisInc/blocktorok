@@ -149,16 +149,13 @@ exprParser =
     selector = ExprSelector <$> selectorParser
 
     parseArgs =
-      located $
-        symbol' "(" *>
-          MP.sepBy exprParser (symbol' ",")
-        <* symbol' ")"
+      located $ MP.sepBy exprParser (symbol' ",")
 
 
     call name fname =
       located $
-      do  MP.try (symbol' name)
-          Call fname <$> parseArgs
+      do  MP.try (symbol' name <* symbol' "(")
+          Call fname <$> (parseArgs <* symbol' ")")
 
     fn name fname = ExprFn <$> call name fname
 
@@ -174,8 +171,19 @@ exprParser =
 
 
 declParser :: Parser Decl
-declParser = MP.choice [renderDecl, letDecl, outDecl]
+declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
   where
+    inDecl =
+      do  lin <-
+            located $
+              do  sel <- MP.try $ symbol' "in" *> selectorParser <* symbol' "{"
+                  decls <- many declParser
+                  symbol' "}"
+                  pure (sel, decls)
+          let (sel, decls) = locValue lin
+
+          pure $ DeclIn (locRange lin) sel decls
+
     outDecl =
       do  i <- MP.try $ lident <* symbol' "<<"
           DeclFileOut i <$> exprParser

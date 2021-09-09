@@ -1,0 +1,32 @@
+schema "schema.ocs"
+
+output = file("orcs.py")
+
+render value.Dice      |Roll(${number}, ${sides})
+render value.Fixed     |Fixed(${amount})
+
+render battle.hero     |Creature("${name}", ${hp}, ${damage})
+render battle.orc      |Creature("Orc", ${hp}, ${damage})
+render battle.minotaur |Creature("Minotaur", ${hp}, ${damage})
+
+in battle.hero {
+  filename = |${name}.charsheet
+  cs_out = file(filename)
+
+  render value.Dice  |${number}d${sides}
+  render value.Fixed |${amount}
+
+  cs_out << |${name}
+            |  hp: ${hp}
+            |  damage: ${damage}
+}
+
+render battle
+  |from battle import *
+  |heroes = [${join(", ", hero)}]
+  |orcs = [${join(", ", orc)}]
+  |minotaurs = [${join(", ", minotaur)}]
+  |battle(heroes, orcs + minotaurs)
+
+output << battle
+
