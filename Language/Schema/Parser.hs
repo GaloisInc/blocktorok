@@ -102,12 +102,13 @@ brackets :: Parser a -> Parser a
 brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
-stype = MP.choice [int, float, string, named]
-  where
-    int    = symbol' "int"    $> SInt
-    float  = symbol' "float"  $> SFloat
-    string = symbol' "string" $> SString
-    named  = SNamed <$> ident
+stype =
+  do tyName <- ident
+     case tyName of
+       "int" -> pure SInt
+       "float" -> pure SFloat
+       "string" -> pure SString
+       _ -> pure $ SNamed tyName
 
 decl :: Parser Ident -> Parser Decl
 decl p =
