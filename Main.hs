@@ -27,6 +27,7 @@ import           Options.Applicative             (execParser, fullDesc, header,
                                                   helper, info, progDesc,
                                                   (<**>))
 
+import           System.Directory                (makeAbsolute)
 import qualified System.Exit                     as Exit
 
 import           Language.Schema.Pretty.Doc      (ppSchemaDocs)
@@ -46,10 +47,13 @@ main = realMain =<< execParser opts
 realMain :: Options -> IO ()
 realMain Options { optCommand = cmd } =
   case cmd of
-    Doc fp -> ppSchemaDocs fp
-    Template fp -> ppSchemaTemplate fp
+    Doc fp -> ppSchemaDocs =<< makeAbsolute fp
+    Template fp -> ppSchemaTemplate =<< makeAbsolute fp
     Build BuildOptions { transformer = t, output = o, blocktorok = d} ->
-      runTransformIO t d o
+      do absT <- makeAbsolute t
+         absO <- makeAbsolute o
+         absD <- makeAbsolute d
+         runTransformIO absT absD absO
 
   `Ex.catch`
 
