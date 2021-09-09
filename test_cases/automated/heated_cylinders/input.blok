@@ -1,0 +1,67 @@
+simulation {
+  
+  coupling {
+    domain1: "solid"
+    domain2: "fluid"
+
+    interface {
+      interface1: "cylinder_outer1"
+      interface2: "cylinder_inner1"
+    }
+  }
+
+  domain {
+    name: "solid"
+    solid {
+      governing_equation: heat_conduction {}
+      conduction: components {density = 0.00042,
+                              heat_capacity = 1004.703,
+                              thermal_conductivity = 0.1}
+      initial_values: temperature {value = 288.15}
+    }
+    time: steady_state {iter = 10}
+    convergence: criterion_with_start {min_value = -20, start_iter = 10}
+  }
+
+  domain {
+    name: "fluid"
+    fluid {
+      governing_equation: compressible_navier_stokes {}
+      turbulence: SA {}
+      density_model: variable { fluid_model =
+        incompressible_ideal_gas {specific_heat_capacity = 1004.703,
+                                  molecular_weight = 28.96}
+      }
+      viscosity_model: constant {mu_constant = 1.7893e-05}
+      thermal_conductivity: constant_prandtl {laminar_prandtl_number = 0.72,
+                                              turbulent_prandtl_number = 0.90}
+      energy_equation: use {temperature = 288.15}
+      initial_values: [density  {value = 0.00042},
+                       velocity {x = 3.40297,
+                                 y = 0,
+                                 z = 0}]
+    }
+    time: steady_state {iter = 1}
+    convergence: criterion_with_start {min_value = -20, start_iter = 0}
+  }
+
+    input_output {
+      write_interval_iter: 15000
+
+      write_interval_sec: 0.2
+
+      output_format: [ RESTART {}, TECPLOT {}, PARAVIEW {}, SURFACE_TECPLOT {}, SURFACE_PARAVIEW {} ]
+
+      mesh_filename: "mesh_cht_3cyl_ffd.su2"
+
+      mesh_format: SU2 {}
+    }
+
+    couple_iter: 15000
+
+    convergence: criterion {min_value = -20}
+
+  }
+
+
+
