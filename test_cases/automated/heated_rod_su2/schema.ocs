@@ -1,7 +1,7 @@
 block thermal_diffusivity {
   [-- Right hand side of the equation --]
   .density: float
-  
+
   .heat_capacity: float
 
   .thermal_conductivity: float
