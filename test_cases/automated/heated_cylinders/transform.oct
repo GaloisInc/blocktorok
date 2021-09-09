@@ -1,0 +1,157 @@
+schema "schema.ocs"
+
+-- TODO: wait for the in block
+solid1 = file("solid1.cfg")
+fluid = file("fluid.cfg")
+cht = file("cht_fluid_solid.cfg")
+
+-- su2 takes the individual components and openfoam takes dt
+-- TODO: use require at a later point to throw an error when this isn't given by the user
+render conduction.components          |SOLID_DENSITY= ${density}
+                                      |SPECIFIC_HEAT_CP= ${heat_capacity}
+                                      |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
+
+render convergence.criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
+render convergence.criterion_with_start 
+                                      |CONV_RESIDUAL_MINVAL= ${min_value}
+                                      |CONV_STARTITER= ${start_iter}
+-- max iterations is only for steady state (does not indicate how to deal with time)
+-- TODO: it's OUTER_ITER for multi-physics, ITER for single physics
+render convergence.max_iterations     |ITER= ${max_iterations}
+
+render time.Steady_state              |TIME_DOMAIN = NO
+                                      |INNER_ITER = ${inner_iter}
+render time.Transient                 |TIME_DOMAIN = YES
+                                      |TIME_STEP = ${dt}
+                                      |MAX_TIME = ${max_time}
+                                      |INNER_ITER = ${inner_iter}
+                                      |TIME_ITER = ${outer_iter}
+
+render input_output                   |MESH_FILENAME= ${mesh_filename}
+                                      |MESH_FORMAT= ${mesh_format}
+                                      |TABULAR_FORMAT= ( ${join(", ", output_format)} )
+                                      |CONV_FILENAME= history
+-- TODO: how do I make it if it exists use the user defined value, if not use flow?
+                                      |VOLUME_FILENAME= flow
+                                      |SURFACE_FILENAME= surface_flow
+                                      |OUTPUT_WRT_FREQ = ${write_interval_iter}
+                                      |SCREEN_WRT_FREQ_TIME = 1
+
+render governing_equations_fluid.incompressible_navier_stokes |INC_NAVIER_STOKES
+render governing_equations_fluid.compressible_navier_stokes   |NAVIER_STOKES
+render governing_equations_fluid.compressible_euler           |EULER
+render governing_equations_fluid.incompressible_euler         |INC_EULER
+
+render governing_equations_solid.heat_conduction              |HEAT_EQUATION
+
+render initial_values.density         |${value}
+render initial_values.velocity        |( ${x}, ${y}, ${z} )
+render initial_values.temperature     |${value}
+
+render solid                          |SOLVER = ${governing_equations_solid}
+                                      |WRT_ZONE_HIST = YES
+                                      |HISTORY_OUTPUT = (ITER, RMS_RES, HEAT)
+                                      |${time}
+                                      |${convergence}
+                                      |INC_NONDIM= DIMENSIONAL
+                                      |SOLID_TEMPERATURE_INIT = ${initial_values.temperature}
+                                      |${conduction}
+                                      |LINEAR_SOLVER_ITER= 5
+                                      |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.Isothermal)} )
+
+render turbulence_model.NONE          |NONE
+render turbulence_model.SA            |SA
+
+render fluid_model.incompressible_ideal_gas |FLUID_MODEL= INC_IDEAL_GAS
+                                            |SPECIFIC_HEAT_CP= ${specific_heat_capacity}
+                                            |MOLECULAR_WEIGHT= ${molecular_weight}
+render fluid_model.standard_air             |FLUID_MODEL = STANDARD_AIR
+
+render density_model.variable         |INC_DENSITY_MODEL= VARIABLE
+                                      |${fluid_model}
+render density_model.constant         |FLUID_MODEL = CONSTANT_DENSITY
+                                      |SPECIFIC_HEAT_CP = ${specific_heat_capacity}
+
+render viscosity_model.constant       |VISCOSITY_MODEL= CONSTANT_VISCOSITY
+                                      |MU_CONSTANT= ${mu_constant}
+render viscosity_model.sutherland     |VISCOSITY_MODEL= SUTHERLAND
+                                      |MU_REF= ${reference_viscosity}
+                                      |MU_T_REF = ${reference_temp}
+                                      |SUTHERLAND_CONSTANT = ${sutherland_constant}
+
+render thermal_conductivity_model.constant_prandtl      |CONDUCTIVITY_MODEL= CONSTANT_PRANDTL
+                                                        |PRANDTL_LAM= ${laminar_prandtl_number}
+                                                        |PRANDTL_TURB= ${turbulent_prandtl_number}
+render thermal_conductivity_model.constant_conductivity |KT_CONSTANT= ${molecular_thermal_conductivity}
+
+render energy_equation.true           |INC_ENERGY_EQUATION = YES
+                                      |INC_TEMPERATURE_INIT= ${initial_values.temperature}
+render energy_equation.false          |INC_ENERGY_EQUATION = NO
+
+render fluid                          |SOLVER = ${governing_equations_fluid}
+                                      |KIND_TURB_MODEL = ${turbulence_model}
+                                      |WRT_ZONE_HIST= YES
+                                      |HISTORY_OUTPUT= (ITER, RMS_RES, HEAT)
+                                      |${time}
+                                      |${convergence}
+                                      |${density_model}
+                                      |${energy_equation}
+                                      |INC_DENSITY_INIT= ${initial_values.density}
+                                      |INC_VELOCITY_INIT= ${initial_value.velocity} 
+                                      |INC_NONDIM= DIMENSIONAL
+                                      |${viscosity_model}
+                                      |${thermal_conductivity}
+                                      |LINEAR_SOLVER_ITER= 10
+                                      |MARKER_FAR= ( ${join(", ", boundary_conditions.farfield)} )
+
+render boundary_conditions.Isothermal |${marker}, ${value}
+render boundary_conditions.Heatflux   |${marker}, ${value}
+render boundary_conditions.farfield   |${marker}
+
+render mesh_format.SU2                |SU2
+render mesh_format.CGNS               |CGNS
+
+render output_format.CSV              |CSV
+render output_format.TECPLOT          |TECPLOT
+render output_format.RESTART          |RESTART
+render output_format.PARAVIEW         |PARAVIEW
+render output_format.SURFACE_TECPLOT  |SURFACE_TECPLOT
+render output_format.SURFACE_PARAVIEW |SURFACE_PARAVIEW
+
+-- should this be root.simulation or domain?
+render domain                         |${fluid}
+                                      |${solid}
+                                      |${time}
+                                      |NUM_METHOD_GRAD= GREEN_GAUSS
+                                      |CFL_NUMBER= 50.0
+                                      |CFL_ADAPT= NO
+                                      |CFL_ADAPT_PARAM= ( 1.5, 0.5, 10.0, 10000.0 )
+                                      |RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 )
+                                      |LINEAR_SOLVER= FGMRES
+                                      |LINEAR_SOLVER_PREC= ILU
+                                      |LINEAR_SOLVER_ILU_FILL_IN= 0
+                                      |LINEAR_SOLVER_ERROR= 1E-15
+                                      |${convergence}
+
+-- TODO: if multi_physics input exists
+render coupling_interface             |${interface1}, ${interface2}
+
+master =                              |SOLVER = MULTIPHYSICS
+                                      |MATH_PROBLEM= DIRECT
+                                      |RESTART_SOL= NO
+                                      |CONFIG_LIST = (solid1.cfg, fluid.cfg)
+                                      |MARKER_ZONE_INTERFACE = ( ${join(", ", simulation.coupling.interface)})
+                                      |MARKER_CHT_INTERFACE = ( ${join(", ", simulation.coupling.interface)})
+                                      |OBJECTIVE_FUNCTION = TOTAL_HEATFLUX
+                                      |OBJECTIVE_WEIGHT= 1.0
+                                      |OUTER_ITER = ${simulation.couple_iter}
+                                      |${simulation.input_output}
+                                      |${simulation.convergence}
+
+-- TODO: need in to separate the domains into each config file
+domain1 << domain
+
+domain2 << domain
+
+-- Skipping the free-form deformation parameters and design variable parameters
+cht << master
