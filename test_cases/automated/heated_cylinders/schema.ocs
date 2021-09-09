@@ -10,7 +10,7 @@ union thermal_diffusivity {
 --  [-- TODO: OPENFOAM
 --  Transport model handles viscosity and its dependency on other variables.
 --  In our case, it is Sutherland model, where viscosity depends on temperature --]
---  
+--
 --}
 
 union fluid_model {
@@ -174,32 +174,32 @@ block input_output {
 -- union boundary_condition_types {
 --   [-- TODO: finish compiling list of acceptable boundary condition types --]
 --   ZeroGradient {value: float};
--- 
+--
 --   FixedValue {value: float};
 -- }
--- 
+--
 -- union field_type {
 --   [-- TODO: finish compiling list of acceptable boundary condition types
 --   Value being applied to the boundary: e.g. uniform 273 --]
 --   Uniform {value: float};
 -- }
--- 
+--
 -- union variables {
 --   [-- TODO: finish compiling the list of openfoam primitive variables --]
 --   Temperature {};
 --   Pressure {};
 -- }
--- 
+--
 -- block boundary_conditions {
 --   [-- The variable that the boundary condition is being applied (temperature, pressure, ...) --]
 --   .variable: variables
--- 
+--
 --   [-- Name of the mesh location to apply the boundary condition --]
 --   .marker: string
--- 
+--
 --   [-- Type of boundary condition: fixed value, zero gradient, ... --]
 --   .type: boundary_condition_types
--- 
+--
 --   [-- Field type: e.g. Uniform (SU2 is only uniform) --]
 --   .field_type: field_type
 -- }
@@ -237,7 +237,7 @@ block coupled_domains {
 }
 
 block simulation {
-  
+
   [-- multiphysics simulation has at least one coupled domains
   (currently only allowed for conjugated heat transfer) --]
   .coupling: coupled_domains*

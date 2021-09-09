@@ -1,5 +1,4 @@
 simulation {
-  
   coupling {
     domain1: "solid"
     domain2: "fluid"

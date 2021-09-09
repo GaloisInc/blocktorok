@@ -12,7 +12,7 @@ render conduction.components          |SOLID_DENSITY= ${density}
                                       |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
 
 render convergence.criterion          |CONV_RESIDUAL_MINVAL= ${min_value}
-render convergence.criterion_with_start 
+render convergence.criterion_with_start
                                       |CONV_RESIDUAL_MINVAL= ${min_value}
                                       |CONV_STARTITER= ${start_iter}
 -- max iterations is only for steady state (does not indicate how to deal with time)
@@ -97,7 +97,7 @@ render fluid                          |SOLVER = ${governing_equations_fluid}
                                       |${density_model}
                                       |${energy_equation}
                                       |INC_DENSITY_INIT= ${initial_values.density}
-                                      |INC_VELOCITY_INIT= ${initial_value.velocity} 
+                                      |INC_VELOCITY_INIT= ${initial_value.velocity}
                                       |INC_NONDIM= DIMENSIONAL
                                       |${viscosity_model}
                                       |${thermal_conductivity}
