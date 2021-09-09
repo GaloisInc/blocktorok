@@ -1,5 +1,0 @@
-{
-    "SOLVER": "Heat Equation",
-    "CONV_RESIDUAL_MINVAL": -20,
-    "CONV_STARTITER": 10,
-}

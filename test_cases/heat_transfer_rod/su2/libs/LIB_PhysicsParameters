@@ -1,6 +1,0 @@
-{
-    "INC_NONDIM": "Dimensional",
-    "SOLID_DENSITY": 19300.0,
-    "SPECIFIC_HEAT_CP": 130.0,
-    "SOLID_THERMAL_CONDUCTIVITY": 318.0
-}

@@ -1,9 +1,0 @@
-{
-    "MATH_PROBLEM": "Direct",
-    "RESTART_SOL": false,
-    "MARKER_ZONE_INTERFACE": [ "cylinder_outer1", "cylinder_inner1", "cylinder_outer2", "cylinder_inner2", "cylinder_outer3", "cylinder_inner3" ],
-    "MARKER_CHT_INTERFACE": [ "cylinder_outer1", "cylinder_inner1", "cylinder_outer2", "cylinder_inner2", "cylinder_outer3", "cylinder_inner3" ],
-    "MULTIZONE_MESH": false,
-    "OBJECTIVE_FUNCTION": "TOTAL_HEATFLUX",
-    "OBJECTIVE_WEIGHT": 1.0
-}
