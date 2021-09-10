@@ -1,8 +1,5 @@
 schema "schema.ocs"
 
--- TODO: wait for the in block
-solid1 = file("solid1.cfg")
-fluid = file("fluid.cfg")
 cht = file("cht_fluid_solid.cfg")
 
 -- su2 takes the individual components and openfoam takes dt
@@ -118,8 +115,11 @@ render output_format.PARAVIEW         |PARAVIEW
 render output_format.SURFACE_TECPLOT  |SURFACE_TECPLOT
 render output_format.SURFACE_PARAVIEW |SURFACE_PARAVIEW
 
--- should this be root.simulation or domain?
-render domain                         |${fluid}
+in simulation.domain {
+  filename = |${name}.cfg
+  cfg_out = file(filename)
+
+  cs_out <<                           |${fluid}
                                       |${solid}
                                       |${time}
                                       |NUM_METHOD_GRAD= GREEN_GAUSS
@@ -131,7 +131,8 @@ render domain                         |${fluid}
                                       |LINEAR_SOLVER_PREC= ILU
                                       |LINEAR_SOLVER_ILU_FILL_IN= 0
                                       |LINEAR_SOLVER_ERROR= 1E-15
-                                      |${convergence}
+                                      |${convergence}}
+}
 
 -- TODO: if multi_physics input exists
 render coupling_interface             |${interface1}, ${interface2}
@@ -147,11 +148,6 @@ master =                              |SOLVER = MULTIPHYSICS
                                       |OUTER_ITER = ${simulation.couple_iter}
                                       |${simulation.input_output}
                                       |${simulation.convergence}
-
--- TODO: need in to separate the domains into each config file
-domain1 << domain
-
-domain2 << domain
 
 -- Skipping the free-form deformation parameters and design variable parameters
 cht << master
