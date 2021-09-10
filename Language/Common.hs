@@ -54,8 +54,8 @@ data Located a = Located
 
 -- | @withSameLocAs b a@ returns @b@ annotated with the same location
 -- information as @a@
-withSameLocAs :: b -> Located a -> Located b
-withSameLocAs b a = Located (locRange a) b
+withSameLocAs :: HasLocation a => b -> a -> Located b
+withSameLocAs b a = Located (location a) b
 
 -- | Pretty-printing for a 'SourceRange'
 ppRange :: SourceRange -> Text

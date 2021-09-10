@@ -37,6 +37,7 @@ data SType
   = SInt
   | SFloat
   | SString
+  | SBool
   | SNamed Ident
   deriving (Eq)
 
@@ -44,6 +45,7 @@ instance Show SType where
   show SInt       = "int"
   show SFloat     = "float"
   show SString    = "string"
+  show SBool     = "boolean"
   show (SNamed i) = unpack i
 
 -- | Globs for block layout definitions

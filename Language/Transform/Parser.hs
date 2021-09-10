@@ -33,9 +33,9 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import           Language.Common            (Located (..),
                                              SourceRange (SourceRange), unloc,
-                                             withSameLocAs)
+                                             withSameLocAs, sourceRangeSpan')
 import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin),
+                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin, FIsEmpty, FNot),
                                              Lit (LitString), Selector (..),
                                              Transform (Transform))
 
@@ -136,21 +136,55 @@ strLitParser =
       pure contents
 
 exprParser :: Parser Expr
-exprParser =
-    MP.choice [ mkSeq
-              , fn "vjoin" FVJoin
-              , fn "join" FJoin
-              , fn "file" FFile
-              , ExprLit . LitString <$> located strLitParser
-              , barStringExprParser
-              , selector
-              ]
+exprParser = located baseExpr >>= postFixOps
   where
+    -- TODO: this is a little inefficient
+    postFixOps e =
+      MP.choice [ isEmpty e
+                , notIsEmpty e
+                , pure (unloc e)
+                ]
+
+    baseExpr =
+      MP.choice [ mkSeq
+          , fn "vjoin" FVJoin
+          , fn "join" FJoin
+          , fn "file" FFile
+          , cond
+          , ExprLit . LitString <$> located strLitParser
+          , barStringExprParser
+          , selector
+          ]
+
+    cond =
+      do  lite <- located $ do  MP.try (symbol' "if")
+                                i <- exprParser
+                                symbol' "then"
+                                t <- exprParser
+                                symbol' "else"
+                                e <- exprParser
+                                pure (i,t,e)
+          let (i,t,e) = unloc lite
+          pure (ExprCond (locRange lite) i t e)
+
+    isEmpty arg =
+        do  range <- locRange <$> MP.try (located (symbol' "!?"))
+            let sr = sourceRangeSpan' arg range
+                cl = Call FIsEmpty ([unloc arg] `withSameLocAs` arg) `withSameLocAs` sr
+            pure $ ExprFn cl
+
+    notIsEmpty arg =
+        do  range <- locRange <$> MP.try (located (symbol' "?"))
+            let sr = sourceRangeSpan' arg range
+                ncall = Call FNot ([eexpr] `withSameLocAs` sr) `withSameLocAs` sr
+                eexpr = ExprFn ecall
+                ecall = Call FIsEmpty ([unloc arg] `withSameLocAs` arg) `withSameLocAs` sr
+            pure $ ExprFn ncall
+
     selector = ExprSelector <$> selectorParser
 
     parseArgs =
       located $ MP.sepBy exprParser (symbol' ",")
-
 
     call name fname =
       located $

@@ -53,6 +53,7 @@ data Expr =
     ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
+  | ExprCond SourceRange Expr Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -62,9 +63,10 @@ data Call = Call FName (Located [Expr])
 instance HasLocation Expr where
   location e =
     case e of
-      ExprFn c       -> location c
-      ExprSelector s -> location s
-      ExprLit l      -> location l
+      ExprFn c         -> location c
+      ExprSelector s   -> location s
+      ExprLit l        -> location l
+      ExprCond r _ _ _ -> r
 
 -- TODO: units
 -- | Literals in the transformer language; numerical literals will eventually
@@ -103,6 +105,12 @@ data FName =
 
   -- | Open a file for output
   | FFile
+
+  -- | Is a list/selector empty?
+  | FIsEmpty
+
+  -- | Boolean negation
+  | FNot
   deriving(Show, Eq, Ord)
 
 -- | Top-level declarations defining a transformer, consisting of:
