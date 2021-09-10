@@ -4,7 +4,7 @@ cht = file("cht_fluid_solid.cfg")
 
 -- su2 takes the individual components and openfoam takes dt
 -- TODO: use require at a later point to throw an error when this isn't given by the user
-render conduction.components          |SOLID_DENSITY= ${density}
+render thermal_diffusivity.components |SOLID_DENSITY= ${density}
                                       |SPECIFIC_HEAT_CP= ${heat_capacity}
                                       |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
 
@@ -16,9 +16,9 @@ render convergence.criterion_with_start
 -- TODO: it's OUTER_ITER for multi-physics, ITER for single physics
 render convergence.max_iterations     |ITER= ${max_iterations}
 
-render time.Steady_state              |TIME_DOMAIN = NO
-                                      |INNER_ITER = ${inner_iter}
-render time.Transient                 |TIME_DOMAIN = YES
+render time.steady_state              |TIME_DOMAIN = NO
+                                      |INNER_ITER = ${iter}
+render time.transient                 |TIME_DOMAIN = YES
                                       |TIME_STEP = ${dt}
                                       |MAX_TIME = ${max_time}
                                       |INNER_ITER = ${inner_iter}
@@ -41,20 +41,21 @@ render governing_equations_fluid.incompressible_euler         |INC_EULER
 
 render governing_equations_solid.heat_conduction              |HEAT_EQUATION
 
-render initial_values.density         |${value}
-render initial_values.velocity        |( ${x}, ${y}, ${z} )
-render initial_values.temperature     |${value}
+render initial_value.density          |${value}
+render initial_value.velocity         |( ${x}, ${y}, ${z} )
+render initial_value.temperature      |${value}
 
-render solid                          |SOLVER = ${governing_equations_solid}
+render governing_equations_solid.heat_conduction
+                                      |HEAT_EQUATION
+
+render solid                          |SOLVER = ${governing_equation}
                                       |WRT_ZONE_HIST = YES
                                       |HISTORY_OUTPUT = (ITER, RMS_RES, HEAT)
-                                      |${time}
-                                      |${convergence}
                                       |INC_NONDIM= DIMENSIONAL
                                       |SOLID_TEMPERATURE_INIT = ${initial_values.temperature}
                                       |${conduction}
                                       |LINEAR_SOLVER_ITER= 5
-                                      |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.Isothermal)} )
+                                      |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.isothermal)} )
 
 render turbulence_model.NONE          |NONE
 render turbulence_model.SA            |SA
@@ -81,28 +82,26 @@ render thermal_conductivity_model.constant_prandtl      |CONDUCTIVITY_MODEL= CON
                                                         |PRANDTL_TURB= ${turbulent_prandtl_number}
 render thermal_conductivity_model.constant_conductivity |KT_CONSTANT= ${molecular_thermal_conductivity}
 
-render energy_equation.true           |INC_ENERGY_EQUATION = YES
-                                      |INC_TEMPERATURE_INIT= ${initial_values.temperature}
-render energy_equation.false          |INC_ENERGY_EQUATION = NO
+render energy_equation.use            |INC_ENERGY_EQUATION = YES
+                                      |INC_TEMPERATURE_INIT= ${temperature}
+render energy_equation.not_used       |INC_ENERGY_EQUATION = NO
 
-render fluid                          |SOLVER = ${governing_equations_fluid}
-                                      |KIND_TURB_MODEL = ${turbulence_model}
+render fluid                          |SOLVER = ${governing_equation}
+                                      |KIND_TURB_MODEL = ${turbulence}
                                       |WRT_ZONE_HIST= YES
                                       |HISTORY_OUTPUT= (ITER, RMS_RES, HEAT)
-                                      |${time}
-                                      |${convergence}
                                       |${density_model}
                                       |${energy_equation}
                                       |INC_DENSITY_INIT= ${initial_values.density}
-                                      |INC_VELOCITY_INIT= ${initial_value.velocity}
+                                      |INC_VELOCITY_INIT= ${initial_values.velocity}
                                       |INC_NONDIM= DIMENSIONAL
                                       |${viscosity_model}
                                       |${thermal_conductivity}
                                       |LINEAR_SOLVER_ITER= 10
                                       |MARKER_FAR= ( ${join(", ", boundary_conditions.farfield)} )
 
-render boundary_conditions.Isothermal |${marker}, ${value}
-render boundary_conditions.Heatflux   |${marker}, ${value}
+render boundary_conditions.isothermal |${marker}, ${value}
+render boundary_conditions.heatflux   |${marker}, ${value}
 render boundary_conditions.farfield   |${marker}
 
 render mesh_format.SU2                |SU2
@@ -119,7 +118,7 @@ in simulation.domain {
   filename = |${name}.cfg
   cfg_out = file(filename)
 
-  cs_out <<                           |${fluid}
+  cfg_out <<                          |${fluid}
                                       |${solid}
                                       |${time}
                                       |NUM_METHOD_GRAD= GREEN_GAUSS

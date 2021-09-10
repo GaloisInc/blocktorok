@@ -112,7 +112,7 @@ block solid {
 
   .conduction: thermal_diffusivity
 
-  .initial_values: initial_value
+  .initial_values: initial_value*
 
   [-- Boundary conditions --]
   .boundary_conditions: boundary_conditions*
