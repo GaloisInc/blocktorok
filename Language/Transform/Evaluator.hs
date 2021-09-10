@@ -314,13 +314,6 @@ envValue v =
     VConstruct c -> pure $ Value.tagValue c
     _ -> throw v "Expecting some kind of block or constructor here"
 
-
-string :: Value -> Eval Text
-string v =
-  case v of
-    VString _ s -> pure s
-    _           -> throw v "Expecting a string here"
-
 showAsString :: Value -> Eval Text
 showAsString s = Text.pack . show <$> showValue s
 
