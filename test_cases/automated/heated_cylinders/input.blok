@@ -17,6 +17,7 @@ simulation {
                               heat_capacity = 1004.703,
                               thermal_conductivity = 0.1}
       initial_values: temperature {value = 288.15}
+      boundary_conditions: isothermal {marker = "core1", value = 350.0}
     }
     time: steady_state {iter = 10}
     convergence: criterion_with_start {min_value = -20, start_iter = 10}
@@ -39,6 +40,7 @@ simulation {
                        velocity {x = 3.40297,
                                  y = 0,
                                  z = 0}]
+      boundary_conditions: farfield {marker = "farfield"}
     }
     time: steady_state {iter = 1}
     convergence: criterion_with_start {min_value = -20, start_iter = 0}

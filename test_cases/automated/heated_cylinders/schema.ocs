@@ -68,6 +68,14 @@ union initial_value {
   temperature {value: float};
 }
 
+union boundary_conditions {
+  isothermal { marker: string, value: float };
+
+  heatflux { marker: string, value: float };
+
+  farfield { marker: string};
+}
+
 block fluid {
   [-- The governing equation/solver for the problem --]
   .governing_equation: governing_equations_fluid
@@ -87,18 +95,15 @@ block fluid {
 
   .initial_values: initial_value*
 
+  [-- Boundary conditions --]
+  .boundary_conditions: boundary_conditions*
+
   -- TODO: non-dimensionalization scheme
   -- defines how the reference pressure (pref) is computed
 }
 
 union governing_equations_solid {
   heat_conduction {};
-}
-
-union boundary_conditions {
-  Isothermal { marker: string, value: float };
-
-  Heatflux { marker: string, value: float };
 }
 
 block solid {
