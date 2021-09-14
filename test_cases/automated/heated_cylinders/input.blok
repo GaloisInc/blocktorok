@@ -1,6 +1,6 @@
 simulation {
   coupling {
-    domain1: "solid"
+    domain1: "solid1"
     domain2: "fluid"
 
     interface {
@@ -9,8 +9,28 @@ simulation {
     }
   }
 
+  coupling {
+    domain1: "solid2"
+    domain2: "fluid"
+
+    interface {
+      interface1: "cylinder_outer2"
+      interface2: "cylinder_inner2"
+    }
+  }
+
+  coupling {
+    domain1: "solid3"
+    domain2: "fluid"
+
+    interface {
+      interface1: "cylinder_outer3"
+      interface2: "cylinder_inner3"
+    }
+  }
+
   domain {
-    name: "solid"
+    name: "solid1"
     solid {
       governing_equation: heat_conduction {}
       conduction: components {density = 0.00042,
@@ -24,10 +44,38 @@ simulation {
   }
 
   domain {
+    name: "solid2"
+    solid {
+      governing_equation: heat_conduction {}
+      conduction: components {density = 0.00042,
+                              heat_capacity = 1004.703,
+                              thermal_conductivity = 0.1}
+      initial_values: temperature {value = 288.15}
+      boundary_conditions: isothermal {marker = "core2", value = 350.0}
+    }
+    time: steady_state {iter = 10}
+    convergence: criterion_with_start {min_value = -20, start_iter = 10}
+  }
+
+    domain {
+    name: "solid3"
+    solid {
+      governing_equation: heat_conduction {}
+      conduction: components {density = 0.00042,
+                              heat_capacity = 1004.703,
+                              thermal_conductivity = 0.1}
+      initial_values: temperature {value = 288.15}
+      boundary_conditions: isothermal {marker = "core3", value = 350.0}
+    }
+    time: steady_state {iter = 10}
+    convergence: criterion_with_start {min_value = -20, start_iter = 10}
+  }
+
+  domain {
     name: "fluid"
     fluid {
-      governing_equation: compressible_navier_stokes {}
-      turbulence: SA {}
+      governing_equation: incompressible_navier_stokes {}
+      turbulence: NONE {}
       density_model: variable { fluid_model =
         incompressible_ideal_gas {specific_heat_capacity = 1004.703,
                                   molecular_weight = 28.96}
