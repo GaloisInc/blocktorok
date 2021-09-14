@@ -26,7 +26,7 @@ render time.transient                 |TIME_DOMAIN = YES
 
 render input_output                   |MESH_FILENAME= ${mesh_filename}
                                       |MESH_FORMAT= ${mesh_format}
-                                      |TABULAR_FORMAT= ( ${join(", ", output_format)} )
+                                      |OUTPUT_FILES= ( ${join(", ", output_format)} )
                                       |CONV_FILENAME= history
 -- TODO: how do I make it if it exists use the user defined value, if not use flow?
                                       |VOLUME_FILENAME= flow
@@ -99,6 +99,11 @@ render fluid                          |SOLVER = ${governing_equation}
                                       |${thermal_conductivity}
                                       |LINEAR_SOLVER_ITER= 10
                                       |MARKER_FAR= ( ${join(", ", boundary_conditions.farfield)} )
+-- FLUID SPECIFIC NUMERICAL METHOD
+                                      |CONV_NUM_METHOD_FLOW= FDS
+                                      |MUSCL_FLOW= YES
+                                      |SLOPE_LIMITER_FLOW= NONE
+                                      |TIME_DISCRE_FLOW= EULER_IMPLICIT
 
 render boundary_conditions.isothermal |${marker}, ${value}
 render boundary_conditions.heatflux   |${marker}, ${value}
@@ -139,7 +144,8 @@ render coupling_interface             |${interface1}, ${interface2}
 master =                              |SOLVER = MULTIPHYSICS
                                       |MATH_PROBLEM= DIRECT
                                       |RESTART_SOL= NO
-                                      |CONFIG_LIST = (solid1.cfg, fluid.cfg)
+-- TODO: WARNING: ORDER MATTERS HERE! FLUID MUST GO FIRST FOR SOME STRANGE UNKNOWABLE REASON!
+                                      |CONFIG_LIST = (fluid.cfg, solid1.cfg, solid2.cfg, solid3.cfg)
                                       |MARKER_ZONE_INTERFACE = ( ${join(", ", simulation.coupling.interface)})
                                       |MARKER_CHT_INTERFACE = ( ${join(", ", simulation.coupling.interface)})
                                       |OBJECTIVE_FUNCTION = TOTAL_HEATFLUX
