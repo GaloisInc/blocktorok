@@ -4,7 +4,7 @@ output = file("v3_solid_rod.cfg")
 
 -- su2 takes the individual components and openfoam takes dt
 -- TODO: use require at a later point to throw an error when this isn't given by the user
-render physical_models.Components     |SOLID_DENSITY= ${density}
+render thermal_diffusivity            |SOLID_DENSITY= ${density}
                                       |SPECIFIC_HEAT_CP= ${heat_capacity}
                                       |SOLID_THERMAL_CONDUCTIVITY= ${thermal_conductivity}
 
@@ -50,7 +50,7 @@ render output_format.TECPLOT          |TECPLOT
 
 conduction_condition =                |INC_NONDIM = DIMENSIONAL
                                       |SOLID_TEMPERATURE_INIT = ${simulation.initial_temp}
-                                      |${simulation.physics.physical_models.Components}
+                                      |${simulation.physics.physical_models}
 
 -- should this be root.simulation or domain?
 render domain                         |${physics}
