@@ -54,6 +54,7 @@ realMain Options { optCommand = cmd } =
          absO <- makeAbsolute o
          absD <- makeAbsolute d
          runTransformIO absT absD absO
+    GUI _ -> error "Not yet implemented"
 
   `Ex.catch`
 
