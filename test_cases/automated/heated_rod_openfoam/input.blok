@@ -4,7 +4,7 @@ simulation {
       density: 19300
       heat_capacity: 130
       thermal_conductivity: 318
-      dt: 0.000127
+      dt: 0.0127
     }
   }
 
@@ -31,7 +31,7 @@ simulation {
     max_time = 3,
     start_time = 0,
     inner_iter = 200,
-    outer_iter = 600
+    outer_iter = 200
   }
 
   boundary_conditions: [ Isothermal { marker = "left", value = 573.0 }
