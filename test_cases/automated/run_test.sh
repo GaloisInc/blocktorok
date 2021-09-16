@@ -13,8 +13,8 @@ for TEST in "$@"
 do
   if [ -d $TEST ]; then
     OUT="output"
-    rm -rf $OUT
     pushd $TEST > /dev/null && \
+      rm -rf $OUT && \
       mkdir -p expected && \
       $BLOCKTOROK build -t transform.oct -o $OUT input.blok &&  \
       diff -r -q expected $OUT
