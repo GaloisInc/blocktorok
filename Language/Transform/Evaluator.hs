@@ -189,6 +189,19 @@ evalExpr e0 =
           Tx.LitFloat f  -> VDouble (location f) (unloc f)
           Tx.LitInt i    -> VInt (location i) (unloc i)
           Tx.LitString s -> VString (location s) (unloc s)
+    Tx.ExprFor name iterExpr body ->
+      do  iterVals <- evalExpr iterExpr >>= asList pure
+          results <- forIteration name body `traverse` iterVals
+          pure $ VList (location e0) results -- TODO: less listy if it's doable
+  where
+    forIteration name body value =
+      scoped $
+        do bindVar name value
+           evalExpr body
+
+
+
+
 
 -- TODO: this is kind of a hack to deal with constructors not being separable into tag/value
 data SelValue =

@@ -53,6 +53,7 @@ data Expr =
     ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
+  | ExprFor LIdent Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -65,6 +66,7 @@ instance HasLocation Expr where
       ExprFn c       -> location c
       ExprSelector s -> location s
       ExprLit l      -> location l
+      ExprFor ident _ e2 -> sourceRangeSpan' ident e2
 
 -- TODO: units
 -- | Literals in the transformer language; numerical literals will eventually

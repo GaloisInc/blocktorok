@@ -138,6 +138,7 @@ strLitParser =
 exprParser :: Parser Expr
 exprParser =
     MP.choice [ mkSeq
+              , forParser
               , fn "vjoin" FVJoin
               , fn "join" FJoin
               , fn "file" FFile
@@ -151,6 +152,11 @@ exprParser =
     parseArgs =
       located $ MP.sepBy exprParser (symbol' ",")
 
+    forParser =
+      do  MP.try (symbol' "for")
+          name <- located ident
+          symbol' "in"
+          ExprFor name <$> exprParser <*> exprParser
 
     call name fname =
       located $
