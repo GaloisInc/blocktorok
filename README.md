@@ -167,5 +167,5 @@ Of particular interest are the tests `heated_rod_su2` and
 different transforms to produce very different simulation codes for the same
 problem, demonstrating the power of the Blocktorok workflow.
 
-Documentation for the Blocktorok's data, schema, and transformer language can
-be found in the report distributed with this code release.
+Documentation for the Blocktorok schema and transformer languages can be found
+in the `docs/` directory.
