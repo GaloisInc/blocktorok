@@ -16,10 +16,8 @@ parsing a 'Block', many 'Block's, and 'BlockElement's from files.
 module Language.Blocktorok.Parser
   ( -- * Parsing Blocktorok data
     -- ** Parsing 'Block's
-    blockFromFile
-  , blocksFromFile
     -- ** Parsing 'BlockElement's
-  , elementsFromFile
+    elementsFromFile
     -- ** Raw entry
   , parseBlocktorok
   ) where
@@ -39,8 +37,7 @@ import           Text.Megaparsec.Char       (char)
 import qualified Text.Megaparsec.Char       as MPC
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
-import           Language.Blocktorok.Syntax (Block (Block), BlockElement (..),
-                                             Constructor (..), Value (..))
+import           Language.Blocktorok.Syntax (BlockElement (..), Value (..))
 import           Language.Common            (Located (..), SourceRange (..))
 
 type Parser a = MP.Parsec Void Text a
@@ -87,43 +84,35 @@ ident =
     identFirstChar c = isAlpha c || c == '_'
     identRestChar c = identFirstChar c || isDigit c
 
-brackets :: Parser a -> Parser a
-brackets p = symbol "{" *> p <* symbol "}"
-
-block :: Parser Block
-block =
-  Block <$> located ident
-        <*> optional (located ident)
-        <*> brackets (MP.many blockElement)
+blockContents :: Parser [BlockElement]
+blockContents = MP.many blockElement
 
 blockElement :: Parser BlockElement
-blockElement = blockValue <|> (BlockSub <$> located block)
-  where
-    blockValue =
-      BlockValue <$> MP.try (located ident <* symbol' ":") <*> value
-
-termBy :: Parser a -> Parser sep -> Parser [a]
-termBy elt sep =
-  MP.sepBy elt sep <* optional sep
+blockElement = BlockElement <$> MP.try (located ident <* symbol' ":") <*> value
 
 value :: Parser Value
 value =
-      Construct <$> MP.try (located cns)
+      blockValue
   <|> Number <$> located (SciN.toRealFloat <$> signedNum)  -- use 'scientific instead?
   <|> List <$> located (symbol' "[" *> MP.sepBy value (symbol' ",")   <* symbol' "]")
   <|> str
+  <|> tag
   where
-    cns = Constructor <$> (located ident <* symbol' "{") <*> (termBy nv (symbol ",") <* symbol "}")
+    blockValue =
+      do  MP.try (symbol' "{")
+          cts <- located blockContents
+          symbol' "}"
+          pure $ Block cts
+
+    tag =
+      do  t <- MP.try (located ident <* MP.notFollowedBy (symbol' ":"))
+          val <- optional value
+          pure $ Tag t val
     str =
       do  s <- located strLit
           pure $ String (Text.pack <$> s)
     signedNum = Lexer.signed spc $ lexeme Lexer.scientific
-    strLit = char '"' >> MP.manyTill Lexer.charLiteral (char '"')
-    nv =
-      do  n <- located ident
-          symbol' "="
-          v <- value
-          pure (n,v)
+    strLit = MP.try (char '"') >> MP.manyTill Lexer.charLiteral (char '"')
 
 -------------------------------------------------------------------------------
 
@@ -134,19 +123,11 @@ parse parser fp t =
     Left errs -> Left . Text.pack $ MP.errorBundlePretty errs
 
 -- | Parse the given 'Text' to a 'Block'
-parseBlocktorok :: Text -> Either Text Block
-parseBlocktorok = parse block "--input--"
-
--- | Parse a 'Block' from the contents of a given file
-blockFromFile :: FilePath -> IO (Either Text Block)
-blockFromFile fp = parse block fp <$> TextIO.readFile fp
-
--- | Parse many 'Block's from the contents of a given file
-blocksFromFile :: FilePath -> IO (Either Text [Block])
-blocksFromFile fp = parse (MP.many block) fp <$> TextIO.readFile fp
+parseBlocktorok :: Text -> Either Text [BlockElement]
+parseBlocktorok = parse blockContents "--input--"
 
 -- | Parse many 'Block's from the contents of a given file, returning the
 -- results as 'BlockElement's
 elementsFromFile :: FilePath -> IO (Either Text (Located [BlockElement]))
 elementsFromFile f =
-  parse (located $ MP.many (BlockSub <$> located block)) f <$> TextIO.readFile f
+  parse (located blockContents) f <$> TextIO.readFile f

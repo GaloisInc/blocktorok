@@ -45,8 +45,8 @@ import           Language.Schema.Syntax     (BlockDecl (BlockDecl, blockDeclDecl
                                              Schema (Schema), SchemaDef (..),
                                              Union (Union),
                                              Variant (Variant, variantTag),
-                                             declsMap, globbedDeclsMap,
-                                             schemaDefMap, variantsMap)
+                                             globbedDeclsMap, schemaDefMap,
+                                             variantsMap)
 import           Language.Schema.Type       (Globbed (..), Ident, SType (..),
                                              containedName, containsNamed,
                                              unGlob)
@@ -131,14 +131,9 @@ variant :: Parser Variant
 variant =
   do ann   <- optional (located doc)
      t     <- located ident
-     decls <- brackets $ MP.sepBy (decl ident) (symbol' ",")
+     ty    <- optional stype
      symbol' ";"
-     if length (declNames decls) /= length (List.nub (declNames decls)) then
-       fail "The preceding union variant contains duplicated field names."
-     else
-       pure $ Variant ann t (declsMap decls)
-  where
-    declNames = fmap (locValue . declName)
+     pure $ Variant ann t ty
 
 -- | TODO: Better detection of / error for duplicate tags?
 union :: Parser Union

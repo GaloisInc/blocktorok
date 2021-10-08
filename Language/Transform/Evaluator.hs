@@ -125,12 +125,10 @@ showValue v0 =
     VList _ l -> PP.hcat <$> showValue `traverse` l
     VDoc _ d -> pure d
     VFile _ p -> pure $ PP.pretty p
-    VConstruct c ->
-      case Value.tagRenderer c of
-        Nothing ->
-          throw v0 ("No renderer for constructor at " <> ppRange (Value.tagLoc c))
-        Just r ->
-          withBlockEnv (Value.tagValue c) (evalExpr r) >>= showValue
+    VTag c ->
+      case Value.tagValue c of
+        Nothing -> pure PP.emptyDoc
+        Just v -> showValue v
     VBlock b ->
       case Value.blockRenderer b of
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
@@ -163,7 +161,7 @@ evalRender s0 e = Value.traverseSchemaValues (Value.mapSelected render path) sch
       case vr of
         VBlock vb ->
             pure $ VBlock vb { Value.blockRenderer = Just e}
-        VConstruct vc -> pure $ VConstruct vc { Value.tagRenderer = Just e }
+        VTag vc -> pure $ VTag vc { Value.tagRenderer = Just e }
         _ -> pure vr
 
     path = reverse (pathRev s0)
@@ -201,51 +199,29 @@ evalExpr e0 =
 
 
 
-
-
--- TODO: this is kind of a hack to deal with constructors not being separable into tag/value
-data SelValue =
-    SelValue Value
-  | SelValues [SelValue]
-  | SelMap Value (Map Ident Value)
-
 evalSelector :: Tx.Selector -> Eval Value
-evalSelector s0 = selValToVal s0 <$> go s0
-    where
-      go s1 =
-        case s1 of
-          Tx.SelName n -> SelValue <$> getVarVal n
-          Tx.SelMem s n ->
-            do  s' <- go s
-                pure $ select (unloc n) s'
+evalSelector s0 =
+  case s0 of
+    Tx.SelName name -> getVarVal name
+    Tx.SelMem s name ->
+      do  subSelVal <- evalSelector s
+          vals <- asList pure subSelVal
+          let mems = vals >>= mem (unloc name)
+          pure $ valuesToVList s0 mems
+  where
+    mem name v =
+      case v of
+        VBlock b ->
+          case Map.lookup name (Value.blockValues b) of
+            Nothing -> []
+            Just v' -> [v']
+        VTag t | unloc (Value.tagTag t) == name ->
+          case Value.tagValue t of
+            Nothing -> []
+            Just v'  -> [v']
+        VList _ l -> l >>= mem name
+        _ -> []
 
-      selValToVal :: HasLocation why => why -> SelValue -> Value
-      selValToVal loc v0 =
-        case v0 of
-          SelValue  v -> v
-          SelMap v _ -> v
-          SelValues vs ->
-            VList (location loc) [ l | v <- selValToVal loc <$> vs
-                                 , l <- Value.valueToList v ]
-
-      select :: Ident -> SelValue -> SelValue
-      select i v =
-        case v of
-          SelValue (VBlock b) ->
-            case Map.lookup i (Value.blockValues b) of
-              Nothing -> SelValues []
-              Just vs -> SelValue vs
-          SelValue vc@(VConstruct c) | unloc (Value.tagTag c) == i ->
-              SelMap vc (Value.tagValue c)
-          SelValue (VList _ vs) ->
-              SelValues (select i . SelValue <$> vs)
-          SelValues vs ->
-              SelValues $ select i <$> vs
-          SelMap _ m ->
-              case Map.lookup i m of
-                Nothing -> SelValues []
-                Just vs -> SelValue vs
-          _ -> SelValues []
 
 evalCall :: Located Tx.Call -> Eval Value
 evalCall lcall =
@@ -301,8 +277,11 @@ describeValueType v0 =
     VList {} -> "list"
     VString {} -> "string"
     VDoc {} -> "doc"
-    VBlock b -> "block " <> q (unloc $ Value.blockType b)
-    VConstruct c ->
+    VBlock b ->
+      case Value.blockSchema b of
+        Just a -> "block " <> q a
+        Nothing -> "block"
+    VTag c ->
       case Value.tagSchema c of
         Just a -> "constructor " <> q (unloc $ Value.tagTag c) <> " for union " <> q a
         Nothing -> "constructor " <> q (unloc $ Value.tagTag c)
@@ -324,7 +303,6 @@ envValue :: Value -> Eval (Map Text Value)
 envValue v =
   case v of
     VBlock b -> pure $ Value.blockValues b
-    VConstruct c -> pure $ Value.tagValue c
     _ -> throw v "Expecting some kind of block or constructor here"
 
 showAsString :: Value -> Eval Text
@@ -341,6 +319,14 @@ file v =
 
 q :: Text -> Text
 q v = "'" <> v <> "'"
+
+
+valuesToVList :: HasLocation a => a -> [Value] -> Value
+valuesToVList l vs =
+  case vs of
+    [a] -> a
+    _ -> VList (location l) vs
+
 
 -------------------------------------------------------------------------------
 -- API

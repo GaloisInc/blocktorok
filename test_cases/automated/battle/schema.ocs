@@ -1,9 +1,18 @@
+block dice {
+  .sides: int
+  .number: int
+}
+
+block fixed {
+  .amount: int
+}
+
 union value {
   [-- Roll a die with `sides` sides `number` times --]
-  Dice { number: int, sides: int };
+  Dice dice;
 
   [-- A fixed amount --]
-  Fixed { amount: int };
+  Fixed fixed;
 }
 
 block creature {

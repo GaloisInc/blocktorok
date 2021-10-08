@@ -1,17 +1,17 @@
-neural {
-   urlBase {
+neural: {
+   urlBase: {
       base: "https://playground.tensorflow.org/"
    }
 
-   urlParams {
-      activation: Tanh {}
+   urlParams: {
+      activation: Tanh
       batchSize:  7
-      dataSet:    None {}
+      dataSet:    None
    }
 }
 
-foo {
-   bar {
+foo: {
+   bar: {
       base: "hello"
    }
 }

@@ -49,9 +49,9 @@ instance Show Decl where
 
 -- | Union variant definition
 data Variant = Variant
-  { variantDoc    :: Maybe (Located Text)
-  , variantTag    :: Located Ident
-  , variantFields :: Map Ident SType
+  { variantDoc :: Maybe (Located Text)
+  , variantTag :: Located Ident
+  , variantArg :: Maybe SType
   } deriving (Show)
 
 -- | Union-type definition

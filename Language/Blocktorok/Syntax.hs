@@ -15,9 +15,7 @@ syntax see "Language.Schema.Syntax", and for the transformer language see
 module Language.Blocktorok.Syntax
   ( -- * Blocktorok Data
     -- ** The AST
-    Block(..)
-  , BlockElement(..)
-  , Constructor(..)
+    BlockElement(..)
   , Ident
   , Value(..)
     -- ** Utility functions
@@ -26,27 +24,13 @@ module Language.Blocktorok.Syntax
 
 import           Data.Text       (Text)
 
-import           Language.Common (Located, withSameLocAs)
+import           Language.Common (Located(..), withSameLocAs, sourceRangeSpan')
 
 -- | Identifiers; type alias for easy representation changes in the future
 type Ident = Text
 
--- | Top-level structure of Blocktorok data blocks
-data Block = Block
-  { -- | The "type name" of the block
-    blockTypeName :: Located Ident
-    -- | An optional identifier for the block, intended to distinguish blocks
-    -- with the same 'blockTypeName'
-  , blockName     :: Maybe (Located Ident)
-    -- | The fields and sub-blocks contained in the block
-  , blockContents :: [BlockElement]
-  }
-  deriving(Show, Eq, Ord)
-
 -- | Data that may appear within a Blocktorok 'Block'
-data BlockElement =
-    BlockSub (Located Block)
-  | BlockValue (Located Ident) Value
+data BlockElement = BlockElement (Located Ident) Value
   deriving(Show, Eq, Ord)
 
 -- | Blocktorok values, corresponding to the types fields may be declared to
@@ -54,22 +38,18 @@ data BlockElement =
 data Value =
     Number (Located Double)
   | List (Located [Value])
-  | Construct (Located Constructor)
+  | Block (Located [BlockElement])
+  | Tag (Located Ident) (Maybe Value)
   | String (Located Text)
-  deriving(Show, Eq, Ord)
-
--- | Values inhabiting union types
-data Constructor = Constructor
-  { constructorName   :: Located Ident
-  , constructorFields :: [(Located Ident, Value)]
-  }
   deriving(Show, Eq, Ord)
 
 -- | Locate a 'Value' where its underlying data is located
 locateValue :: Value -> Located Value
 locateValue v =
   case v of
-    Number n    -> v `withSameLocAs` n
-    List l      -> v `withSameLocAs` l
-    Construct c -> v `withSameLocAs` c
-    String s    -> v `withSameLocAs` s
+    Number n         -> v `withSameLocAs` n
+    List l           -> v `withSameLocAs` l
+    Tag i Nothing    -> v `withSameLocAs` i
+    Tag i (Just val) -> Located (sourceRangeSpan' i (locateValue val)) val
+    Block elts       -> v `withSameLocAs` elts
+    String s         -> v `withSameLocAs` s

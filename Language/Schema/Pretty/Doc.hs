@@ -38,7 +38,7 @@ import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
                                             SchemaDef (..), Union (..),
                                             Variant (..))
-import           Language.Schema.Type      (Globbed (..), Ident, SType (..))
+import           Language.Schema.Type      (Globbed (..), Ident)
 
 import           Link                      (LinkError (..))
 
@@ -105,24 +105,14 @@ ppSchemaDefs defs =
       concatWith (<//>) (Map.elems (Map.map ppVariant variants))
 
     ppVariant :: Variant -> Doc ann
-    ppVariant Variant { variantDoc, variantTag, variantFields} =
+    ppVariant Variant { variantDoc, variantTag, variantArg} =
            h4 (italic (pretty (unloc variantTag)))
         <> maybe emptyDoc (\vd -> blankLine <> ppNoLoc vd) variantDoc
-        <> if Map.null variantFields
-           then emptyDoc
-           else blankLine
-             <> "This variant carries data:"
-           <//> ppVariantFields variantFields
-
-    ppVariantFields :: Map Ident SType -> Doc ann
-    ppVariantFields types =
-      concatWith (</>) (Map.elems (Map.mapWithKey ppTypeDecl types))
-
-    ppTypeDecl :: Ident -> SType -> Doc ann
-    ppTypeDecl nm t =
-          item (italic (pretty nm))
-      <+> "with type"
-      <+> bold (ppStype t)
+        <> case variantArg of
+              Nothing -> emptyDoc
+              Just a -> blankLine
+                        <> "This variant carries data:"
+                        <//> ppStype a
 
 -------------------------------------------------------------------------------
 -- Simple Markdown annotations

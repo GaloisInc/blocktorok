@@ -10,12 +10,21 @@ block thermal_diffusivity {
   .dt: float
 }
 
+block criterion {
+  .min_value: float
+  .start_iter: int
+  .cauchy_elements: int
+  .cauchy_epsilon: float
+}
+
 union convergence {
   [-- Maximum number of iterations before the simulation ends --]
   Max_iterations { iter: int };
 
   [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
-  Criterion { min_value: float, start_iter: int, cauchy_elements: int, cauchy_epsilon: float };
+  Criterion criterion;
+
+  SomeNumber int;
 }
 
 union time {
