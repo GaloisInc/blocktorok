@@ -126,15 +126,19 @@ showValue v0 =
     VDoc _ d -> pure d
     VFile _ p -> pure $ PP.pretty p
     VTag c ->
-      case Value.tagValue c of
-        Nothing -> pure PP.emptyDoc
-        Just v -> showValue v
+      case Value.tagRenderer c of
+        Nothing -> throw v0 ("No renderer for tag at " <> ppRange (Value.tagLoc c))
+        Just renderer ->
+          case Value.tagValue c of
+            Nothing -> showEnv Map.empty renderer
+            Just (VBlock b) -> showEnv (Value.blockValues b) renderer
+            Just v -> showEnv (Map.singleton "value" v) renderer
     VBlock b ->
       case Value.blockRenderer b of
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
-        Just r ->
-          withBlockEnv (Value.blockValues b) (evalExpr r) >>= showValue
-
+        Just r -> showEnv (Value.blockValues b) r
+  where
+    showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
 evalDecl d0 =
   case d0 of

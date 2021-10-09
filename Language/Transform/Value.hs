@@ -169,7 +169,9 @@ mapSelected f path v =
           VBlock . mkBlock b <$> (mapElt n r `traverse`  Map.toList (blockValues b))
 
         VTag c | unloc (tagTag c) == n ->
-          VTag . mkCns c <$> (f `traverse` tagValue c)
+          case r of
+            [] -> f v
+            _:_ -> VTag . mkCns c <$> (mapSelected f r `traverse` tagValue c)
 
         VList loc vs ->
           VList loc <$> (mapSelected f path `traverse` vs)

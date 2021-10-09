@@ -1,28 +1,33 @@
-battle {
-  hero {
+battle: {
+  hero: {
     name: "Phrobald the Halfling"
-    hp: Fixed { amount = 50 }
-    damage: Dice { sides = 6, number = 2 }
+    hp: Fixed { amount: 50 }
+    damage: Dice { sides: 6  number: 2 }
   }
 
-  hero {
+  hero: {
     name: "Wizzle the Chaotic"
-    hp: Fixed { amount = 25 }
-    damage: Dice { sides = 20, number = 1 }
+    hp: Fixed { amount: 25 }
+    damage: Dice { sides: 20  number: 1 }
   }
 
-  orc {
-    hp: Dice { number = 1, sides = 6 }
-    damage: Fixed { amount = 2 }
+  orc: {
+    hp: Dice { number: 1  sides: 6 }
+    damage: Fixed { amount: 2 }
   }
 
-  orc {
-    hp: Dice { number = 1, sides = 6 }
-    damage: Fixed { amount = 2 }
+  orc: {
+    hp: Dice { number: 1  sides: 6 }
+    damage: Fixed { amount: 2 }
   }
 
-  minotaur {
-    hp: Dice { number = 4, sides = 8 }
-    damage: Dice { number = 1, sides = 8}
+  orc: {
+    hp: Dice { number: 1  sides: 6 }
+    damage: Fixed { amount: 2 }
+  }
+
+  minotaur: {
+    hp: Dice { number: 4  sides: 8 }
+    damage: Dice { number: 1  sides: 8 }
   }
 }
