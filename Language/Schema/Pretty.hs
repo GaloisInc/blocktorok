@@ -49,4 +49,5 @@ ppStype t =
     SInt       -> "int"
     SFloat     -> "float"
     SString    -> "string"
+    SBool      -> "bool"
     SNamed txt -> pretty txt

@@ -102,6 +102,7 @@ data Value =
   | VFile SourceRange FilePath
   | VDoc SourceRange Doc
   | VBlock BlockValue
+  | VBool SourceRange Bool
   deriving(Show)
 
 instance HasLocation Value where
@@ -109,6 +110,7 @@ instance HasLocation Value where
     case v of
       VDouble r _  -> r
       VInt r _     -> r
+      VBool r _    -> r
       VList r _    -> r
       VString r _  -> r
 
@@ -123,6 +125,7 @@ traverseValue f v =
     VDouble {} -> f v
     VInt {} -> f v
     VString {} -> f v
+    VBool {} -> f v
     VFile {} -> f v
     VList r l ->
       (traverseValue f `traverse` l) >>= f . VList r
@@ -149,6 +152,7 @@ describeValue v =
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
     VDouble _ i  -> "double " <> showT i
+    VBool _ b    -> "boolean " <>  showT b
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
     VFile _ f    -> "file " <> Text.pack f
     VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
@@ -263,6 +267,7 @@ validateValue ty val =
     VList {} -> unexpected "list"
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
+    VBool {} -> req Schema.SBool
     VTag t ->
       do  n <- reqNamed "union constructor"
           union <- getUnion n

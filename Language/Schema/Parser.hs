@@ -106,6 +106,7 @@ stype =
   do tyName <- ident
      case tyName of
        "int" -> pure SInt
+       "bool" -> pure SBool
        "float" -> pure SFloat
        "string" -> pure SString
        _ -> pure $ SNamed tyName

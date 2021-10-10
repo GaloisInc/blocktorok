@@ -54,6 +54,7 @@ data Expr =
   | ExprSelector Selector
   | ExprLit Lit
   | ExprFor LIdent Expr Expr
+  | ExprCond SourceRange Expr Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -67,6 +68,7 @@ instance HasLocation Expr where
       ExprSelector s -> location s
       ExprLit l      -> location l
       ExprFor ident _ e2 -> sourceRangeSpan' ident e2
+      ExprCond r _ _ _ -> r
 
 -- TODO: units
 -- | Literals in the transformer language; numerical literals will eventually
@@ -105,6 +107,12 @@ data FName =
 
   -- | Open a file for output
   | FFile
+
+  -- | Is a list/selector empty?
+  | FIsEmpty
+
+  -- | Boolean negation
+  | FNot
   deriving(Show, Eq, Ord)
 
 -- | Top-level declarations defining a transformer, consisting of:

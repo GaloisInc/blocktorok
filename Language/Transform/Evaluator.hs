@@ -119,6 +119,8 @@ scoped eval =
 showValue :: Value -> Eval Doc
 showValue v0 =
   case v0 of
+    VBool _ True -> pure "true"
+    VBool _ False -> pure "false"
     VDouble _ d -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
@@ -195,11 +197,17 @@ evalExpr e0 =
       do  iterVals <- evalExpr iterExpr >>= asList pure
           results <- forIteration name body `traverse` iterVals
           pure $ VList (location e0) results -- TODO: less listy if it's doable
+    Tx.ExprCond _ i t e ->
+      do  test <- evalExpr i >>= bool
+          if test
+            then evalExpr t
+            else evalExpr e
   where
     forIteration name body value =
       scoped $
         do bindVar name value
            evalExpr body
+
 
 
 
@@ -256,6 +264,15 @@ evalCall lcall =
                   throw lcall
                     ("Transform error: refusing to create file with multiple line name "
                      <> q (line1 <> "\n" <> line2 <> "\n" <> "..."))
+        Tx.FIsEmpty ->
+          do  elts <- args1 args >>= asList pure
+              case elts of
+                [] -> pure $ VBool (location lcall) True
+                _ -> pure $ VBool (location lcall) False
+        Tx.FNot ->
+          do  b <- args1 args >>= bool
+              pure $ VBool (location lcall) (not b)
+
   where
     Tx.Call name largExprs = unloc lcall
     argExprs = unloc largExprs
@@ -290,6 +307,7 @@ describeValueType v0 =
         Just a -> "constructor " <> q (unloc $ Value.tagTag c) <> " for union " <> q a
         Nothing -> "constructor " <> q (unloc $ Value.tagTag c)
     VFile {} -> "file"
+    VBool {} -> "boolean"
 
 list :: (Value -> Eval a) -> Value -> Eval [a]
 list f v =
@@ -317,6 +335,12 @@ file v =
   case v of
     VFile _ f -> pure f
     _         -> throw v "Expecting a file handle here"
+
+bool :: Value -> Eval Bool
+bool v =
+  case v of
+    VBool _ b -> pure b
+    _         -> throw v "Expecting a boolean expression here"
 
 -------------------------------------------------------------------------------
 -- misc
