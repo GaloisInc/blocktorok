@@ -87,6 +87,9 @@ lident = located ident
 
 -------------------------------------------------------------------------------
 
+renderSelectorParser :: Parser Selector
+renderSelectorParser = symbol' "::" *> selectorParser
+
 selectorParser :: Parser Selector
 selectorParser =
   do  nm <- lident
@@ -200,7 +203,7 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
 
     renderDecl =
       do  MP.try (symbol' "render")
-          sel <- selectorParser
+          sel <- renderSelectorParser
           DeclRender sel <$> exprParser
 
 transformParser :: Parser Transform
