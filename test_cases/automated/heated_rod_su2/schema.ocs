@@ -19,30 +19,36 @@ block criterion {
 
 union convergence {
   [-- Maximum number of iterations before the simulation ends --]
-  Max_iterations { iter: int };
+  Max_iterations int;
 
   [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
   Criterion criterion;
+}
 
-  SomeNumber int;
+block transient {
+  .dt: float
+  .max_time: float
+  .start_time: float
+  .inner_iter: int
+  .outer_iter: int
 }
 
 union time {
   [-- Steady state simulation --]
-  Steady_state {};
+  Steady_state;
 
   [-- Transient simulation --]
-  Transient { dt: float, max_time: float, start_time: float, inner_iter: int, outer_iter: int };
+  Transient transient;
 }
 
 union output_format {
-  CSV {};
-  TECPLOT {};
+  CSV;
+  TECPLOT;
 }
 
 union mesh_format {
-  SU2 {};
-  CGNS {};
+  SU2;
+  CGNS;
 }
 
 block input_output {
@@ -66,15 +72,19 @@ block input_output {
 }
 
 block physics {
-
   [-- Parameters for physical models such as turbulence and thermophysical models are defined here --]
   .physical_models: thermal_diffusivity
 }
 
-union boundary_conditions {
-  Isothermal { marker: string, value: float };
+block bc_val {
+  .marker: string
+  .value: float
+}
 
-  Heatflux { marker: string, value: float };
+union boundary_conditions {
+  Isothermal bc_val;
+
+  Heatflux bc_val;
 }
 
 block domain {

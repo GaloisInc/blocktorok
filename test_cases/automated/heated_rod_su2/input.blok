@@ -1,6 +1,6 @@
-simulation {
-  physics {
-    physical_models {
+simulation: {
+  physics: {
+    physical_models: {
       density: 19300
       heat_capacity: 130
       thermal_conductivity: 318
@@ -10,33 +10,39 @@ simulation {
 
   initial_temp: 273.0
 
-  convergence: Criterion {
-    min_value = -19,
-    start_iter = 10,
-    cauchy_elements = 100,
-    cauchy_epsilon = 1E-6
-  }
+  convergence: Criterion { min_value: -19
+                           start_iter: 10
+                           cauchy_elements: 100
+                           cauchy_epsilon: 1E-6
+                         }
 
-  input_output {
+  input_output: {
     write_interval_iter: 250
     write_interval_sec: 0.2
     output_file: "flow"
-    output_format: CSV {}
+    output_format: CSV
     mesh_filename: "mesh_solid_rod.su2"
-    mesh_format: SU2 {}
+    mesh_format: SU2
   }
 
-  time: Transient {
-    dt = 0.005,
-    max_time = 3,
-    start_time = 0,
-    inner_iter = 200,
-    outer_iter = 600
-  }
+  time: Transient { dt: 0.005
+                    max_time: 3
+                    start_time: 0
+                    inner_iter: 200
+                    outer_iter: 600
+                  }
 
-  boundary_conditions: [ Isothermal { marker = "left", value = 573.0 }
-                       , Isothermal { marker = "right", value = 273.0 }
-                       , Heatflux {marker = "bottom", value = 0}
-                       , Heatflux {marker = "top", value = 0}
+  boundary_conditions: [ Isothermal { marker: "left"
+                                      value: 573.0
+                                    }
+                       , Isothermal { marker: "right"
+                                      value: 273.0
+                                    }
+                       , Heatflux { marker: "bottom"
+                                    value: 0
+                                  }
+                       , Heatflux { marker: "top"
+                                    value: 0
+                                  }
                        ]
 }
