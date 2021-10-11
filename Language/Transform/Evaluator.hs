@@ -26,11 +26,11 @@ import qualified Control.Monad.Except      as Except
 import qualified Control.Monad.State       as State
 
 import           Data.Foldable             (traverse_)
+import           Data.List.NonEmpty        (NonEmpty ((:|)))
 import           Data.Map                  (Map)
 import qualified Data.Map                  as Map
 import           Data.Text                 (Text)
 import qualified Data.Text                 as Text
-import           Data.List.NonEmpty        (NonEmpty((:|)))
 
 import qualified Prettyprinter             as PP
 
@@ -39,8 +39,6 @@ import           Language.Common           (HasLocation (..), Located (..),
 import qualified Language.Transform.Syntax as Tx
 import           Language.Transform.Value  (Value (..))
 import qualified Language.Transform.Value  as Value
-
-import qualified Debug.Trace as Trace
 
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
@@ -136,11 +134,8 @@ valEnv v =
   case v of
     VBlock b -> Value.blockValues b
     VUnion u -> Map.singleton (unloc $ Value.tagTag (Value.unionTag u)) (Value.unionTagValue u)
-    VTag t ->
-      case Value.tagValue t of
-        Nothing -> Map.empty
-        Just v' -> valEnv v'
-    _ -> Map.singleton "value" v
+    VTag t   -> maybe Map.empty valEnv (Value.tagValue t)
+    _        -> Map.singleton "value" v
 
 scoped :: Eval a -> Eval a
 scoped eval =
@@ -170,9 +165,9 @@ showValue v0 =
         Nothing -> throw v0 ("No renderer for tag at " <> ppRange (Value.tagLoc c))
         Just renderer ->
           case Value.tagValue c of
-            Nothing -> showEnv Map.empty renderer
+            Nothing         -> showEnv Map.empty renderer
             Just (VBlock b) -> showEnv (Value.blockValues b) renderer
-            Just v -> showEnv (Map.singleton "value" v) renderer
+            Just v          -> showEnv (Map.singleton "value" v) renderer
     VBlock b ->
       case Value.blockRenderer b of
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
@@ -214,10 +209,10 @@ modifySelected f sel = go (Tx.selectorElements sel)
 
     modify ss v =
       case ss of
-        [] -> f v
-        Tx.SelName name:r -> mem (unloc name) (modify r) v
+        []                  -> f v
+        Tx.SelName name:r   -> mem (unloc name) (modify r) v
         Tx.SelSchema name:r -> schema (unloc name) (modify r) v
-        Tx.SelCond expr:r -> cond expr (modify r) v
+        Tx.SelCond expr:r   -> cond expr (modify r) v
 
     schema :: Ident -> (Value -> Eval Value) -> Value -> Eval Value
     schema sch g v =
@@ -289,10 +284,10 @@ evalRender sel e = modifySelected render sel
       -- Trace.traceM "\n\n" >>
 
       case vr of
-        VBlock vb -> pure $ VBlock vb { Value.blockRenderer = Just e}
-        VTag vc -> pure $ VTag vc { Value.tagRenderer = Just e }
+        VBlock vb  -> pure $ VBlock vb { Value.blockRenderer = Just e}
+        VTag vc    -> pure $ VTag vc { Value.tagRenderer = Just e }
         VList l vs -> VList l <$> render `traverse` vs
-        _ -> pure vr
+        _          -> pure vr
 
     -- path = reverse (pathRev s0)
     -- schema = schemaS s0
@@ -379,13 +374,13 @@ evalSelector selector = go (Tx.selectorElements selector)
     initial s0 =
       case s0 of
         Tx.SelName name -> getVarVal name
-        Tx.SelSchema _ -> throw s0 "Cannot use schema selector here"
-        Tx.SelCond _ -> throw s0 "Selector cannot begin with a condition"
+        Tx.SelSchema _  -> throw s0 "Cannot use schema selector here"
+        Tx.SelCond _    -> throw s0 "Selector cannot begin with a condition"
 
     schema name v =
       case v of
         VBlock b ->
-          let svals = (snd <$> Map.toList (Value.blockValues b)) >>= schema name
+          let svals = Map.toList (Value.blockValues b) >>= schema name . snd
           in if Value.blockSchema b == Just name
               then v:svals
               else svals
@@ -408,7 +403,7 @@ evalSelector selector = go (Tx.selectorElements selector)
         VTag t ->
           case Value.tagValue t of
             Nothing -> []
-            Just v'  -> [v'] >>= mem name
+            Just v' -> [v'] >>= mem name
         VList _ l -> l >>= mem name
         _ -> []
 
@@ -432,11 +427,11 @@ evalCall lcall =
         Tx.FJoin ->
           do  (sep, vals) <- args2 args
               sep' <- showValue sep
-              vals' <- list showValue vals
+              vals' <- asList showValue vals
               pure $ VDoc (location lcall) (PP.hcat $ PP.punctuate sep' vals')
         Tx.FVJoin ->
           do  vals <- args1 args
-              vals' <- list showValue vals
+              vals' <- asList showValue vals
               pure $ VDoc (location lcall) (PP.vcat vals')
         Tx.FMkSeq -> pure $ VList (location lcall) args
         Tx.FFile ->
@@ -452,7 +447,7 @@ evalCall lcall =
           do  elts <- args1 args >>= asList pure
               case elts of
                 [] -> pure $ VBool (location lcall) True
-                _ -> pure $ VBool (location lcall) False
+                _  -> pure $ VBool (location lcall) False
         Tx.FNot ->
           do  b <- args1 args >>= bool
               pure $ VBool (location lcall) (not b)
@@ -484,7 +479,7 @@ describeValueType v0 =
     VDoc {} -> "doc"
     VBlock b ->
       case Value.blockSchema b of
-        Just a -> "block " <> q a
+        Just a  -> "block " <> q a
         Nothing -> "block"
     VUnion u ->
       case Value.unionSchema u of
@@ -511,7 +506,7 @@ envValue :: Value -> Eval (Map Text Value)
 envValue v =
   case v of
     VBlock b -> pure $ Value.blockValues b
-    _ -> throw v "Expecting some kind of block or constructor here"
+    _        -> throw v "Expecting some kind of block or constructor here"
 
 showAsString :: Value -> Eval Text
 showAsString s = Text.pack . show <$> showValue s
@@ -532,7 +527,7 @@ tag :: Value -> Eval Value.TagValue
 tag t =
   case t of
     VTag tv -> pure tv
-    _ -> throw t "Expecting a union tag here"
+    _       -> throw t "Expecting a union tag here"
 
 -------------------------------------------------------------------------------
 -- misc
@@ -545,7 +540,7 @@ valuesToVList :: HasLocation a => a -> [Value] -> Value
 valuesToVList l vs =
   case vs of
     [a] -> a
-    _ -> VList (location l) vs
+    _   -> VList (location l) vs
 
 
 -------------------------------------------------------------------------------
