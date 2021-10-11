@@ -200,7 +200,7 @@ exprParser = located baseExpr >>= postFixOps
       do  MP.try (symbol' "for")
           name <- located ident
           symbol' "in"
-          ExprFor name <$> exprParser <*> brackets exprParser
+          ExprFor name <$> exprParser <*> exprParser
 
     call name fname =
       located $
@@ -221,7 +221,7 @@ exprParser = located baseExpr >>= postFixOps
 
 
 declParser :: Parser Decl
-declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
+declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl, requireDecl]
   where
     inDecl =
       do  lin <-
@@ -246,6 +246,11 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
       do  MP.try (symbol' "render")
           sel <- selectorParser
           DeclRender sel <$> exprParser
+
+    requireDecl =
+      do  MP.try (symbol' "require")
+          DeclRequire <$> exprParser <*> located strLitParser
+
 
 transformParser :: Parser Transform
 transformParser =

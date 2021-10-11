@@ -194,6 +194,10 @@ evalDecl d0 =
     Tx.DeclIn _ sel decls ->
       do  envs <- evalSelector sel >>= asList envValue
           evalIn decls `traverse_` envs
+    Tx.DeclRequire expr text ->
+      do  v <- evalExpr expr >>= bool
+          if not v then throw expr (unloc text)
+                   else pure ()
   where
     evalIn decls env =
       scoped $ withBlockEnv env (evalDecl `traverse_` decls)

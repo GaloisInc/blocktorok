@@ -142,6 +142,8 @@ data Decl =
 
   -- | Subtemplates
   | DeclIn SourceRange Selector [Decl]
+
+  | DeclRequire Expr (Located Text)
   deriving(Show, Eq, Ord)
 
 instance HasLocation Decl where
@@ -150,6 +152,7 @@ instance HasLocation Decl where
       DeclRender s e  -> sourceRangeSpan' s e
       DeclLet  l e    -> sourceRangeSpan' l e
       DeclFileOut f o -> sourceRangeSpan' f o
+      DeclRequire e s -> sourceRangeSpan' e s
       DeclIn r _ _    -> r
 
 -- | A full transformer, consisting of a schema filename and the 'Decl's which
