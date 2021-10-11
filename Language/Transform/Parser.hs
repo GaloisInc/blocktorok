@@ -26,6 +26,7 @@ import           Data.Text                  (Text)
 import qualified Data.Text                  as Text
 import qualified Data.Text.IO               as TIO
 import           Data.Void                  (Void)
+import qualified Data.List.NonEmpty         as NEL
 
 import qualified Text.Megaparsec            as MP
 import qualified Text.Megaparsec.Char       as MPC
@@ -35,8 +36,8 @@ import           Language.Common            (Located (..),
                                              SourceRange (SourceRange), unloc,
                                              withSameLocAs, sourceRangeSpan')
 import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin, FIsEmpty, FNot),
-                                             Lit (LitString), Selector (..),
+                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin, FNot, FIsEmpty),
+                                             Lit (LitString), Selector (..), SelectorElement(..),
                                              Transform (Transform))
 
 type Parser a = MP.Parsec Void Text a
@@ -87,19 +88,20 @@ lident = located ident
 
 -------------------------------------------------------------------------------
 
-renderSelectorParser :: Parser Selector
-renderSelectorParser = symbol' "::" *> selectorParser
-
 selectorParser :: Parser Selector
 selectorParser =
-  do  nm <- lident
-      selElt (SelName nm)
+  do  e0 <- initial
+      es <- MP.many subsequent
+      pure $ Selector (e0 NEL.:| es)
+
   where
-    selElt p =
-      MP.choice [selMem p, pure p]
-    selMem p =
-      do  p' <- MP.try (symbol' ".") *> (SelMem p <$> lident)
-          selElt p'
+    schema = SelSchema <$> located (MP.try (symbol' "::") *> ident)
+    mem = SelName <$> located (MP.try (symbol' ".") *> ident)
+    cond = SelCond <$> (MP.try (symbol' "[") *> exprParser <* symbol' "]")
+    initial =
+      MP.choice [ SelName <$> lident, mem, schema ]
+    subsequent =
+      MP.choice [ mem, schema, cond ]
 
 barStringExprParser :: Parser Expr
 barStringExprParser =
@@ -238,7 +240,7 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
 
     renderDecl =
       do  MP.try (symbol' "render")
-          sel <- renderSelectorParser
+          sel <- selectorParser
           DeclRender sel <$> exprParser
 
 transformParser :: Parser Transform

@@ -2,24 +2,24 @@ schema "schema.ocs"
 
 output = file("neural.txt")
 
-render activation.Tanh    |Tanh
-render activation.Sigmoid |Sigmoid
-render activation.Linear  |Linear
-render activation.ReLU    |ReLU
+render ::activation.Tanh    |Tanh
+render ::activation.Sigmoid |Sigmoid
+render ::activation.Linear  |Linear
+render ::activation.ReLU    |ReLU
 
-render data.Circle |circle
-render data.Xor    |xor
-render data.Gauss  |gauss
-render data.Spiral |spiral
+render ::data.Circle |circle
+render ::data.Xor    |xor
+render ::data.Gauss  |gauss
+render ::data.Spiral |spiral
 
-render maybeData.None |gauss
-render maybeData.Just |${d}
+render ::maybeData.None |gauss
+render ::maybeData.Just |${d}
 
-render urlBase   |${base}
-render urlParams |activation=${activation}&batchSize=${batchSize}&dataset=${dataSet}
+render ::urlBase   |${base}
+render ::urlParams |activation=${activation}&batchSize=${batchSize}&dataset=${dataSet}
 
-render neural |${urlBase}#${urlParams}
+render ::neural |${urlBase}#${urlParams}
 
-render foo |${bar}
+render ::foo |${bar}
 
 output << neural

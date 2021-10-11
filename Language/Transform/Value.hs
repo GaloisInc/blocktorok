@@ -22,11 +22,13 @@ module Language.Transform.Value
     -- ** Values
     BlockValue(..)
   , TagValue(..)
+  , UnionValue(..)
+  , unionTagValue
+  , unionTagTag
   , Value(..)
     -- ** Describing, traversing, validating values
   , describeValue
   , mapSelected
-  , traverseSchemaValues
   , validateElts
   , valueToList
   ) where
@@ -65,10 +67,20 @@ data TagValue = TagValue
   , tagRenderer :: Maybe Tx.Expr
     -- | The argument to the variant constructor
   , tagValue    :: Maybe Value
-    -- | The type of this variant, if defined
-  , tagSchema   :: Maybe Ident
   }
   deriving(Show)
+
+data UnionValue = UnionValue
+  { unionTag :: TagValue
+  , unionSchema :: Maybe Ident
+  }
+  deriving(Show)
+
+unionTagValue :: UnionValue -> Value
+unionTagValue = VTag . unionTag
+
+unionTagTag :: UnionValue -> Located Ident
+unionTagTag = tagTag . unionTag
 
 instance HasLocation TagValue where
   location = tagLoc
@@ -98,6 +110,7 @@ data Value =
   | VList SourceRange [Value]
   | VString SourceRange Text
   | VTag TagValue
+  | VUnion UnionValue  -- "container" for union values
 
   | VFile SourceRange FilePath
   | VDoc SourceRange Doc
@@ -118,26 +131,31 @@ instance HasLocation Value where
       VFile r _    -> r
       VTag t       -> location t
       VBlock b     -> location b
+      VUnion t     -> location (unionTagValue t)
 
-traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
-traverseValue f v =
-  case v of
-    VDouble {} -> f v
-    VInt {} -> f v
-    VString {} -> f v
-    VBool {} -> f v
-    VFile {} -> f v
-    VList r l ->
-      (traverseValue f `traverse` l) >>= f . VList r
+-- traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
+-- traverseValue f v =
+--   case v of
+--     VDouble {} -> f v
+--     VInt {} -> f v
+--     VString {} -> f v
+--     VBool {} -> f v
+--     VFile {} -> f v
+--     VList r l ->
+--       (traverseValue f `traverse` l) >>= f . VList r
 
-    VDoc {} -> f v
-    VTag t ->
-      do  v' <- traverseValue f `traverse` tagValue t
-          f (VTag t { tagValue = v'})
+--     VDoc {} -> f v
+--     VTag t ->
+--       do  v' <- traverseValue f `traverse` tagValue t
+--           f (VTag t { tagValue = v'})
 
-    VBlock b ->
-      do  v' <- traverseValue f `traverse` blockValues b
-          f (VBlock b { blockValues = v' })
+--     VBlock b ->
+--       do  v' <- traverseValue f `traverse` blockValues b
+--           f (VBlock b { blockValues = v' })
+
+--     VUnion t ->
+--       do  v' <- traverseValue f (unionTag t)
+--           f (VUnion )
 
 -- | Return a textual description of a 'Value', useful for debugging and
 -- testing
@@ -156,6 +174,7 @@ describeValue v =
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
     VFile _ f    -> "file " <> Text.pack f
     VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
+    VUnion t     -> describeValue (unionTagValue t)
 
 -- | Map an action over the selected parts of a 'Value'. The list of 'Ident'
 -- corresponds to a path described by a 'Selector'
@@ -189,15 +208,15 @@ mapSelected f path v =
 
 -- | Traverse a 'Value', running an action at each entity described by the
 -- schema named by the provided 'Ident'
-traverseSchemaValues :: Monad m => (Value -> m Value) -> Ident -> Value -> m Value
-traverseSchemaValues f i = traverseValue sch
-  where
-    sch v =
-      case v of
-        VBlock b | blockSchema b == Just i -> f v
-        VTag t | tagSchema t == Just i -> f v
-        VList r vs -> VList r <$> (traverseSchemaValues f i `traverse` vs)
-        _ -> pure v
+-- traverseSchemaValues :: Monad m => (Value -> m Value) -> Ident -> Value -> m Value
+-- traverseSchemaValues f i = traverseValue sch
+--   where
+--     sch v =
+--       case v of
+--         VBlock b | blockSchema b == Just i -> f v
+--         VTag t | tagSchema t == Just i -> f v
+--         VList r vs -> VList r <$> (traverseSchemaValues f i `traverse` vs)
+--         _ -> pure v
 
 
 --
@@ -268,21 +287,24 @@ validateValue ty val =
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VBool {} -> req Schema.SBool
-    VTag t ->
-      do  n <- reqNamed "union constructor"
+    VUnion vu ->
+      do  let t = unionTag vu
+          n <- reqNamed "union constructor"
           union <- getUnion n
           argType <- getVariantArgType union t
-          let t' = t { tagSchema = Just $ unloc (Schema.unionName union)}
+          let vu' = vu { unionSchema = Just $ unloc (Schema.unionName union)}
 
           case (tagValue t, argType) of
-            (Nothing, Nothing) -> pure $ VTag t'
+            (Nothing, Nothing) -> pure $ VUnion vu'
             (Just val', Just ty') ->
               do  tagVal' <- validateValue ty' val'
-                  pure $ VTag (t' { tagValue = Just tagVal' })
+                  let t' = t { tagValue = Just tagVal' }
+                  pure $ VUnion (vu' { unionTag = t'})
             (Nothing, _) ->
               throw val "Was expecting this tag to take an argument"
             (_, Nothing) ->
               throw val "Was not expecting this tag to take an argument"
+    VTag {} -> unexpected "tag"
 
     VBlock block ->
       do  n <- reqNamed "block"
@@ -290,6 +312,7 @@ validateValue ty val =
           let fieldTys = Schema.blockSFields blockS
           fvals' <- validateBlockLike (location block) (blockValues block) fieldTys
           pure $ VBlock (block { blockValues =  fvals', blockSchema = Just n})
+
   where
     -- tag stuff
     getVariantArgType union c =
@@ -335,12 +358,12 @@ blockValueToValue e =
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)
     Blok.Tag i v ->
-      VTag $ TagValue { tagLoc = location $ Blok.locateValue e
-                      , tagRenderer = Nothing
-                      , tagSchema = Nothing
-                      , tagTag = i
-                      , tagValue = blockValueToValue <$> v
-                      }
+      let tag = TagValue { tagLoc = location $ Blok.locateValue e
+                         , tagRenderer = Nothing
+                         , tagTag = i
+                         , tagValue = blockValueToValue <$> v
+                         }
+      in VUnion UnionValue { unionTag = tag, unionSchema = Nothing }
     Blok.Block elts ->
       VBlock $
         BlockValue  { blockLoc = location elts

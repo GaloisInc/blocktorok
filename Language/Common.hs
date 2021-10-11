@@ -26,6 +26,7 @@ module Language.Common
   , orThrow'
   , sourceRangeSpan
   , sourceRangeSpan'
+  , sourceRangeSpans
   , unloc
   , withSameLocAs
     -- ** Pretty-printing
@@ -33,6 +34,7 @@ module Language.Common
   ) where
 
 import qualified Control.Exception         as Ex
+import qualified Data.List.NonEmpty        as NonEmptyList
 
 import           Data.Text (Text, pack)
 
@@ -107,6 +109,9 @@ sourceRangeSpan (SourceRange f1 s1 e1) (SourceRange _ s2 e2) =
 -- location data
 sourceRangeSpan' :: (HasLocation a, HasLocation b) => a -> b -> SourceRange
 sourceRangeSpan' e1 e2 = sourceRangeSpan (location e1) (location e2)
+
+sourceRangeSpans :: HasLocation a => NonEmptyList.NonEmpty a -> SourceRange
+sourceRangeSpans es = foldr1 sourceRangeSpan (location <$> es)
 
 -- | @ioe `orThrow` f@ runs the 'IO' action @ioe@, throwing an exception via
 -- @f@ if the result is @Left@ and unwrapping the @Right@ value otherwise

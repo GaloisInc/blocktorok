@@ -1,12 +1,12 @@
-battle {
-  hero {
+battle: {
+  hero: {
     name: "Phrobald the Halfling"
-    hp: Fixed { amount = 50 }
-    damage: Dice { sides = 6, number = 2 }
+    hp: Fixed { amount: 50 }
+    damage: Dice { sides: 6  number: 2 }
   }
 
-  minotaur {
-    hp: Dice { number = 4, sides = 8 }
-    damage: Dice { number = 1, sides = 8}
+  minotaur: {
+    hp: Dice { number: 4  sides: 8 }
+    damage: Dice { number: 1  sides: 8 }
   }
 }
