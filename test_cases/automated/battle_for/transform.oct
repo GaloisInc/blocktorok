@@ -3,8 +3,7 @@ schema "schema.ocs"
 output = file("heroes.txt")
 
 hero_list =
-  for hero in battle.hero {
+  for hero in battle.hero
     |${hero.name} the Hero
-  }
 
 output << |${join(", ", hero_list)}
