@@ -1,9 +1,15 @@
+block components {
+  .density: float
+  .heat_capacity: float
+  .thermal_conductivity: float
+}
+
 union thermal_diffusivity {
   [-- Right hand side of the equation --]
-  components { density: float, heat_capacity: float, thermal_conductivity: float };
+  components components;
 
   [-- Left hand side of the equation --]
-  dt { dt: float };
+  dt float;
 }
 
 -- union transport_models {
@@ -13,67 +19,94 @@ union thermal_diffusivity {
 --
 --}
 
-union fluid_model {
-  incompressible_ideal_gas {specific_heat_capacity: float, molecular_weight: float};
+block incompressible_ideal_gas {
+  .specific_heat_capacity: float
+  .molecular_weight: float
+}
 
-  standard_air {};
+union fluid_model {
+  incompressible_ideal_gas incompressible_ideal_gas;
+
+  standard_air;
 }
 
 union density_model {
   [-- if variable density, an appropriate fluid model must be selected --]
-  variable {fluid_model: fluid_model};
+  variable fluid_model;
 
-  constant {specific_heat_capacity: float};
+  constant float;
 
-  boussinesq {};
+  boussinesq;
+}
+
+block sutherland {
+  .reference_viscosity: float
+  .reference_temp: float
+  .sutherland_constant: float
 }
 
 union viscosity_model {
   [-- dynamic viscosity --]
-  sutherland {reference_viscosity: float, reference_temp: float, sutherland_constant: float};
+  sutherland sutherland;
 
   [-- constant viscosity --]
-  constant {mu_constant: float};
+  constant float;
+}
+
+block constant_prandtl {
+  .laminar_prandtl_number: float
+  .turbulent_prandtl_number: float
 }
 
 union thermal_conductivity_model {
   [-- constant Prandtl number --]
-  constant_prandtl {laminar_prandtl_number: float, turbulent_prandtl_number: float};
+  constant_prandtl constant_prandtl;
 
   [-- constant conductivity --]
-  constant_conductivity {molecular_thermal_conductivity: float};
+  constant_conductivity float;
 }
 
 union energy_equation {
-  use {temperature: float};
-  not_used {};
+  use float;
+  not_used;
 }
 
 union governing_equations_fluid {
-  compressible_navier_stokes {};
-  incompressible_navier_stokes {};
-  compressible_euler {};
-  incompressible_euler {};
+  compressible_navier_stokes;
+  incompressible_navier_stokes;
+  compressible_euler;
+  incompressible_euler;
 }
 
 union turbulence_model {
   [-- There's more, this is an incomplete list --]
-  NONE {};
-  SA {};
+  NONE;
+  SA;
+}
+
+block velocity {
+  .x: float
+  .y: float
+  .z: float
 }
 
 union initial_value {
-  density {value: float};
-  velocity {x: float, y: float, z: float};
-  temperature {value: float};
+  density float;
+  velocity velocity;
+  temperature float;
+}
+
+block bc_val {
+  .marker: string
+  .value: float
 }
 
 union boundary_conditions {
-  isothermal { marker: string, value: float };
+  isothermal bc_val;
 
-  heatflux { marker: string, value: float };
+  heatflux bc_val;
 
-  farfield { marker: string};
+  farfield string;
 }
 
 block fluid {
@@ -103,7 +136,7 @@ block fluid {
 }
 
 union governing_equations_solid {
-  heat_conduction {};
+  heat_conduction;
 }
 
 block solid {
@@ -124,36 +157,48 @@ block solid {
 --   solid;
 -- }
 
+block criterion_with_start {
+  .min_value: float
+  .start_iter: int
+}
+
 union convergence {
   [-- Maximum number of iterations before the simulation ends --]
-  max_iterations { iter: int };
+  max_iterations int;
 
   [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
-  criterion { min_value: float };
+  criterion float;
 
-  criterion_with_start { min_value: float, start_iter: int };
+  criterion_with_start criterion_with_start;
+}
+
+block transient {
+  .dt: float
+  .max_time: float
+  .inner_iter: int
+  .outer_iter: int
 }
 
 union time {
   [-- Steady state simulation --]
-  steady_state { iter: int };
+  steady_state int;
 
   [-- Transient simulation --]
-  transient { dt: float, max_time: float, inner_iter: int, outer_iter: int };
+  transient transient;
 }
 
 union output_format {
-  CSV {};
-  TECPLOT {};
-  RESTART {};
-  PARAVIEW {};
-  SURFACE_TECPLOT {};
-  SURFACE_PARAVIEW {};
+  CSV;
+  TECPLOT;
+  RESTART;
+  PARAVIEW;
+  SURFACE_TECPLOT;
+  SURFACE_PARAVIEW;
 }
 
 union mesh_format {
-  SU2 {};
-  CGNS {};
+  SU2;
+  CGNS;
 }
 
 block input_output {
