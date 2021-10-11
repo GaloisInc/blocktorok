@@ -7,209 +7,209 @@ output_schemes = file("system/fvSchemes")
 output_solution = file("system/fvSolution")
 blockMeshDict = file("system/blockMeshDict")
 
-render boundary_conditions.Isothermal |    ${marker}
-                                      |    {
-                                      |        type            fixedValue;
-                                      |        value           uniform ${value};
-                                      |    }
+render ::boundary_conditions.Isothermal |    ${marker}
+                                        |    {
+                                        |        type            fixedValue;
+                                        |        value           uniform ${value};
+                                        |    }
 
 -- TODO: if ${value} == 0, then use zeroGradient, if not use fixedGradient with ${value}
-render boundary_conditions.Heatflux   |    ${marker}
-                                      |    {
-                                      |        type            zeroGradient;
-                                      |    }
+render ::boundary_conditions.Heatflux   |    ${marker}
+                                        |    {
+                                        |        type            zeroGradient;
+                                        |    }
 
-output_var <<                         |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       volScalarField;
-                                      |    object      T;
-                                      |}
-                                      |dimensions      [0 0 0 1 0 0 0];
-                                      |internalField   uniform ${simulation.initial_temp};
-                                      |boundaryField
-                                      |{
-                                      |${vjoin(simulation.boundary_conditions)}
-                                      |}
+output_var <<                           |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       volScalarField;
+                                        |    object      T;
+                                        |}
+                                        |dimensions      [0 0 0 1 0 0 0];
+                                        |internalField   uniform ${simulation.initial_temp};
+                                        |boundaryField
+                                        |{
+                                        |${vjoin(simulation.boundary_conditions)}
+                                        |}
 
-render thermal_diffusivity            |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       dictionary;
-                                      |    location    "constant";
-                                      |    object      transportProperties;
-                                      |}
-                                      |DT              DT [0 2 -1 0 0 0 0] ${dt};
+render ::thermal_diffusivity            |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       dictionary;
+                                        |    location    "constant";
+                                        |    object      transportProperties;
+                                        |}
+                                        |DT              DT [0 2 -1 0 0 0 0] ${dt};
 
 output_transport << simulation.physics.physical_models
 
 -- TODO: fix laplacianFoam
-render time.Transient                 |deltaT          ${dt};
-                                      |endTime         ${max_time};
-                                      |startTime       ${start_time};
+render ::time.Transient                 |deltaT          ${dt};
+                                        |endTime         ${max_time};
+                                        |startTime       ${start_time};
 
-output_control <<                     |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       dictionary;
-                                      |    location    "system";
-                                      |    object      controlDict;
-                                      |}
-                                      |application     laplacianFoam;
-                                      |startFrom       latestTime;
-                                      |stopAt          endTime;
-                                      |${simulation.time.Transient}
-                                      |writeControl    runTime;
-                                      |writeInterval   ${simulation.input_output.write_interval_sec};
-                                      |purgeWrite      0;
-                                      |writeFormat     ascii;
-                                      |writePrecision  6;
-                                      |writeCompression off;
-                                      |timeFormat      general;
-                                      |timePrecision   6;
-                                      |runTimeModifiable true;
+output_control <<                       |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       dictionary;
+                                        |    location    "system";
+                                        |    object      controlDict;
+                                        |}
+                                        |application     laplacianFoam;
+                                        |startFrom       latestTime;
+                                        |stopAt          endTime;
+                                        |${simulation.time.Transient}
+                                        |writeControl    runTime;
+                                        |writeInterval   ${simulation.input_output.write_interval_sec};
+                                        |purgeWrite      0;
+                                        |writeFormat     ascii;
+                                        |writePrecision  6;
+                                        |writeCompression off;
+                                        |timeFormat      general;
+                                        |timePrecision   6;
+                                        |runTimeModifiable true;
 
 
-output_schemes <<                     |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       dictionary;
-                                      |    location    "system";
-                                      |    object      fvSchemes;
-                                      |}
-                                      |ddtSchemes
-                                      |{
-                                      |    default         Euler;
-                                      |}
-                                      |gradSchemes
-                                      |{
-                                      |    default         Gauss linear;
-                                      |    grad(T)         Gauss linear;
-                                      |}
-                                      |divSchemes
-                                      |{
-                                      |    default         none;
-                                      |}
-                                      |laplacianSchemes
-                                      |{
-                                      |    default         none;
-                                      |    laplacian(DT,T) Gauss linear corrected;
-                                      |}
-                                      |interpolationSchemes
-                                      |{
-                                      |    default         linear;
-                                      |}
-                                      |snGradSchemes
-                                      |{
-                                      |    default         corrected;
-                                      |}
+output_schemes <<                       |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       dictionary;
+                                        |    location    "system";
+                                        |    object      fvSchemes;
+                                        |}
+                                        |ddtSchemes
+                                        |{
+                                        |    default         Euler;
+                                        |}
+                                        |gradSchemes
+                                        |{
+                                        |    default         Gauss linear;
+                                        |    grad(T)         Gauss linear;
+                                        |}
+                                        |divSchemes
+                                        |{
+                                        |    default         none;
+                                        |}
+                                        |laplacianSchemes
+                                        |{
+                                        |    default         none;
+                                        |    laplacian(DT,T) Gauss linear corrected;
+                                        |}
+                                        |interpolationSchemes
+                                        |{
+                                        |    default         linear;
+                                        |}
+                                        |snGradSchemes
+                                        |{
+                                        |    default         corrected;
+                                        |}
 
-output_solution <<                    |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       dictionary;
-                                      |    location    "system";
-                                      |    object      fvSolution;
-                                      |}
-                                      |solvers
-                                      |{
-                                      |    T
-                                      |    {
-                                      |        solver          PCG;
-                                      |        preconditioner  DIC;
-                                      |        tolerance       1e-06;
-                                      |        relTol          0;
-                                      |    }
-                                      |}
-                                      |SIMPLE
-                                      |{
-                                      |    nNonOrthogonalCorrectors 2;
-                                      |}
+output_solution <<                      |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       dictionary;
+                                        |    location    "system";
+                                        |    object      fvSolution;
+                                        |}
+                                        |solvers
+                                        |{
+                                        |    T
+                                        |    {
+                                        |        solver          PCG;
+                                        |        preconditioner  DIC;
+                                        |        tolerance       1e-06;
+                                        |        relTol          0;
+                                        |    }
+                                        |}
+                                        |SIMPLE
+                                        |{
+                                        |    nNonOrthogonalCorrectors 2;
+                                        |}
 
-blockMeshDict <<                      |/*--------------------------------*- C++ -*----------------------------------*\
-                                      |  =========                 |
-                                      |  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-                                      |   \\    /   O peration     | Website:  https://openfoam.org
-                                      |    \\  /    A nd           | Version:  8
-                                      |     \\/     M anipulation  |
-                                      |\*---------------------------------------------------------------------------*/
-                                      |FoamFile
-                                      |{
-                                      |    version     2.0;
-                                      |    format      ascii;
-                                      |    class       dictionary;
-                                      |    object      blockMeshDict;
-                                      |}
-                                      |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-                                      |convertToMeters 0.1;
-                                      |vertices
-                                      |(
-                                      |    (0 0 0)
-                                      |    (5 0 0)
-                                      |    (5 1 0)
-                                      |    (0 1 0)
-                                      |    (0 0 0.1)
-                                      |    (5 0 0.1)
-                                      |    (5 1 0.1)
-                                      |    (0 1 0.1)
-                                      |);
-                                      |blocks
-                                      |(
-                                      |    hex (0 1 2 3 4 5 6 7) (100 20 1) simpleGrading (1 1 1)
-                                      |);
-                                      |edges
-                                      |(
-                                      |);
-                                      |boundary
-                                      |(
-                                      |    top
-                                      |    {
-                                      |        type patch;
-                                      |        faces
-                                      |        (
-                                      |            (3 7 6 2)
-                                      |        );
-                                      |    }
-                                      |    bottom
-                                      |    {
-                                      |        type patch;
-                                      |        faces
-                                      |        (
-                                      |            (1 5 4 0)
-                                      |        );
-                                      |    }
-                                      |    left
-                                      |    {
-                                      |        type patch;
-                                      |        faces
-                                      |        (
-                                      |            (0 4 7 3)
-                                      |        );
-                                      |    }
-                                      |    right
-                                      |    {
-                                      |        type patch;
-                                      |        faces
-                                      |        (
-                                      |            (2 6 5 1)
-                                      |        );
-                                      |    }
-                                      |    frontAndBack
-                                      |    {
-                                      |        type empty;
-                                      |        faces
-                                      |        (
-                                      |            (0 3 2 1)
-                                      |            (4 5 6 7)
-                                      |        );
-                                      |    }
-                                      |);
-                                      |mergePatchPairs
-                                      |(
-                                      |);
-                                      |// ************************************************************************* //
+blockMeshDict <<                        |/*--------------------------------*- C++ -*----------------------------------*\\
+                                        |  =========                 |
+                                        |  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+                                        |   \\\\    /   O peration     | Website:  https://openfoam.org
+                                        |    \\\\  /    A nd           | Version:  8
+                                        |     \\\\/     M anipulation  |
+                                        |\*---------------------------------------------------------------------------*/
+                                        |FoamFile
+                                        |{
+                                        |    version     2.0;
+                                        |    format      ascii;
+                                        |    class       dictionary;
+                                        |    object      blockMeshDict;
+                                        |}
+                                        |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+                                        |convertToMeters 0.1;
+                                        |vertices
+                                        |(
+                                        |    (0 0 0)
+                                        |    (5 0 0)
+                                        |    (5 1 0)
+                                        |    (0 1 0)
+                                        |    (0 0 0.1)
+                                        |    (5 0 0.1)
+                                        |    (5 1 0.1)
+                                        |    (0 1 0.1)
+                                        |);
+                                        |blocks
+                                        |(
+                                        |    hex (0 1 2 3 4 5 6 7) (100 20 1) simpleGrading (1 1 1)
+                                        |);
+                                        |edges
+                                        |(
+                                        |);
+                                        |boundary
+                                        |(
+                                        |    top
+                                        |    {
+                                        |        type patch;
+                                        |        faces
+                                        |        (
+                                        |            (3 7 6 2)
+                                        |        );
+                                        |    }
+                                        |    bottom
+                                        |    {
+                                        |        type patch;
+                                        |        faces
+                                        |        (
+                                        |            (1 5 4 0)
+                                        |        );
+                                        |    }
+                                        |    left
+                                        |    {
+                                        |        type patch;
+                                        |        faces
+                                        |        (
+                                        |            (0 4 7 3)
+                                        |        );
+                                        |    }
+                                        |    right
+                                        |    {
+                                        |        type patch;
+                                        |        faces
+                                        |        (
+                                        |            (2 6 5 1)
+                                        |        );
+                                        |    }
+                                        |    frontAndBack
+                                        |    {
+                                        |        type empty;
+                                        |        faces
+                                        |        (
+                                        |            (0 3 2 1)
+                                        |            (4 5 6 7)
+                                        |        );
+                                        |    }
+                                        |);
+                                        |mergePatchPairs
+                                        |(
+                                        |);
+                                        |// ************************************************************************* //
