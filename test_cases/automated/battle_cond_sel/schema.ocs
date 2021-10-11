@@ -1,0 +1,50 @@
+block dice {
+  .sides: int
+  .number: int
+}
+
+block fixed {
+  .amount: int
+}
+
+union value {
+  [-- Roll a die with `sides` sides `number` times --]
+  Dice dice;
+
+  [-- A fixed amount --]
+  Fixed fixed;
+}
+
+block creature {
+  [-- The number of hitpoints a creature has  --]
+  .hp: value
+
+  [-- The amount of damage a creature does --]
+  .damage: value
+}
+
+block hero {
+  [-- The hero's bold name --]
+  .name: string
+
+  [-- Hero hitpoints --]
+  .hp: value
+
+  [-- Hero damage --]
+  .damage: value
+}
+
+block battle {
+  [-- The dauntless heroes in the battle --]
+  .hero: hero*
+
+  [-- The fell orcs opposing the hero --]
+  .orc: creature*
+
+  [-- The forbidding minotaurs opposing the hero --]
+  .minotaur: creature*
+}
+
+root {
+  .battle: battle
+}

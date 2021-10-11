@@ -104,7 +104,7 @@ modifyEnv f =
       envVals' <- f `traverse` envVals
       bindVals' <- f `traverse` bindVals
 
-      State.modify (\s -> s { envBindings = envVals', envBlockEnv = bindVals' })
+      State.modify (\s -> s { envBindings = bindVals', envBlockEnv = envVals' })
 
 
 appendToFile :: FilePath -> Doc -> Eval ()
@@ -247,6 +247,7 @@ modifySelected f sel = go (Tx.selectorElements sel)
           case i of
             VBool _ True -> g v
             VBool _ False -> pure v
+            VList l elts -> VList l <$> (cond expr g `traverse` elts)
             _ -> throw expr "Expecting selector expression to return a bool"
 
     mem :: Ident -> (Value -> Eval Value) -> Value -> Eval Value
