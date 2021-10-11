@@ -56,6 +56,10 @@ symbol = Lexer.symbol spc
 symbol' :: Text -> Parser ()
 symbol' t = void $ symbol t
 
+brackets :: Parser a -> Parser a
+brackets p =
+  MP.try (symbol' "{") *> p <* symbol' "}"
+
 mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
 mkRange s e =
   SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
@@ -165,10 +169,10 @@ exprParser = located baseExpr >>= postFixOps
     cond =
       do  lite <- located $ do  MP.try (symbol' "if")
                                 i <- exprParser
-                                symbol' "then"
-                                t <- exprParser
+                                t <- brackets exprParser
+
                                 symbol' "else"
-                                e <- exprParser
+                                e <- brackets exprParser
                                 pure (i,t,e)
           let (i,t,e) = unloc lite
           pure (ExprCond (locRange lite) i t e)
