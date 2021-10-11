@@ -200,7 +200,7 @@ exprParser = located baseExpr >>= postFixOps
       do  MP.try (symbol' "for")
           name <- located ident
           symbol' "in"
-          ExprFor name <$> exprParser <*> exprParser
+          ExprFor name <$> exprParser <*> brackets exprParser
 
     call name fname =
       located $
