@@ -490,11 +490,11 @@ describeValueType v0 =
     VFile {} -> "file"
     VBool {} -> "boolean"
 
-list :: (Value -> Eval a) -> Value -> Eval [a]
-list f v =
-  case v of
-    VList _ l -> f `traverse` l
-    _         -> throw v "Expecting a list here"
+-- list :: (Value -> Eval a) -> Value -> Eval [a]
+-- list f v =
+--   case v of
+--     VList _ l -> f `traverse` l
+--     _         -> throw v "Expecting a list here"
 
 asList :: (Value -> Eval a) -> Value -> Eval [a]
 asList f v =
