@@ -24,6 +24,7 @@ module Language.Transform.Evaluator
 import           Control.Applicative       ((<|>))
 import qualified Control.Monad.Except      as Except
 import qualified Control.Monad.State       as State
+import           Control.Monad             ((>=>))
 
 import           Data.Foldable             (traverse_)
 import           Data.List.NonEmpty        (NonEmpty ((:|)))
@@ -339,6 +340,11 @@ evalExpr e0 =
           if test
             then evalExpr t
             else evalExpr e
+    Tx.ExprTemplate les ->
+      do  let es = unloc les
+          vs <- evalExpr `traverse` es
+          vs' <- concat <$> (asList showValue `traverse` vs)
+          pure $ VDoc (location les) (PP.vcat vs')
   where
     forIteration name body value =
       scoped $

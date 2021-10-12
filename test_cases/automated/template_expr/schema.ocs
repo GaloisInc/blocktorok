@@ -1,0 +1,8 @@
+block x {
+  .y : int
+}
+
+root {
+  .x : x*
+  .z : int*
+}

@@ -1,0 +1,19 @@
+schema "schema.ocs"
+
+output = file("out.txt")
+
+output <<
+  template {
+      |Hello
+      |World
+    if z? {
+      |has z
+    } else {
+      |no z
+    }
+
+    for ex in x {
+      |${ex.y}
+    }
+    |
+  }

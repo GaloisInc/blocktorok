@@ -163,6 +163,7 @@ exprParser = located baseExpr >>= postFixOps
                 , cond
                 , ExprLit . LitString <$> located strLitParser
                 , barStringExprParser
+                , template
                 , selector
                 ]
 
@@ -176,6 +177,7 @@ exprParser = located baseExpr >>= postFixOps
                                 pure (i,t,e)
           let (i,t,e) = unloc lite
           pure (ExprCond (locRange lite) i t e)
+
 
     isEmpty arg =
         do  range <- locRange <$> MP.try (located (symbol' "!?"))
@@ -200,7 +202,7 @@ exprParser = located baseExpr >>= postFixOps
       do  MP.try (symbol' "for")
           name <- located ident
           symbol' "in"
-          ExprFor name <$> exprParser <*> exprParser
+          ExprFor name <$> exprParser <*> brackets exprParser
 
     call name fname =
       located $
@@ -218,6 +220,13 @@ exprParser = located baseExpr >>= postFixOps
         MP.try (symbol' "[") *>
           MP.sepBy exprParser (symbol' ",")
         <* MP.try (symbol' "]")
+
+    template =
+      ExprTemplate <$>
+        located
+         (do  MP.try (symbol' "template")
+              brackets (MP.many exprParser))
+
 
 
 declParser :: Parser Decl
