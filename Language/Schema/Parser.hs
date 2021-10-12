@@ -30,6 +30,7 @@ import           Data.Text                  (Text)
 import qualified Data.Text                  as Text
 import qualified Data.Text.IO               as TIO
 import           Data.Void                  (Void)
+import           Data.Foldable              (traverse_)
 
 import           Text.Megaparsec            ((<|>))
 import qualified Text.Megaparsec            as MP
@@ -50,6 +51,7 @@ import           Language.Schema.Syntax     (BlockDecl (BlockDecl, blockDeclDecl
 import           Language.Schema.Type       (Globbed (..), Ident, SType (..),
                                              containedName, containsNamed,
                                              unGlob)
+import qualified Language.Common.Units.Parser as UP
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -103,13 +105,19 @@ brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
 stype =
-  do tyName <- ident
-     case tyName of
-       "int" -> pure SInt
-       "bool" -> pure SBool
-       "float" -> pure SFloat
-       "string" -> pure SString
-       _ -> pure $ SNamed tyName
+  MP.choice [ trySym "int" $> SInt
+            , trySym "bool" $> SBool
+            , trySym "float" $> SFloat
+            , trySym "string" $> SString
+            , parseQuantity
+            , SNamed <$> ident
+            ]
+  where
+    trySym = MP.try . symbol'
+    parseQuantity =
+      do  trySym "quantity"
+          symbol' `traverse_` ["in", "dim", "of"]
+          SQuantity <$> UP.parseUnit
 
 decl :: Parser Ident -> Parser Decl
 decl p =

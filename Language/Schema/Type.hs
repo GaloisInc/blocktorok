@@ -27,6 +27,7 @@ module Language.Schema.Type
   ) where
 
 import           Data.Text (Text, unpack)
+import           Language.Common.Units.Units(Unit(..))
 
 -- | Identifiers
 type Ident = Text
@@ -38,6 +39,7 @@ data SType
   | SFloat
   | SString
   | SBool
+  | SQuantity Unit
   | SNamed Ident
   deriving (Eq)
 
@@ -45,7 +47,8 @@ instance Show SType where
   show SInt       = "int"
   show SFloat     = "float"
   show SString    = "string"
-  show SBool     = "boolean"
+  show SBool      = "boolean"
+  show (SQuantity u) = "quantity in dim of " ++ show u
   show (SNamed i) = unpack i
 
 -- | Globs for block layout definitions

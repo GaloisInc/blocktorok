@@ -39,6 +39,7 @@ import qualified Text.Megaparsec.Char.Lexer as Lexer
 
 import           Language.Blocktorok.Syntax (BlockElement (..), Value (..))
 import           Language.Common            (Located (..), SourceRange (..))
+import qualified Language.Common.Units.Parser as UP
 
 type Parser a = MP.Parsec Void Text a
 
@@ -93,11 +94,18 @@ blockElement = BlockElement <$> MP.try (located ident <* symbol' ":") <*> value
 value :: Parser Value
 value =
       blockValue
-  <|> Number <$> located (SciN.toRealFloat <$> signedNum)  -- use 'scientific instead?
+  <|> num
   <|> List <$> located (symbol' "[" *> MP.sepBy value (symbol' ",")   <* symbol' "]")
   <|> str
   <|> tag
   where
+    num =
+      do  n <- located (MP.try signedNum)
+          MP.choice
+            [ Quantity n <$> located UP.parseUnit
+            , pure $ Number (SciN.toRealFloat <$> n)
+            ]
+
     blockValue =
       do  MP.try (symbol' "{")
           cts <- located blockContents

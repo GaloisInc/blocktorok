@@ -31,14 +31,20 @@ import           Data.Map                  (Map)
 import qualified Data.Map                  as Map
 import           Data.Text                 (Text)
 import qualified Data.Text                 as Text
+import           Data.Ratio                as Ratio
 
 import qualified Prettyprinter             as PP
+import           Data.Scientific           (Scientific)
+import qualified Data.Scientific           as Sci
 
 import           Language.Common           (HasLocation (..), Located (..),
-                                            msgWithLoc, ppRange, unloc)
+                                            msgWithLoc, ppRange, unloc, withSameLocAs)
 import qualified Language.Transform.Syntax as Tx
 import           Language.Transform.Value  (Value (..))
 import qualified Language.Transform.Value  as Value
+import           Language.Common.Units.Units(Unit)
+import qualified Language.Common.Units.Units as Units
+
 
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
@@ -173,6 +179,7 @@ showValue v0 =
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
         Just r -> showEnv (Value.blockValues b) r
     VUnion u -> showValue (Value.unionTagValue u)
+    VQuantity n _ -> showValue ()
   where
     showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
@@ -339,7 +346,24 @@ evalExpr e0 =
           if test
             then evalExpr t
             else evalExpr e
+    Tx.ExprConvertUnits e u ->
+      do  (n, u') <- evalExpr e >>= quantity
+          convert e n u u'
+
+
   where
+    -- TODO: move this into units?
+    convert why n from to
+      | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
+
+        let fromRatio' = fromRational (Units.unitConversionRatio (unloc from))
+            toRatio' = fromRational (Units.unitConversionRatio (unloc to))
+            n' = unloc n * fromRatio' / toRatio'
+        in pure $ VQuantity (n' `withSameLocAs` n) to
+      | otherwise = throw why ("Cannot convert from " <> q (showT from) <> " to " <>
+                               q (showT to))
+
+
     forIteration name body value =
       scoped $
         do bindVar name value
@@ -489,6 +513,7 @@ describeValueType v0 =
         "constructor " <> q (unloc $ Value.tagTag c)
     VFile {} -> "file"
     VBool {} -> "boolean"
+    VQuantity _ u -> "quantity in " <> showT u
 
 list :: (Value -> Eval a) -> Value -> Eval [a]
 list f v =
@@ -529,6 +554,13 @@ tag t =
     VTag tv -> pure tv
     _       -> throw t "Expecting a union tag here"
 
+quantity :: Value -> Eval (Located Scientific, Located Unit)
+quantity v =
+  case v of
+    VQuantity n u -> pure (n, u)
+    _             -> throw v "Expecting a quantity with units here"
+
+
 -------------------------------------------------------------------------------
 -- misc
 
@@ -542,6 +574,9 @@ valuesToVList l vs =
     [a] -> a
     _   -> VList (location l) vs
 
+
+showT :: Show a => a -> Text
+showT = Text.pack . show
 
 -------------------------------------------------------------------------------
 -- API

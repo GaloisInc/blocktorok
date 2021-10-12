@@ -17,6 +17,13 @@ executable blocktorok
                        Language.Blocktorok.Syntax
 
                        Language.Common
+                       Language.Common.Units.Combinators
+                       Language.Common.Units.Dimensions
+                       Language.Common.Units.Parser
+                       Language.Common.Units.Factor
+                       Language.Common.Units.SI
+                       Language.Common.Units.SymbolTable
+                       Language.Common.Units.Units
 
                        Language.Schema.Env
                        Language.Schema.Parser
@@ -44,5 +51,6 @@ executable blocktorok
                      , prettyprinter
                      , scientific
                      , text
+                     , multimap
   default-language:    Haskell2010
   ghc-options: -Wall
