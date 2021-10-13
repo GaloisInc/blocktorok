@@ -174,9 +174,6 @@ glob = MP.option One $ MP.choice [opt, some, many]
     some = symbol' "+" $> Some
     many = symbol' "*" $> Many
 
-globbed :: Parser a -> Parser (Globbed a)
-globbed p = p <**> glob
-
 blockDecl :: Parser BlockDecl
 blockDecl =
   BlockDecl <$> optional (located doc)
@@ -186,7 +183,7 @@ blockS :: Parser BlockS
 blockS =
   do symbol' "block"
      t  <- located ident
-     fs <- brackets $ MP.many $ globbed blockDecl
+     fs <- brackets $ MP.many $ blockDecl <**> glob
      if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
        fail "The preceding block definition contains duplicated field names."
      else
@@ -199,7 +196,7 @@ blockS =
 root :: Parser Root
 root =
   do symbol' "root"
-     fs <- brackets $ MP.many $ globbed blockDecl
+     fs <- brackets $ MP.many $ blockDecl <**> glob
      if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
        fail "The root specifiation contains duplicated field names."
      else
