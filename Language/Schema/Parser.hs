@@ -51,7 +51,7 @@ import           Language.Schema.Syntax       (BlockDecl (BlockDecl, blockDeclDe
                                                globbedDeclsMap, schemaDefMap,
                                                variantsMap)
 import           Language.Schema.Type         (Globbed (..), Ident, SType (..),
-                                               containedName, isNamed, unGlob)
+                                               unGlob)
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -134,13 +134,13 @@ decl p =
      o <- MP.getOffset
      t <- located stype
      let res = Decl n t
-     if isNamed (locValue t) then
-       do let nm = containedName (locValue t)
-          env <- State.get
-          case lookupTypeDef nm env of
-            Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined.")
-            Just _  -> pure res
-     else pure res
+     case locValue t of
+       SNamed nm ->
+         do env <- State.get
+            case lookupTypeDef nm env of
+              Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined.")
+              Just _ -> pure res
+       _ -> pure res
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[-- " *> MP.manyTill Lexer.charLiteral (symbol' " --]"))
