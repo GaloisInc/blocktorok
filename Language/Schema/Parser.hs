@@ -126,17 +126,19 @@ stype =
           symbol' `traverse_` ["in", "dim", "of"]
           SQuantity <$> UP.parseUnit
 
+-- ! Uses MP.setOffset; parsing state is messed up after this
 decl :: Parser Ident -> Parser Decl
 decl p =
   do n <- located p
      symbol' ":"
+     o <- MP.getOffset
      t <- located stype
      let res = Decl n t
      if isNamed (locValue t) then
        do let nm = containedName (locValue t)
           env <- State.get
           case lookupTypeDef nm env of
-            Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
+            Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined.")
             Just _  -> pure res
      else pure res
 
