@@ -33,8 +33,6 @@ import           Data.Text                 (Text)
 import qualified Data.Text                 as Text
 
 import qualified Prettyprinter             as PP
-import           Data.Scientific           (Scientific)
-import qualified Data.Scientific           as Sci
 
 import           Language.Common           (HasLocation (..), Located (..),
                                             msgWithLoc, ppRange, unloc, withSameLocAs)
@@ -178,7 +176,7 @@ showValue v0 =
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
         Just r -> showEnv (Value.blockValues b) r
     VUnion u -> showValue (Value.unionTagValue u)
-    VQuantity n _ -> pure $ PP.pretty (Sci.formatScientific Sci.Fixed Nothing (unloc n))
+    VQuantity n _ -> pure $ PP.pretty (unloc n)
   where
     showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
@@ -553,7 +551,7 @@ tag t =
     VTag tv -> pure tv
     _       -> throw t "Expecting a union tag here"
 
-quantity :: Value -> Eval (Located Scientific, Located Unit)
+quantity :: Value -> Eval (Located Double, Located Unit)
 quantity v =
   case v of
     VQuantity n u -> pure (n, u)
