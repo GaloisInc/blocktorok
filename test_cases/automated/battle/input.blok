@@ -1,23 +1,23 @@
 battle: {
   hero: {
     name: "Phrobald the Halfling"
-    hp: Fixed { amount: 50 }
+    hp: Fixed 50
     damage: Dice { sides: 6  number: 2 }
   }
 
   orc: {
     hp: Dice { number: 1  sides: 6 }
-    damage: Fixed { amount: 2 }
+    damage: Fixed 2
   }
 
   orc: {
     hp: Dice { number: 1  sides: 6 }
-    damage: Fixed { amount: 2 }
+    damage: Fixed 2
   }
 
   orc: {
     hp: Dice { number: 1  sides: 6 }
-    damage: Fixed { amount: 2 }
+    damage: Fixed 2
   }
 
   minotaur: {
