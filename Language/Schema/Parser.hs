@@ -86,16 +86,24 @@ located p =
 optional :: Parser a -> Parser (Maybe a)
 optional p = (Just <$> MP.try p) <|> pure Nothing
 
+keyword :: Text -> Parser ()
+keyword t =
+  lexeme . MP.try $
+    do  void $ MP.chunk t
+        MP.notFollowedBy (MP.satisfy identRestChar)
+
 ident :: Parser Ident
 ident =
   lexeme . MP.try $
     do c0 <- MP.satisfy identFirstChar
        cr <- MP.takeWhileP Nothing identRestChar
        pure (c0 `Text.cons` cr)
-  where
-    identFirstChar :: Char -> Bool
-    identFirstChar c = isAlpha c || c == '_'
-    identRestChar c = identFirstChar c || isDigit c
+
+identFirstChar :: Char -> Bool
+identFirstChar c = isAlpha c || c == '_'
+
+identRestChar :: Char -> Bool
+identRestChar c = identFirstChar c || isDigit c
 
 selector :: Parser Ident
 selector = MPC.char '.' *> ident
@@ -113,7 +121,7 @@ stype =
             , SNamed <$> ident
             ]
   where
-    trySym = MP.try . symbol'
+    trySym = MP.try . keyword
     parseQuantity =
       do  trySym "quantity"
           symbol' `traverse_` ["in", "dim", "of"]
