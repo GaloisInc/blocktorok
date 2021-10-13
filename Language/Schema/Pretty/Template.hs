@@ -86,7 +86,7 @@ ppTemplate =
                     </> pretty nm <> ":"
                Just (BlockDef BlockS { blockSFields }) ->
                  do fs <- concatWith (<//>) <$> mapM ppField blockSFields
-                    pure $ pretty nm <+> lbrace </> indent 2 fs </> rbrace
+                    pure $ pretty nm <> ":" <+> lbrace </> indent 2 fs </> rbrace
            _ -> pure $ pretty nm <> ":"
 
 -------------------------------------------------------------------------------
