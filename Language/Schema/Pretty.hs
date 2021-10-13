@@ -21,10 +21,10 @@ module Language.Schema.Pretty
   , (<//>)
   ) where
 
-import           Prettyprinter   (Doc, Pretty (pretty), hardline)
+import           Prettyprinter        (Doc, Pretty (pretty), hardline, (<+>))
 
-import           Language.Common (Located, unloc)
-import Language.Schema.Type (SType (..))
+import           Language.Common      (Located, unloc)
+import           Language.Schema.Type (SType (..))
 
 -- | Combine two 'Doc' @ann@, separating with 'hardline'
 (</>) :: Doc ann -> Doc ann -> Doc ann
@@ -46,8 +46,9 @@ ppNoLoc = pretty . unloc
 ppStype :: SType -> Doc ann
 ppStype t =
   case t of
-    SInt       -> "int"
-    SFloat     -> "float"
-    SString    -> "string"
-    SBool      -> "bool"
-    SNamed txt -> pretty txt
+    SInt        -> "int"
+    SFloat      -> "float"
+    SString     -> "string"
+    SBool       -> "bool"
+    SQuantity u -> "quantity with dimension of" <+> pretty u
+    SNamed txt  -> pretty txt

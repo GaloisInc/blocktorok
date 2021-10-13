@@ -19,6 +19,8 @@ import           Data.Text                        (Text, unpack)
 import           Language.Common.Units.Dimensions (Dimension, dimensionless)
 import           Language.Common.Units.Factor     (Factor (..))
 
+import           Prettyprinter                    (Pretty (pretty))
+
 -- | The type of units
 data Unit = Unit
   { -- | The name of this unit.
@@ -45,6 +47,12 @@ instance Show Unit where
     case showNm of
       Nothing      -> unpack nm
       Just showNm' -> unpack showNm'
+
+instance Pretty Unit where
+  pretty Unit { unitName = nm, unitShowName = showNm } =
+    case showNm of
+      Nothing      -> pretty nm
+      Just showNm' -> pretty showNm'
 
 -- | Create a new canonical unit
 mkCanonicalUnit :: Text -> Dimension -> Maybe Text -> Unit
