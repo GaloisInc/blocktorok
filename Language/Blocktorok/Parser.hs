@@ -103,7 +103,7 @@ value =
     num =
       do  n <- located (MP.try signedNum)
           MP.choice
-            [ Quantity n <$> located UP.parseUnit
+            [ Quantity n <$> (MP.try  (symbol' "(") *> located UP.parseUnit <* symbol' ")")
             , pure $ Number (SciN.toRealFloat <$> n)
             ]
 
