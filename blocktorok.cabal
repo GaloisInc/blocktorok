@@ -47,6 +47,7 @@ executable blocktorok
                      , megaparsec
                      , monad-validate
                      , mtl
+                     , multiset
                      , optparse-applicative
                      , prettyprinter
                      , scientific

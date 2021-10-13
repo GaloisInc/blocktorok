@@ -27,7 +27,7 @@ import qualified Control.Monad.State          as State
 import           Data.Char                    (isAlpha, isDigit)
 import           Data.Foldable                (traverse_)
 import           Data.Functor                 (($>))
-import qualified Data.List                    as List
+import qualified Data.MultiSet                as MS
 import           Data.Text                    (Text)
 import qualified Data.Text                    as Text
 import qualified Data.Text.IO                 as TIO
@@ -38,7 +38,8 @@ import qualified Text.Megaparsec              as MP
 import qualified Text.Megaparsec.Char         as MPC
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
-import           Language.Common              (Located (..), SourceRange (..))
+import           Language.Common              (Located (..), SourceRange (..),
+                                               unloc)
 import qualified Language.Common.Units.Parser as UP
 import           Language.Schema.Env          (Env, addRootType, addTypeDef,
                                                emptyEnv, lookupTypeDef)
@@ -126,7 +127,7 @@ stype =
           symbol' `traverse_` ["in", "dim", "of"]
           SQuantity <$> UP.parseUnit
 
--- ! Uses MP.setOffset; parsing state is messed up after this
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 decl :: Parser Ident -> Parser Decl
 decl p =
   do n <- located p
@@ -134,7 +135,7 @@ decl p =
      o <- MP.getOffset
      t <- located stype
      let res = Decl n t
-     case locValue t of
+     case unloc t of
        SNamed nm ->
          do env <- State.get
             case lookupTypeDef nm env of
@@ -152,20 +153,24 @@ variant =
           <*> optional stype
           <*  symbol' ";"
 
--- | TODO: Better detection of / error for duplicate tags?
+duplicatedElems :: Ord a => [a] -> [a]
+duplicatedElems xs = [x | (x, c) <- MS.toOccurList (MS.fromList xs), c > 1]
+
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 union :: Parser Union
 union =
   do symbol' "union"
+     o    <- MP.getOffset
      nm   <- located ident
      vars <- brackets $ MP.some variant
-     if length (varNames vars) /= length (List.nub (varNames vars)) then
-       fail "The preceding union definition contains duplicated variant tags."
-     else
+     let dupedTags   = duplicatedElems (fmap (unloc . variantTag) vars)
+         ppDupedTags = Text.unpack $ Text.intercalate ", " dupedTags
+     if null dupedTags then
        do let u = Union nm (variantsMap vars)
-          addTypeDef (locValue nm) (UnionDef u)
+          addTypeDef (unloc nm) (UnionDef u)
           pure u
-  where
-    varNames = fmap (locValue . variantTag)
+     else
+       MP.setOffset o >> fail ("This union has duplicate tags: " ++ ppDupedTags)
 
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
@@ -179,32 +184,35 @@ blockDecl =
   BlockDecl <$> optional (located doc)
             <*> decl selector
 
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 blockS :: Parser BlockS
 blockS =
   do symbol' "block"
+     o <- MP.getOffset
      t  <- located ident
      fs <- brackets $ MP.many $ blockDecl <**> glob
-     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
-       fail "The preceding block definition contains duplicated field names."
-     else
+     let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
+         ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
+     if null dupedFields then
        do let b = BlockS t (globbedDeclsMap fs)
-          addTypeDef (locValue t) (BlockDef b)
+          addTypeDef (unloc t) (BlockDef b)
           pure b
-  where
-    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
+     else
+       MP.setOffset o >> fail ("This block has duplicated fields: " ++ ppDupedFields)
 
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 root :: Parser Root
 root =
-  do symbol' "root"
+  do o <- MP.getOffset
+     symbol' "root"
      fs <- brackets $ MP.many $ blockDecl <**> glob
-     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
-       fail "The root specifiation contains duplicated field names."
-     else
+     let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
+         ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
+     if null dupedFields then
        do sequence_ (addRootType <$> fs)
           pure $ Root $ globbedDeclsMap fs
-  where
-    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
-  -- Root <$> (symbol' "root" *> brackets (globbedDeclsMap <$> (MP.some $ globbed blockDecl)))
+     else
+       MP.setOffset o >> fail ("The root specification has duplicate fields: " ++ ppDupedFields)
 
 schemaDefsP :: Parser SchemaDef
 schemaDefsP =  UnionDef <$> union
