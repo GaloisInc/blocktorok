@@ -19,6 +19,7 @@ module Language.Schema.Parser
   , schemaEnvFromFile
   ) where
 
+import           Control.Applicative          ((<**>))
 import           Control.Monad                (void)
 import           Control.Monad.State          (State)
 import qualified Control.Monad.State          as State
@@ -32,7 +33,7 @@ import qualified Data.Text                    as Text
 import qualified Data.Text.IO                 as TIO
 import           Data.Void                    (Void)
 
-import           Text.Megaparsec              ((<|>),(<?>))
+import           Text.Megaparsec              ((<?>), (<|>))
 import qualified Text.Megaparsec              as MP
 import qualified Text.Megaparsec.Char         as MPC
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
@@ -83,7 +84,7 @@ located p =
         pure $ Located (mkRange start end) a
 
 optional :: Parser a -> Parser (Maybe a)
-optional p = (Just <$> MP.try p) <|> pure Nothing
+optional p = (Just <$> p) <|> pure Nothing
 
 keyword :: Text -> Parser ()
 keyword t =
@@ -93,7 +94,7 @@ keyword t =
 
 ident :: Parser Ident
 ident =
-  lexeme . MP.try $
+  lexeme $
     do c0 <- MP.satisfy identFirstChar <?> "a letter or '_'"
        cr <- MP.takeWhileP (Just "a letter, number, or '_'") identRestChar
        pure (c0 `Text.cons` cr)
@@ -172,10 +173,7 @@ glob = MP.option One $ MP.choice [opt, some, many]
     many = symbol' "*" $> Many
 
 globbed :: Parser a -> Parser (Globbed a)
-globbed p =
-  do a <- p
-     g <- glob
-     pure $ g a
+globbed p = p <**> glob
 
 blockDecl :: Parser BlockDecl
 blockDecl =
@@ -195,15 +193,6 @@ blockS =
           pure b
   where
     fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
-
--- blockExt :: Parser BlockS
--- blockExt =
---   do symbol' "block"
---      new <- located ident
---      symbol' "extends"
---      old <- located ident
---      fs <- brackets $ MP.many $ globbed blockDecl
-
 
 root :: Parser Root
 root =
