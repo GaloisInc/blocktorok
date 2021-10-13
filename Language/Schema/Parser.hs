@@ -19,39 +19,38 @@ module Language.Schema.Parser
   , schemaEnvFromFile
   ) where
 
-import           Control.Monad              (void)
-import           Control.Monad.State        (State)
-import qualified Control.Monad.State        as State
+import           Control.Monad                (void)
+import           Control.Monad.State          (State)
+import qualified Control.Monad.State          as State
 
-import           Data.Char                  (isAlpha, isDigit)
-import           Data.Functor               (($>))
-import qualified Data.List                  as List
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
-import qualified Data.Text.IO               as TIO
-import           Data.Void                  (Void)
-import           Data.Foldable              (traverse_)
+import           Data.Char                    (isAlpha, isDigit)
+import           Data.Foldable                (traverse_)
+import           Data.Functor                 (($>))
+import qualified Data.List                    as List
+import           Data.Text                    (Text)
+import qualified Data.Text                    as Text
+import qualified Data.Text.IO                 as TIO
+import           Data.Void                    (Void)
 
-import           Text.Megaparsec            ((<|>))
-import qualified Text.Megaparsec            as MP
-import qualified Text.Megaparsec.Char       as MPC
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import           Text.Megaparsec              ((<|>),(<?>))
+import qualified Text.Megaparsec              as MP
+import qualified Text.Megaparsec.Char         as MPC
+import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
-import           Language.Common            (Located (..), SourceRange (..))
-import           Language.Schema.Env        (Env, addRootType, addTypeDef,
-                                             emptyEnv, lookupTypeDef)
-import           Language.Schema.Syntax     (BlockDecl (BlockDecl, blockDeclDecl),
-                                             BlockS (BlockS),
-                                             Decl (Decl, declName), Root (Root),
-                                             Schema (Schema), SchemaDef (..),
-                                             Union (Union),
-                                             Variant (Variant, variantTag),
-                                             globbedDeclsMap, schemaDefMap,
-                                             variantsMap)
-import           Language.Schema.Type       (Globbed (..), Ident, SType (..),
-                                             containedName, containsNamed,
-                                             unGlob)
+import           Language.Common              (Located (..), SourceRange (..))
 import qualified Language.Common.Units.Parser as UP
+import           Language.Schema.Env          (Env, addRootType, addTypeDef,
+                                               emptyEnv, lookupTypeDef)
+import           Language.Schema.Syntax       (BlockDecl (BlockDecl, blockDeclDecl),
+                                               BlockS (BlockS),
+                                               Decl (Decl, declName),
+                                               Root (Root), Schema (Schema),
+                                               SchemaDef (..), Union (Union),
+                                               Variant (Variant, variantTag),
+                                               globbedDeclsMap, schemaDefMap,
+                                               variantsMap)
+import           Language.Schema.Type         (Globbed (..), Ident, SType (..),
+                                               containedName, isNamed, unGlob)
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
@@ -95,8 +94,8 @@ keyword t =
 ident :: Parser Ident
 ident =
   lexeme . MP.try $
-    do c0 <- MP.satisfy identFirstChar
-       cr <- MP.takeWhileP Nothing identRestChar
+    do c0 <- MP.satisfy identFirstChar <?> "a letter or '_'"
+       cr <- MP.takeWhileP (Just "a letter, number, or '_'") identRestChar
        pure (c0 `Text.cons` cr)
 
 identFirstChar :: Char -> Bool
@@ -113,17 +112,16 @@ brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
 stype =
-  MP.choice [ trySym "int" $> SInt
-            , trySym "bool" $> SBool
-            , trySym "float" $> SFloat
-            , trySym "string" $> SString
+  MP.choice [ keyword "int" $> SInt
+            , keyword "bool" $> SBool
+            , keyword "float" $> SFloat
+            , keyword "string" $> SString
             , parseQuantity
             , SNamed <$> ident
             ]
   where
-    trySym = MP.try . keyword
     parseQuantity =
-      do  trySym "quantity"
+      do  keyword "quantity"
           symbol' `traverse_` ["in", "dim", "of"]
           SQuantity <$> UP.parseUnit
 
@@ -132,25 +130,24 @@ decl p =
   do n <- located p
      symbol' ":"
      t <- located stype
-     if containsNamed (locValue t) then
+     let res = Decl n t
+     if isNamed (locValue t) then
        do let nm = containedName (locValue t)
           env <- State.get
           case lookupTypeDef nm env of
             Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
-            Just _  -> pure $ Decl n t
-     else pure $ Decl n t
+            Just _  -> pure res
+     else pure res
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[-- " *> MP.manyTill Lexer.charLiteral (symbol' " --]"))
 
--- | TODO: Better detection of / error for duplicate fields?
 variant :: Parser Variant
 variant =
-  do ann   <- optional (located doc)
-     t     <- located ident
-     ty    <- optional stype
-     symbol' ";"
-     pure $ Variant ann t ty
+  Variant <$> optional (located doc)
+          <*> located ident
+          <*> optional stype
+          <*  symbol' ";"
 
 -- | TODO: Better detection of / error for duplicate tags?
 union :: Parser Union

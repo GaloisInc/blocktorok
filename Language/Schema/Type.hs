@@ -20,7 +20,7 @@ module Language.Schema.Type
   , SType(..)
     -- ** User-defined/named type utilities
   , containedName
-  , containsNamed
+  , isNamed
     -- ** Globbed type utilities
   , ppGlob
   , unGlob
@@ -90,13 +90,13 @@ ppGlob g = show (unGlob g) ++ globStr
                 Many _     -> "*"
 
 -- | Return true iff the type contains a named type
-containsNamed :: SType -> Bool
-containsNamed (SNamed _) = True
-containsNamed _          = False
+isNamed :: SType -> Bool
+isNamed (SNamed _) = True
+isNamed _          = False
 
--- | If the type @t@ contains a named type (i.e. @containsNamed t@ returns
+-- | If the type @t@ contains a named type (i.e. @isNamed t@ returns
 -- @True@), return that type's name. This function errors on types that
--- fail to return true when passed to 'containsNamed'.
+-- fail to return true when passed to 'isNamed'.
 containedName :: SType -> Ident
 containedName (SNamed i) = i
 containedName _          = error "Type contains no named type"
