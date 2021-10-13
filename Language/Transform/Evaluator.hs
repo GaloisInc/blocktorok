@@ -31,7 +31,6 @@ import           Data.Map                  (Map)
 import qualified Data.Map                  as Map
 import           Data.Text                 (Text)
 import qualified Data.Text                 as Text
-import           Data.Ratio                as Ratio
 
 import qualified Prettyprinter             as PP
 import           Data.Scientific           (Scientific)
@@ -179,7 +178,7 @@ showValue v0 =
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
         Just r -> showEnv (Value.blockValues b) r
     VUnion u -> showValue (Value.unionTagValue u)
-    VQuantity n _ -> showValue ()
+    VQuantity n _ -> pure $ PP.pretty (Sci.formatScientific Sci.Fixed Nothing (unloc n))
   where
     showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
@@ -347,18 +346,18 @@ evalExpr e0 =
             then evalExpr t
             else evalExpr e
     Tx.ExprConvertUnits e u ->
-      do  (n, u') <- evalExpr e >>= quantity
-          convert e n u u'
-
-
+      -- TODO: every selector seems to produce a list, seems questionable
+      do  quantities <- evalExpr e >>= asList quantity
+          let conv (n, u') = convert e n u u'
+          valuesToVList e <$> (conv `traverse` quantities)
   where
     -- TODO: move this into units?
     convert why n from to
       | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
 
-        let fromRatio' = fromRational (Units.unitConversionRatio (unloc from))
-            toRatio' = fromRational (Units.unitConversionRatio (unloc to))
-            n' = unloc n * fromRatio' / toRatio'
+        let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
+            toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
+            n' = unloc n * toRatio' / fromRatio'
         in pure $ VQuantity (n' `withSameLocAs` n) to
       | otherwise = throw why ("Cannot convert from " <> q (showT from) <> " to " <>
                                q (showT to))
@@ -558,7 +557,7 @@ quantity :: Value -> Eval (Located Scientific, Located Unit)
 quantity v =
   case v of
     VQuantity n u -> pure (n, u)
-    _             -> throw v "Expecting a quantity with units here"
+    _             -> throw v ("Expecting a quantity with units here (got " <> q (describeValueType v) <> ")")
 
 
 -------------------------------------------------------------------------------

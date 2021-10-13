@@ -128,7 +128,7 @@ barStringExprParser =
 
     stringChunk = ExprLit . LitString <$> located' sc
     embeddedExpr =
-      do  void $ MP.try (MP.chunk "${")
+      do  void $ MP.try (symbol' "${")
           expr <- exprParser
           void $ MP.chunk "}"
           pure expr
