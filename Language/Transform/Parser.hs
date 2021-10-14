@@ -18,78 +18,30 @@ module Language.Transform.Parser
     transformFromFile
   ) where
 
-import           Control.Applicative        (many, some)
-import           Control.Monad              (void)
+import           Control.Applicative          (many, some)
+import           Control.Monad                (void)
 
-import           Data.Char                  (isAlpha, isDigit)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
-import qualified Data.Text.IO               as TIO
-import           Data.Void                  (Void)
-import qualified Data.List.NonEmpty         as NEL
+import qualified Data.List.NonEmpty           as NEL
+import           Data.Text                    (Text)
+import qualified Data.Text                    as Text
+import qualified Data.Text.IO                 as TIO
+import           Data.Void                    (Void)
 
-import qualified Text.Megaparsec            as MP
-import qualified Text.Megaparsec.Char       as MPC
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import qualified Text.Megaparsec              as MP
 
-import           Language.Common            (Located (..),
-                                             SourceRange (SourceRange), unloc,
-                                             withSameLocAs, sourceRangeSpan')
-import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin, FNot, FIsEmpty),
-                                             Lit (LitString), Selector (..), SelectorElement(..),
-                                             Transform (Transform))
-import           Language.Common.Units.Parser as UP
+import           Language.Common              (Located (..), sourceRangeSpan',
+                                               unloc, withSameLocAs)
+import           Language.Common.Parser       (brackets, ident, lexeme, lident,
+                                               located, located', spc, symbol')
+import qualified Language.Common.Units.Parser as UP
+import           Language.Transform.Syntax    (Call (Call), Decl (..),
+                                               Expr (..),
+                                               FName (FFile, FHCat, FIsEmpty, FJoin, FMkSeq, FNot, FVCat, FVJoin),
+                                               Lit (LitString), Selector (..),
+                                               SelectorElement (..),
+                                               Transform (Transform))
 
 type Parser a = MP.Parsec Void Text a
-
-spc :: Parser ()
-spc = Lexer.space MPC.space1
-                  (Lexer.skipLineComment "--")
-                  MP.empty
-
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme spc
-
-symbol :: Text -> Parser Text
-symbol = Lexer.symbol spc
-
-symbol' :: Text -> Parser ()
-symbol' t = void $ symbol t
-
-brackets :: Parser a -> Parser a
-brackets p =
-  MP.try (symbol' "{") *> p <* symbol' "}"
-
-mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
-mkRange s e =
-  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
-  where
-    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
-
-located :: Parser a -> Parser (Located a)
-located = lexeme . located'
-
-located' :: Parser a -> Parser (Located a)
-located' p =
-    do  start <- MP.getSourcePos
-        a <- p
-        end <- MP.getSourcePos
-        pure $ Located (mkRange start end) a
-
-ident :: Parser Text
-ident =
-  lexeme . MP.try $
-    do  c0 <- MP.satisfy identFirstChar
-        cr <- MP.takeWhileP Nothing identRestChar
-        pure (c0 `Text.cons` cr)
-  where
-    identFirstChar :: Char -> Bool
-    identFirstChar c = isAlpha c || c == '_'
-    identRestChar c = identFirstChar c || isDigit c
-
-lident :: Parser (Located Text)
-lident = located ident
 
 -------------------------------------------------------------------------------
 
@@ -211,7 +163,7 @@ exprParser = located baseExpr >>= postFixOps
 
     forParser =
       do  MP.try (symbol' "for")
-          name <- located ident
+          name <- lident
           symbol' "in"
           ExprFor name <$> exprParser <*> exprParser
 

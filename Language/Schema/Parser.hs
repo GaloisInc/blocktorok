@@ -20,11 +20,9 @@ module Language.Schema.Parser
   ) where
 
 import           Control.Applicative          ((<**>))
-import           Control.Monad                (void)
 import           Control.Monad.State          (State)
 import qualified Control.Monad.State          as State
 
-import           Data.Char                    (isAlpha, isDigit)
 import           Data.Foldable                (traverse_)
 import           Data.Functor                 (($>))
 import qualified Data.MultiSet                as MS
@@ -33,13 +31,14 @@ import qualified Data.Text                    as Text
 import qualified Data.Text.IO                 as TIO
 import           Data.Void                    (Void)
 
-import           Text.Megaparsec              ((<?>), (<|>))
+import           Text.Megaparsec              ((<|>))
 import qualified Text.Megaparsec              as MP
 import qualified Text.Megaparsec.Char         as MPC
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
-import           Language.Common              (Located (..), SourceRange (..),
-                                               unloc)
+import           Language.Common              (unloc)
+import           Language.Common.Parser       (brackets, ident, keyword, lident,
+                                               located, optional, spc, symbol')
 import qualified Language.Common.Units.Parser as UP
 import           Language.Schema.Env          (Env, addRootType, addTypeDef,
                                                emptyEnv, lookupTypeDef)
@@ -56,61 +55,8 @@ import           Language.Schema.Type         (Globbed (..), Ident, SType (..),
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
-spc :: Parser ()
-spc = Lexer.space MPC.space1
-                  (Lexer.skipLineComment "--")
-                  MP.empty
-
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme spc
-
-symbol :: Text -> Parser Text
-symbol = Lexer.symbol spc
-
-symbol' :: Text -> Parser ()
-symbol' t = void $ symbol t
-
-mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
-mkRange s e =
-  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
-  where
-    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
-
-located :: Parser a -> Parser (Located a)
-located p =
-  lexeme $
-    do  start <- MP.getSourcePos
-        a <- p
-        end <- MP.getSourcePos
-        pure $ Located (mkRange start end) a
-
-optional :: Parser a -> Parser (Maybe a)
-optional p = (Just <$> p) <|> pure Nothing
-
-keyword :: Text -> Parser ()
-keyword t =
-  lexeme . MP.try $
-    do  void $ MP.chunk t
-        MP.notFollowedBy (MP.satisfy identRestChar)
-
-ident :: Parser Ident
-ident =
-  lexeme $
-    do c0 <- MP.satisfy identFirstChar <?> "a letter or '_'"
-       cr <- MP.takeWhileP (Just "a letter, number, or '_'") identRestChar
-       pure (c0 `Text.cons` cr)
-
-identFirstChar :: Char -> Bool
-identFirstChar c = isAlpha c || c == '_'
-
-identRestChar :: Char -> Bool
-identRestChar c = identFirstChar c || isDigit c
-
 selector :: Parser Ident
 selector = MPC.char '.' *> ident
-
-brackets :: Parser a -> Parser a
-brackets p = symbol' "{" *> p <* symbol' "}"
 
 stype :: Parser SType
 stype =
@@ -149,7 +95,7 @@ doc = Text.pack <$> (symbol' "[-- " *> MP.manyTill Lexer.charLiteral (symbol' " 
 variant :: Parser Variant
 variant =
   Variant <$> optional (located doc)
-          <*> located ident
+          <*> lident
           <*> optional stype
           <*  symbol' ";"
 
@@ -161,7 +107,7 @@ union :: Parser Union
 union =
   do symbol' "union"
      o    <- MP.getOffset
-     nm   <- located ident
+     nm   <- lident
      vars <- brackets $ MP.some variant
      let dupedTags   = duplicatedElems (fmap (unloc . variantTag) vars)
          ppDupedTags = Text.unpack $ Text.intercalate ", " dupedTags
@@ -189,7 +135,7 @@ blockS :: Parser BlockS
 blockS =
   do symbol' "block"
      o <- MP.getOffset
-     t  <- located ident
+     t  <- lident
      fs <- brackets $ MP.many $ blockDecl <**> glob
      let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
          ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
