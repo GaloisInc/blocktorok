@@ -44,7 +44,7 @@ blockContents :: Parser [BlockElement]
 blockContents = MP.many blockElement
 
 blockElement :: Parser BlockElement
-blockElement = BlockElement <$> MP.try (lident <* symbol' ":") <*> value
+blockElement = BlockElement <$> (lident <* symbol' ":") <*> value
 
 value :: Parser Value
 value =
@@ -55,9 +55,9 @@ value =
   <|> tag
   where
     num =
-      do  n <- located (MP.try signedNum)
+      do  n <- located signedNum
           MP.choice
-            [ Quantity n <$> (MP.try  (symbol' "(") *> located UP.parseUnit <* symbol' ")")
+            [ Quantity n <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
             , pure $ Number (SciN.toRealFloat <$> n)
             ]
 
@@ -71,7 +71,7 @@ value =
       do  s <- located strLit
           pure $ String (Text.pack <$> s)
     signedNum = Lexer.signed spc $ lexeme Lexer.scientific
-    strLit = MP.try (char '"') >> MP.manyTill Lexer.charLiteral (char '"')
+    strLit = char '"' >> MP.manyTill Lexer.charLiteral (char '"')
 
 -------------------------------------------------------------------------------
 
