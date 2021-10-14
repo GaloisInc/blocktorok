@@ -21,26 +21,27 @@ module Language.Transform.Evaluator
   , runTransform
   ) where
 
-import           Control.Applicative       ((<|>))
-import qualified Control.Monad.Except      as Except
-import qualified Control.Monad.State       as State
+import           Control.Applicative         ((<|>))
+import qualified Control.Monad.Except        as Except
+import qualified Control.Monad.State         as State
 
-import           Data.Foldable             (traverse_)
-import           Data.List.NonEmpty        (NonEmpty ((:|)))
-import           Data.Map                  (Map)
-import qualified Data.Map                  as Map
-import           Data.Text                 (Text)
-import qualified Data.Text                 as Text
+import           Data.Foldable               (traverse_)
+import           Data.List.NonEmpty          (NonEmpty ((:|)))
+import           Data.Map                    (Map)
+import qualified Data.Map                    as Map
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
 
-import qualified Prettyprinter             as PP
+import qualified Prettyprinter               as PP
 
-import           Language.Common           (HasLocation (..), Located (..),
-                                            msgWithLoc, ppRange, unloc, withSameLocAs)
-import qualified Language.Transform.Syntax as Tx
-import           Language.Transform.Value  (Value (..))
-import qualified Language.Transform.Value  as Value
-import           Language.Common.Units.Units(Unit)
+import           Language.Common             (HasLocation (..), Located (..),
+                                              msgWithLoc, ppRange, unloc,
+                                              withSameLocAs)
+import           Language.Common.Units.Units (Unit)
 import qualified Language.Common.Units.Units as Units
+import qualified Language.Transform.Syntax   as Tx
+import           Language.Transform.Value    (Value (..))
+import qualified Language.Transform.Value    as Value
 
 
 data InterpEnv = InterpEnv
@@ -350,15 +351,15 @@ evalExpr e0 =
           valuesToVList e <$> (conv `traverse` quantities)
   where
     -- TODO: move this into units?
-    convert why n from to
+    convert why n to from
       | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
 
         let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
             toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
-            n' = unloc n * toRatio' / fromRatio'
+            n' = unloc n * fromRatio' / toRatio'
         in pure $ VQuantity (n' `withSameLocAs` n) to
-      | otherwise = throw why ("Cannot convert from " <> q (showT from) <> " to " <>
-                               q (showT to))
+      | otherwise = throw why ("Cannot convert from " <> q (showT (unloc from)) <> " to " <>
+                               q (showT (unloc to)))
 
 
     forIteration name body value =
