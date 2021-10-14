@@ -22,8 +22,6 @@ module Language.Common
     -- ** Computing with locations
   , locUnknown
   , msgWithLoc
-  , orThrow
-  , orThrow'
   , sourceRangeSpan
   , sourceRangeSpan'
   , sourceRangeSpans
@@ -31,12 +29,15 @@ module Language.Common
   , withSameLocAs
     -- ** Pretty-printing
   , ppRange
+    -- ** Handling exceptions
+  , orThrow
+  , orThrow'
   ) where
 
-import qualified Control.Exception         as Ex
-import qualified Data.List.NonEmpty        as NonEmptyList
+import qualified Control.Exception  as Ex
+import qualified Data.List.NonEmpty as NonEmptyList
 
-import           Data.Text (Text, pack)
+import           Data.Text          (Text, pack)
 
 -- | A line:column range in a source file used for error reporting
 data SourceRange = SourceRange
