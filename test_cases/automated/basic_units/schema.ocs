@@ -1,5 +1,5 @@
 block unitblock {
-  .velocity : quantity (m/s)
+  .velocity : quantity (cm/s)
   .time : quantity (s)
 }
 

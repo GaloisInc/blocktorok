@@ -35,12 +35,10 @@ import qualified Data.Text                   as Text
 import qualified Prettyprinter               as PP
 
 import           Language.Common             (HasLocation (..), Located (..),
-                                              msgWithLoc, ppRange, unloc,
-                                              withSameLocAs)
+                                              msgWithLoc, ppRange, unloc)
 import           Language.Common.Units.Units (Unit)
-import qualified Language.Common.Units.Units as Units
 import qualified Language.Transform.Syntax   as Tx
-import           Language.Transform.Value    (Value (..))
+import           Language.Transform.Value    (Value (..), convert)
 import qualified Language.Transform.Value    as Value
 
 
@@ -347,21 +345,9 @@ evalExpr e0 =
     Tx.ExprConvertUnits e u ->
       -- TODO: every selector seems to produce a list, seems questionable
       do  quantities <- evalExpr e >>= asList quantity
-          let conv (n, u') = convert e n u u'
+          let conv (n, u') = convert throw e n u u'
           valuesToVList e <$> (conv `traverse` quantities)
   where
-    -- TODO: move this into units?
-    convert why n to from
-      | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
-
-        let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
-            toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
-            n' = unloc n * fromRatio' / toRatio'
-        in pure $ VQuantity (n' `withSameLocAs` n) to
-      | otherwise = throw why ("Cannot convert from " <> q (showT (unloc from)) <> " to " <>
-                               q (showT (unloc to)))
-
-
     forIteration name body value =
       scoped $
         do bindVar name value

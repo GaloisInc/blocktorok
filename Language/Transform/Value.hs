@@ -31,6 +31,8 @@ module Language.Transform.Value
   , mapSelected
   , validateElts
   , valueToList
+    -- ** Misc. utilities
+  , convert
   ) where
 
 import qualified Control.Monad.Reader        as Reader
@@ -278,6 +280,24 @@ validateBlockLike why fieldVals fieldTys =
         Nothing -> throw why (q ln <> " is not part of this block")
         Just _  -> pure ()
 
+-- | @convert thrower why n to from@ converts the value @n@ expressed in unit
+-- @from@ to be expressed in unit @to@, throwing an error (via @thrower why@)
+-- if the units are not of compatible dimension
+convert :: (HasLocation why, Monad m)
+        => (why -> Text -> m Value)
+        -> why
+        -> Located Double
+        -> Located Unit
+        -> Located Unit
+        -> m Value
+convert thrower why n to from
+  | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
+    let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
+        toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
+        n' = unloc n * fromRatio' / toRatio'
+    in pure $ VQuantity (n' `withSameLocAs` n) to
+  | otherwise = thrower why ("Cannot convert from " <> q (showT (unloc from)) <> " to " <>
+                           q (showT (unloc to)))
 
 validateValue :: Schema.SType -> Value -> Val Value
 validateValue ty val =
@@ -293,11 +313,11 @@ validateValue ty val =
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VBool {} -> req Schema.SBool
-    VQuantity _ u ->
+    VQuantity n u ->
       case ty of
         Schema.SQuantity ud ->
           if Units.unitDimension ud == Units.unitDimension (unloc u)
-            then pure val
+            then convert throw val n (ud `withSameLocAs` u) u
             else throw u (q (showT (unloc u)) <> " is not compatible with the required dimension of unit " <> q (showT ud))
 
         _ -> unexpected ("quantity in " <> showT u)
