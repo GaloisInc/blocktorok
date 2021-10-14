@@ -23,7 +23,6 @@ import           Control.Applicative          ((<**>))
 import           Control.Monad.State          (State)
 import qualified Control.Monad.State          as State
 
-import           Data.Foldable                (traverse_)
 import           Data.Functor                 (($>))
 import qualified Data.MultiSet                as MS
 import           Data.Text                    (Text)
@@ -70,8 +69,7 @@ stype =
   where
     parseQuantity =
       do  keyword "quantity"
-          symbol' `traverse_` ["in", "dim", "of"]
-          SQuantity <$> UP.parseUnit
+          SQuantity <$> (symbol' "(" *> UP.parseUnit <* symbol' ")")
 
 -- ! Uses MP.setOffset; parsing state is messed up after failure
 decl :: Parser Ident -> Parser Decl

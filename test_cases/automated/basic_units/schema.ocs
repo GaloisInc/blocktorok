@@ -1,6 +1,6 @@
 block unitblock {
-  .velocity : quantity in dim of m/s
-  .time : quantity in dim of s
+  .velocity : quantity (m/s)
+  .time : quantity (s)
 }
 
 root {
