@@ -1,0 +1,10 @@
+schema "schema.ocs"
+
+out = file("out.txt")
+
+render test
+  |velocity: ${ convert[cm/s](velocity) }
+  |time: ${time}
+  |
+
+out << test

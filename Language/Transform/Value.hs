@@ -33,25 +33,28 @@ module Language.Transform.Value
   , valueToList
   ) where
 
-import qualified Control.Monad.Reader       as Reader
-import qualified Control.Monad.Validate     as Validate
+import qualified Control.Monad.Reader        as Reader
+import qualified Control.Monad.Validate      as Validate
 
-import           Data.Foldable              (traverse_)
-import           Data.Map                   (Map)
-import qualified Data.Map                   as Map
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
+import           Data.Foldable               (traverse_)
+import           Data.Map                    (Map)
+import qualified Data.Map                    as Map
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
 
-import qualified Prettyprinter              as PP
+import qualified Prettyprinter               as PP
 
-import qualified Language.Blocktorok.Syntax as Blok
-import           Language.Common            (HasLocation (..), Located (..),
-                                             SourceRange, msgWithLoc, unloc,
-                                             sourceRangeSpan')
-import qualified Language.Schema.Env        as Schema
-import qualified Language.Schema.Syntax     as Schema
-import qualified Language.Schema.Type       as Schema
-import qualified Language.Transform.Syntax  as Tx
+import           Data.Scientific             as Sci
+import qualified Language.Blocktorok.Syntax  as Blok
+import           Language.Common             (HasLocation (..), Located (..),
+                                              SourceRange, msgWithLoc,
+                                              sourceRangeSpan', unloc, withSameLocAs)
+import           Language.Common.Units.Units (Unit)
+import qualified Language.Common.Units.Units as Units
+import qualified Language.Schema.Env         as Schema
+import qualified Language.Schema.Syntax      as Schema
+import qualified Language.Schema.Type        as Schema
+import qualified Language.Transform.Syntax   as Tx
 
 type Doc = PP.Doc ()
 type Ident = Text
@@ -71,7 +74,7 @@ data TagValue = TagValue
   deriving(Show)
 
 data UnionValue = UnionValue
-  { unionTag :: TagValue
+  { unionTag    :: TagValue
   , unionSchema :: Maybe Ident
   }
   deriving(Show)
@@ -111,6 +114,7 @@ data Value =
   | VString SourceRange Text
   | VTag TagValue
   | VUnion UnionValue  -- "container" for union values
+  | VQuantity (Located Double) (Located Unit)
 
   | VFile SourceRange FilePath
   | VDoc SourceRange Doc
@@ -121,17 +125,18 @@ data Value =
 instance HasLocation Value where
   location v =
     case v of
-      VDouble r _  -> r
-      VInt r _     -> r
-      VBool r _    -> r
-      VList r _    -> r
-      VString r _  -> r
+      VDouble r _   -> r
+      VInt r _      -> r
+      VBool r _     -> r
+      VList r _     -> r
+      VString r _   -> r
 
-      VDoc r _     -> r
-      VFile r _    -> r
-      VTag t       -> location t
-      VBlock b     -> location b
-      VUnion t     -> location (unionTagValue t)
+      VDoc r _      -> r
+      VFile r _     -> r
+      VTag t        -> location t
+      VBlock b      -> location b
+      VUnion t      -> location (unionTagValue t)
+      VQuantity u i -> sourceRangeSpan' u i
 
 -- traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
 -- traverseValue f v =
@@ -165,7 +170,7 @@ describeValue v =
     VBlock b     ->
       case blockSchema b of
         Nothing -> "block"
-        Just s -> "block of type " <> q s
+        Just s  -> "block of type " <> q s
     VTag c       -> "tag " <> unloc (tagTag c)
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
@@ -175,6 +180,7 @@ describeValue v =
     VFile _ f    -> "file " <> Text.pack f
     VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
     VUnion t     -> describeValue (unionTagValue t)
+    VQuantity n u -> "quantity " <> showT (unloc n) <> " in " <> showT (unloc u)
 
 -- | Map an action over the selected parts of a 'Value'. The list of 'Ident'
 -- corresponds to a path described by a 'Selector'
@@ -193,7 +199,7 @@ mapSelected f path v =
 
         VTag c | unloc (tagTag c) == n ->
           case r of
-            [] -> f v
+            []  -> f v
             _:_ -> VTag . mkCns c <$> (mapSelected f r `traverse` tagValue c)
 
         VList loc vs ->
@@ -287,6 +293,15 @@ validateValue ty val =
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VBool {} -> req Schema.SBool
+    VQuantity _ u ->
+      case ty of
+        Schema.SQuantity ud ->
+          if Units.unitDimension ud == Units.unitDimension (unloc u)
+            then pure val
+            else throw u (q (showT (unloc u)) <> " is not compatible with the required dimension of unit " <> q (showT ud))
+
+        _ -> unexpected ("quantity in " <> showT u)
+
     VUnion vu ->
       do  let t = unionTag vu
           n <- reqNamed "union constructor"
@@ -354,6 +369,7 @@ requireType why expected actual =
 blockValueToValue :: Blok.Value -> Value
 blockValueToValue e =
   case e of
+    Blok.Quantity n u -> VQuantity (Sci.toRealFloat (unloc n) `withSameLocAs` n) u
     Blok.Number n -> VDouble (location n) (unloc n)
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)

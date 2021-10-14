@@ -39,6 +39,7 @@ import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
                                              FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin, FNot, FIsEmpty),
                                              Lit (LitString), Selector (..), SelectorElement(..),
                                              Transform (Transform))
+import           Language.Common.Units.Parser as UP
 
 type Parser a = MP.Parsec Void Text a
 
@@ -127,7 +128,7 @@ barStringExprParser =
 
     stringChunk = ExprLit . LitString <$> located' sc
     embeddedExpr =
-      do  void $ MP.try (MP.chunk "${")
+      do  void $ MP.try (symbol' "${")
           expr <- exprParser
           void $ MP.chunk "}"
           pure expr
@@ -162,9 +163,21 @@ exprParser = located baseExpr >>= postFixOps
                 , fn "file" FFile
                 , cond
                 , ExprLit . LitString <$> located strLitParser
+                , convert
                 , barStringExprParser
                 , selector
                 ]
+
+    convert =
+      do  MP.try (symbol' "convert")
+          symbol' "["
+          unit <- located UP.parseUnit
+          symbol' "]"
+          symbol' "("
+          expr <- exprParser
+          symbol' ")"
+
+          pure $ ExprConvertUnits expr unit
 
     cond =
       do  lite <- located $ do  MP.try (symbol' "if")

@@ -31,6 +31,7 @@ import           Language.Common (HasLocation (..), Located (..),
                                   sourceRangeSpan', SourceRange, sourceRangeSpans)
 
 import qualified Data.List.NonEmpty as NEL
+import           Language.Common.Units.Units(Unit)
 
 -- | Identifiers carrying their location; type alias for easy representation
 -- changes
@@ -64,6 +65,7 @@ data Expr =
   | ExprLit Lit
   | ExprFor LIdent Expr Expr
   | ExprCond SourceRange Expr Expr Expr
+  | ExprConvertUnits Expr (Located Unit)
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -78,6 +80,7 @@ instance HasLocation Expr where
       ExprLit l      -> location l
       ExprFor ident _ e2 -> sourceRangeSpan' ident e2
       ExprCond r _ _ _ -> r
+      ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
 
 -- TODO: units
 -- | Literals in the transformer language; numerical literals will eventually

@@ -3,16 +3,12 @@ block dice {
   .number: int
 }
 
-block fixed {
-  .amount: int
-}
-
 union value {
   [-- Roll a die with `sides` sides `number` times --]
   Dice dice;
 
   [-- A fixed amount --]
-  Fixed fixed;
+  Fixed int;
 }
 
 block creature {
