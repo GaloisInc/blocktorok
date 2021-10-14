@@ -83,10 +83,10 @@ parse parser fp t =
 
 -- | Parse the given 'Text' to a 'Block'
 parseBlocktorok :: Text -> Either Text [BlockElement]
-parseBlocktorok = parse blockContents "--input--"
+parseBlocktorok = parse (spc *> blockContents <* MP.eof) "--input--"
 
 -- | Parse many 'Block's from the contents of a given file, returning the
 -- results as 'BlockElement's
 elementsFromFile :: FilePath -> IO (Either Text (Located [BlockElement]))
 elementsFromFile f =
-  parse (located blockContents) f <$> TextIO.readFile f
+  parse (spc *> located blockContents <* MP.eof) f <$> TextIO.readFile f
