@@ -68,7 +68,7 @@ barStringExprParser =
         _   -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
-        do  MP.try (void $ MP.chunk "|")
+        do  void $ MP.chunk "|"
             elts <- located' (many stringElt)
             case unloc elts of
               [a] -> pure a
@@ -80,19 +80,19 @@ barStringExprParser =
 
     stringChunk = ExprLit . LitString <$> located' sc
     embeddedExpr =
-      do  void $ MP.try (symbol' "${")
+      do  void $ symbol' "${"
           expr <- exprParser
           void $ MP.chunk "}"
           pure expr
 
     escaped =
-      do  void $ MP.try (MP.chunk "\\")
+      do  void $ MP.chunk "\\"
           c <- located' MP.anySingle
           pure . ExprLit . LitString $ (Text.singleton <$> c)
 
 strLitParser :: Parser Text
 strLitParser =
-  do  MP.try (symbol' "\"")
+  do  symbol' "\""
       contents <- MP.takeWhileP (Just "string literal") (/= '"')
       void $ MP.single '"'
       pure contents
@@ -121,7 +121,7 @@ exprParser = located baseExpr >>= postFixOps
                 ]
 
     convert =
-      do  MP.try (symbol' "convert")
+      do  symbol' "convert"
           symbol' "["
           unit <- located UP.parseUnit
           symbol' "]"
@@ -132,7 +132,7 @@ exprParser = located baseExpr >>= postFixOps
           pure $ ExprConvertUnits expr unit
 
     cond =
-      do  lite <- located $ do  MP.try (symbol' "if")
+      do  lite <- located $ do  symbol' "if"
                                 i <- exprParser
                                 t <- brackets exprParser
 
@@ -143,13 +143,13 @@ exprParser = located baseExpr >>= postFixOps
           pure (ExprCond (locRange lite) i t e)
 
     isEmpty arg =
-        do  range <- locRange <$> MP.try (located (symbol' "!?"))
+        do  range <- locRange <$> located (symbol' "!?")
             let sr = sourceRangeSpan' arg range
                 cl = Call FIsEmpty ([unloc arg] `withSameLocAs` arg) `withSameLocAs` sr
             pure $ ExprFn cl
 
     notIsEmpty arg =
-        do  range <- locRange <$> MP.try (located (symbol' "?"))
+        do  range <- locRange <$> located (symbol' "?")
             let sr = sourceRangeSpan' arg range
                 ncall = Call FNot ([eexpr] `withSameLocAs` sr) `withSameLocAs` sr
                 eexpr = ExprFn ecall
@@ -162,7 +162,7 @@ exprParser = located baseExpr >>= postFixOps
       located $ MP.sepBy exprParser (symbol' ",")
 
     forParser =
-      do  MP.try (symbol' "for")
+      do  symbol' "for"
           name <- lident
           symbol' "in"
           ExprFor name <$> exprParser <*> exprParser
@@ -179,10 +179,7 @@ exprParser = located baseExpr >>= postFixOps
           pure $ ExprFn (Call FMkSeq seqb `withSameLocAs` seqb)
 
     seqBody =
-      located $
-        MP.try (symbol' "[") *>
-          MP.sepBy exprParser (symbol' ",")
-        <* MP.try (symbol' "]")
+      located $ symbol' "[" *> MP.sepBy exprParser (symbol' ",") <* symbol' "]"
 
 
 declParser :: Parser Decl
@@ -191,7 +188,7 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl, requireDecl]
     inDecl =
       do  lin <-
             located $
-              do  sel <- MP.try $ symbol' "in" *> selectorParser <* symbol' "{"
+              do  sel <- symbol' "in" *> selectorParser <* symbol' "{"
                   decls <- many declParser
                   symbol' "}"
                   pure (sel, decls)
@@ -208,12 +205,12 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl, requireDecl]
           DeclLet i <$> exprParser
 
     renderDecl =
-      do  MP.try (symbol' "render")
+      do  symbol' "render"
           sel <- selectorParser
           DeclRender sel <$> exprParser
 
     requireDecl =
-      do  MP.try (symbol' "require")
+      do  symbol' "require"
           DeclRequire <$> exprParser <*> located strLitParser
 
 
