@@ -105,7 +105,7 @@ prefixUnitP =
          return (pre, uName)
 
 unitStringParser :: Monad m => Parser m Unit
-unitStringParser = MP.try (justUnitP) <|> prefixUnitP
+unitStringParser = MP.try justUnitP <|> prefixUnitP
 
 unitStringP :: Monad m => Text -> Parser m Unit
 unitStringP s =
@@ -125,7 +125,7 @@ numP =
   do symbol' "-"
      negate <$> numP
   <|>
-  Lexer.signed (MP.empty) (lexeme Lexer.decimal)
+  Lexer.signed MP.empty (lexeme Lexer.decimal)
 
 powP :: Monad m => Parser m (Unit -> Unit)
 powP = MP.option id $
