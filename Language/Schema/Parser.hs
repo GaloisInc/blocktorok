@@ -85,7 +85,7 @@ decl p =
        SNamed nm ->
          do env <- State.get
             case lookupTypeDef nm env of
-              Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined.")
+              Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined")
               Just _ -> pure res
        _ -> pure res
 
