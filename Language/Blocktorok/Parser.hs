@@ -53,7 +53,7 @@ value =
   <|> str
   <|> tag
   where
-    num = Number <$> located (Lexer.signed spc $ lexeme Lexer.scientific) <*> munit
+    num = Number <$> located (Lexer.signed (pure ()) $ lexeme Lexer.scientific) <*> munit
     munit = optional $ symbol' "(" *> located UP.parseUnit <* symbol' ")"
 
     blockValue = Block <$> brackets (located blockContents)
