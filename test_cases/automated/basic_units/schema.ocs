@@ -1,6 +1,6 @@
 block unitblock {
-  .velocity : quantity (cm/s)
-  .time : quantity (s)
+  .velocity : float (cm/s)
+  .time : float (s)
 }
 
 root {
