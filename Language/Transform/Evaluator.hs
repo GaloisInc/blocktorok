@@ -556,10 +556,6 @@ valuesToVList l vs =
     [a] -> a
     _   -> VList (location l) vs
 
-
-showT :: Show a => a -> Text
-showT = Text.pack . show
-
 -------------------------------------------------------------------------------
 -- API
 
