@@ -307,7 +307,7 @@ validateValue ty val =
         Schema.SFloat (Just ud) ->
           if Units.unitDimension ud == Units.unitDimension (unloc u)
             then convert throw val (n `withSameLocAs` sr) (ud `withSameLocAs` u) u
-            else throw u (q (showT (unloc u)) <> " has a difference dimension than " <> q (showT ud))
+            else throw u (q (showT (unloc u)) <> " has a different dimension than " <> q (showT ud))
 
         _ -> unexpected ("double in " <> showT u)
     VInt {} -> req Schema.SInt
