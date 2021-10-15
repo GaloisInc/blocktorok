@@ -156,7 +156,7 @@ showValue v0 =
   case v0 of
     VBool _ True -> pure "true"
     VBool _ False -> pure "false"
-    VDouble _ d -> pure $ PP.pretty d
+    VDouble _ d _ -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
     VList _ l -> PP.hcat <$> showValue `traverse` l
@@ -175,7 +175,6 @@ showValue v0 =
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
         Just r -> showEnv (Value.blockValues b) r
     VUnion u -> showValue (Value.unionTagValue u)
-    VQuantity n _ -> pure $ PP.pretty (unloc n)
   where
     showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
@@ -330,7 +329,7 @@ evalExpr e0 =
     Tx.ExprLit l ->
       pure $
         case l of
-          Tx.LitFloat f  -> VDouble (location f) (unloc f)
+          Tx.LitFloat f  -> VDouble (location f) (unloc f) Nothing
           Tx.LitInt i    -> VInt (location i) (unloc i)
           Tx.LitString s -> VString (location s) (unloc s)
     Tx.ExprFor name iterExpr body ->
@@ -497,7 +496,6 @@ describeValueType v0 =
         "constructor " <> q (unloc $ Value.tagTag c)
     VFile {} -> "file"
     VBool {} -> "boolean"
-    VQuantity _ u -> "quantity in " <> showT u
 
 -- list :: (Value -> Eval a) -> Value -> Eval [a]
 -- list f v =
@@ -541,7 +539,7 @@ tag t =
 quantity :: Value -> Eval (Located Double, Located Unit)
 quantity v =
   case v of
-    VQuantity n u -> pure (n, u)
+    VDouble sr n (Just u) -> pure (Located sr n, u)
     _             -> throw v ("Expecting a quantity with units here (got " <> q (describeValueType v) <> ")")
 
 

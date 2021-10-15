@@ -49,7 +49,8 @@ import qualified Prettyprinter               as PP
 import qualified Language.Blocktorok.Syntax  as Blok
 import           Language.Common             (HasLocation (..), Located (..),
                                               SourceRange, msgWithLoc,
-                                              sourceRangeSpan', unloc, withSameLocAs)
+                                              sourceRangeSpan', unloc,
+                                              withSameLocAs)
 import           Language.Common.Units.Units (Unit)
 import qualified Language.Common.Units.Units as Units
 import qualified Language.Schema.Env         as Schema
@@ -109,13 +110,12 @@ instance HasLocation BlockValue where
 -- | Values in the transformer language, which correspond closely to the values
 -- defined in "Language.Blocktorok.Syntax"
 data Value =
-    VDouble SourceRange Double
+    VDouble SourceRange Double (Maybe (Located Unit))
   | VInt SourceRange Integer
   | VList SourceRange [Value]
   | VString SourceRange Text
   | VTag TagValue
   | VUnion UnionValue  -- "container" for union values
-  | VQuantity (Located Double) (Located Unit)
 
   | VFile SourceRange FilePath
   | VDoc SourceRange Doc
@@ -126,18 +126,18 @@ data Value =
 instance HasLocation Value where
   location v =
     case v of
-      VDouble r _   -> r
-      VInt r _      -> r
-      VBool r _     -> r
-      VList r _     -> r
-      VString r _   -> r
+      VDouble r _ Nothing  -> r
+      VDouble r _ (Just u) -> sourceRangeSpan' r u
+      VInt r _             -> r
+      VBool r _            -> r
+      VList r _            -> r
+      VString r _          -> r
 
-      VDoc r _      -> r
-      VFile r _     -> r
-      VTag t        -> location t
-      VBlock b      -> location b
-      VUnion t      -> location (unionTagValue t)
-      VQuantity u i -> sourceRangeSpan' u i
+      VDoc r _             -> r
+      VFile r _            -> r
+      VTag t               -> location t
+      VBlock b             -> location b
+      VUnion t             -> location (unionTagValue t)
 
 -- traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
 -- traverseValue f v =
@@ -175,13 +175,13 @@ describeValue v =
     VTag c       -> "tag " <> unloc (tagTag c)
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
-    VDouble _ i  -> "double " <> showT i
+    VDouble _ i Nothing -> "double " <> showT i
+    VDouble _ i (Just u) -> "double " <> showT i <> " in " <> showT (unloc u)
     VBool _ b    -> "boolean " <>  showT b
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
     VFile _ f    -> "file " <> Text.pack f
     VList _ l    -> "[" <> Text.intercalate ", " (describeValue <$> l) <> "]"
     VUnion t     -> describeValue (unionTagValue t)
-    VQuantity n u -> "quantity " <> showT (unloc n) <> " in " <> showT (unloc u)
 
 -- | Map an action over the selected parts of a 'Value'. The list of 'Ident'
 -- corresponds to a path described by a 'Selector'
@@ -294,28 +294,28 @@ convert thrower why n to from
     let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
         toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
         n' = unloc n * fromRatio' / toRatio'
-    in pure $ VQuantity (n' `withSameLocAs` n) to
+    in pure $ VDouble (location n) n' (Just to)
   | otherwise = thrower why ("Cannot convert from " <> q (showT (unloc from)) <> " to " <>
                            q (showT (unloc to)))
 
 validateValue :: Schema.SType -> Value -> Val Value
 validateValue ty val =
   case val of
-    VDouble {} -> req Schema.SFloat
+    VDouble _ _ Nothing -> req $ Schema.SFloat Nothing
+    VDouble sr n (Just u) ->
+      case ty of
+        Schema.SFloat (Just ud) ->
+          if Units.unitDimension ud == Units.unitDimension (unloc u)
+            then convert throw val (n `withSameLocAs` sr) (ud `withSameLocAs` u) u
+            else throw u (q (showT (unloc u)) <> " has a difference dimension than " <> q (showT ud))
+
+        _ -> unexpected ("double in " <> showT u)
     VInt {} -> req Schema.SInt
     VString {} -> req Schema.SString
     VList {} -> unexpected "list"
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VBool {} -> req Schema.SBool
-    VQuantity n u ->
-      case ty of
-        Schema.SQuantity ud ->
-          if Units.unitDimension ud == Units.unitDimension (unloc u)
-            then convert throw val n (ud `withSameLocAs` u) u
-            else throw u (q (showT (unloc u)) <> " is not compatible with the required dimension of unit " <> q (showT ud))
-
-        _ -> unexpected ("quantity in " <> showT u)
 
     VUnion vu ->
       do  let t = unionTag vu
@@ -384,9 +384,8 @@ requireType why expected actual =
 blockValueToValue :: Blok.Value -> Value
 blockValueToValue e =
   case e of
-    Blok.Double n -> VDouble (location n) (unloc n)
+    Blok.Double n u -> VDouble (location n) (unloc n) u
     Blok.Int n -> VInt (location n) (unloc n)
-    Blok.Quantity n u -> VQuantity n u
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)
     Blok.Tag i v ->
