@@ -54,12 +54,9 @@ value =
   <|> tag
   where
     num = MP.try float <|> int
-    float =
-      do f <- located $ Lexer.signed spc $ lexeme Lexer.float
-         MP.choice [ Quantity f <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
-                   , pure $ Double f
-                   ]
+    float = Double <$> located (Lexer.signed spc $ lexeme Lexer.float) <*> munit
     int = Int <$> located (Lexer.signed spc $ lexeme Lexer.decimal)
+    munit = optional $ symbol' "(" *> located UP.parseUnit <* symbol' ")"
 
     blockValue = Block <$> brackets (located blockContents)
 

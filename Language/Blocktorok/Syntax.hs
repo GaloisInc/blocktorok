@@ -38,24 +38,23 @@ data BlockElement = BlockElement (Located Ident) Value
 -- | Blocktorok values, corresponding to the types fields may be declared to
 -- have in a valid schema
 data Value =
-    Double (Located Double)
+    Double (Located Double) (Maybe (Located Unit))
   | Int (Located Integer)
   | List (Located [Value])
   | Block (Located [BlockElement])
   | Tag (Located Ident) (Maybe Value)
   | String (Located Text)
-  | Quantity (Located Double) (Located Unit)
   deriving(Show, Eq, Ord)
 
 -- | Locate a 'Value' where its underlying data is located
 locateValue :: Value -> Located Value
 locateValue v =
   case v of
-    Double n         -> v `withSameLocAs` n
-    Int n            -> v `withSameLocAs` n
-    List l           -> v `withSameLocAs` l
-    Tag i Nothing    -> v `withSameLocAs` i
-    Tag i (Just val) -> Located (sourceRangeSpan' i (locateValue val)) val
-    Block elts       -> v `withSameLocAs` elts
-    String s         -> v `withSameLocAs` s
-    Quantity n u     -> Located (sourceRangeSpan' n u) v
+    Double n Nothing  -> v `withSameLocAs` n
+    Double n (Just u) -> Located (sourceRangeSpan' n u) v
+    Int n             -> v `withSameLocAs` n
+    List l            -> v `withSameLocAs` l
+    Tag i Nothing     -> v `withSameLocAs` i
+    Tag i (Just val)  -> Located (sourceRangeSpan' i (locateValue val)) val
+    Block elts        -> v `withSameLocAs` elts
+    String s          -> v `withSameLocAs` s
