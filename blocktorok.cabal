@@ -19,8 +19,8 @@ executable blocktorok
                        Language.Common.Parser
                        Language.Common.Units.Combinators
                        Language.Common.Units.Dimensions
-                       Language.Common.Units.Parser
                        Language.Common.Units.Factor
+                       Language.Common.Units.Parser
                        Language.Common.Units.SI
                        Language.Common.Units.SymbolTable
                        Language.Common.Units.Units
@@ -47,11 +47,10 @@ executable blocktorok
                      , megaparsec
                      , monad-validate
                      , mtl
+                     , multimap
                      , multiset
                      , optparse-applicative
                      , prettyprinter
-                     , scientific
                      , text
-                     , multimap
   default-language:    Haskell2010
   ghc-options: -Wall
