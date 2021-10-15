@@ -33,7 +33,7 @@ import           Text.Megaparsec.Char         (char)
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
 import           Language.Blocktorok.Syntax   (BlockElement (..), Value (..))
-import           Language.Common              (Located (..))
+import           Language.Common              (Located (..), unloc, withSameLocAs)
 import           Language.Common.Parser       (brackets, lexeme, lident,
                                                located, optional, spc, symbol')
 import qualified Language.Common.Units.Parser as UP
@@ -56,10 +56,12 @@ value =
   where
     num =
       do  n <- located signedNum
-          MP.choice
-            [ Quantity n <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
-            , pure $ Number (SciN.toRealFloat <$> n)
-            ]
+          case SciN.floatingOrInteger (unloc n) of
+            Left f  -> MP.choice
+                        [ Quantity n <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
+                        , pure $ Double (f `withSameLocAs` n)
+                        ]
+            Right i -> pure $ Int (i `withSameLocAs` n)
 
     blockValue = Block <$> brackets (located blockContents)
 
