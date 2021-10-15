@@ -146,9 +146,8 @@ placing any output files in the directory `out/`.
 
 ## Tests and Documentation
 
-Within the directory `test_cases/` is a subdirectory named `automated`, which
-contains a number of small examples of data and transformers to exercise the
-compiler and get a feel for the language syntax.
+Within the directory `test_cases/` are a number of small examples of data and
+transformers to exercise the compiler and get a feel for the language syntax.
 
 To run an example, from a Bash-compatible shell, simply run:
 
