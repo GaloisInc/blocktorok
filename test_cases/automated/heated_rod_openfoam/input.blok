@@ -1,16 +1,16 @@
 simulation: {
   physics: {
     physical_models: {
-      density: 19300
-      heat_capacity: 130
-      thermal_conductivity: 318
+      density: 19300.0
+      heat_capacity: 130.0
+      thermal_conductivity: 318.0
       dt: 0.0127
     }
   }
 
   initial_temp: 273.0
 
-  convergence: Criterion { min_value: -19
+  convergence: Criterion { min_value: -19.0
                            start_iter: 10
                            cauchy_elements: 100
                            cauchy_epsilon: 1E-6
@@ -26,8 +26,8 @@ simulation: {
   }
 
   time: Transient { dt: 0.005
-                    max_time: 3
-                    start_time: 0
+                    max_time: 3.0
+                    start_time: 0.0
                     inner_iter: 200
                     outer_iter: 200
                   }
@@ -39,10 +39,10 @@ simulation: {
                                       value: 273.0
                                     }
                        , Heatflux { marker: "bottom"
-                                    value: 0
+                                    value: 0.0
                                   }
                        , Heatflux { marker: "top"
-                                    value: 0
+                                    value: 0.0
                                   }
                        ]
 }
