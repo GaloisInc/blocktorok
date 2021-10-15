@@ -53,9 +53,7 @@ value =
   <|> str
   <|> tag
   where
-    num = MP.try float <|> int
-    float = Double <$> located (Lexer.signed spc $ lexeme Lexer.float) <*> munit
-    int = Int <$> located (Lexer.signed spc $ lexeme Lexer.decimal)
+    num = Number <$> located (Lexer.signed spc $ lexeme Lexer.scientific) <*> munit
     munit = optional $ symbol' "(" *> located UP.parseUnit <* symbol' ")"
 
     blockValue = Block <$> brackets (located blockContents)

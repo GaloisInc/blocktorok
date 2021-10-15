@@ -22,6 +22,7 @@ module Language.Blocktorok.Syntax
   , locateValue
   ) where
 
+import           Data.Scientific             (Scientific)
 import           Data.Text                   (Text)
 
 import           Language.Common             (Located (..), sourceRangeSpan',
@@ -38,8 +39,7 @@ data BlockElement = BlockElement (Located Ident) Value
 -- | Blocktorok values, corresponding to the types fields may be declared to
 -- have in a valid schema
 data Value =
-    Double (Located Double) (Maybe (Located Unit))
-  | Int (Located Integer)
+    Number (Located Scientific) (Maybe (Located Unit))
   | List (Located [Value])
   | Block (Located [BlockElement])
   | Tag (Located Ident) (Maybe Value)
@@ -50,9 +50,8 @@ data Value =
 locateValue :: Value -> Located Value
 locateValue v =
   case v of
-    Double n Nothing  -> v `withSameLocAs` n
-    Double n (Just u) -> Located (sourceRangeSpan' n u) v
-    Int n             -> v `withSameLocAs` n
+    Number n Nothing  -> v `withSameLocAs` n
+    Number n (Just u) -> Located (sourceRangeSpan' n u) v
     List l            -> v `withSameLocAs` l
     Tag i Nothing     -> v `withSameLocAs` i
     Tag i (Just val)  -> Located (sourceRangeSpan' i (locateValue val)) val
