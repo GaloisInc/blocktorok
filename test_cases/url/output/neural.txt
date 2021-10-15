@@ -1,1 +1,0 @@
-https://playground.tensorflow.org/#activation=Tanh&batchSize=7&dataset=gauss
