@@ -540,7 +540,7 @@ quantity :: Value -> Eval (Located Double, Located Unit)
 quantity v =
   case v of
     VDouble sr n (Just u) -> pure (Located sr n, u)
-    _             -> throw v ("Expecting a quantity with units here (got " <> q (describeValueType v) <> ")")
+    _             -> throw v ("Expecting a float with units here (got " <> q (describeValueType v) <> ")")
 
 
 -------------------------------------------------------------------------------

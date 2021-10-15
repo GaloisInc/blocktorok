@@ -46,6 +46,7 @@ import qualified Data.Text                   as Text
 
 import qualified Prettyprinter               as PP
 
+import           Data.Scientific             (toRealFloat)
 import qualified Language.Blocktorok.Syntax  as Blok
 import           Language.Common             (HasLocation (..), Located (..),
                                               SourceRange, msgWithLoc,
@@ -139,30 +140,6 @@ instance HasLocation Value where
       VBlock b             -> location b
       VUnion t             -> location (unionTagValue t)
 
--- traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
--- traverseValue f v =
---   case v of
---     VDouble {} -> f v
---     VInt {} -> f v
---     VString {} -> f v
---     VBool {} -> f v
---     VFile {} -> f v
---     VList r l ->
---       (traverseValue f `traverse` l) >>= f . VList r
-
---     VDoc {} -> f v
---     VTag t ->
---       do  v' <- traverseValue f `traverse` tagValue t
---           f (VTag t { tagValue = v'})
-
---     VBlock b ->
---       do  v' <- traverseValue f `traverse` blockValues b
---           f (VBlock b { blockValues = v' })
-
---     VUnion t ->
---       do  v' <- traverseValue f (unionTag t)
---           f (VUnion )
-
 -- | Return a textual description of a 'Value', useful for debugging and
 -- testing
 describeValue :: Value -> Text
@@ -175,8 +152,8 @@ describeValue v =
     VTag c       -> "tag " <> unloc (tagTag c)
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
-    VDouble _ i Nothing -> "double " <> showT i
-    VDouble _ i (Just u) -> "double " <> showT i <> " in " <> showT (unloc u)
+    VDouble _ i Nothing -> "float " <> showT i
+    VDouble _ i (Just u) -> "float " <> showT i <> " in " <> showT (unloc u)
     VBool _ b    -> "boolean " <>  showT b
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
     VFile _ f    -> "file " <> Text.pack f
@@ -213,21 +190,6 @@ mapSelected f path v =
     mapElt p r (n, v') | n == p =  (n,) <$> mapSelected f r v'
                        | otherwise = pure (n, v')
 
--- | Traverse a 'Value', running an action at each entity described by the
--- schema named by the provided 'Ident'
--- traverseSchemaValues :: Monad m => (Value -> m Value) -> Ident -> Value -> m Value
--- traverseSchemaValues f i = traverseValue sch
---   where
---     sch v =
---       case v of
---         VBlock b | blockSchema b == Just i -> f v
---         VTag t | tagSchema t == Just i -> f v
---         VList r vs -> VList r <$> (traverseSchemaValues f i `traverse` vs)
---         _ -> pure v
-
-
---
-
 type Val a = Validate.ValidateT [Text] (Reader.Reader Schema.Env) a
 
 runVal :: Schema.Env -> Val a -> Either [Text] a
@@ -241,11 +203,8 @@ getSchemaDef why name =
           throw why ("[BUG] Could not find definition for schema " <> q name <> " used here")
         Just a -> pure a
 
---
-
 throw :: HasLocation a => a -> Text -> Val b
 throw why msg = Validate.refute [msgWithLoc why msg]
-
 
 validateBlockLike :: SourceRange -> Map Ident Value ->  Map Ident (Schema.Globbed Schema.BlockDecl) -> Val (Map Ident Value)
 validateBlockLike why fieldVals fieldTys =
@@ -301,15 +260,19 @@ convert thrower why n to from
 validateValue :: Schema.SType -> Value -> Val Value
 validateValue ty val =
   case val of
-    VDouble _ _ Nothing -> req $ Schema.SFloat Nothing
-    VDouble sr n (Just u) ->
+    VDouble loc n Nothing ->
+      case ty of
+        Schema.SInt | floor n == (ceiling n :: Integer) -> pure $ VInt loc (round n)
+        Schema.SFloat Nothing -> pure val
+        _ -> unexpected "float"
+    VDouble loc n (Just u) ->
       case ty of
         Schema.SFloat (Just ud) ->
           if Units.unitDimension ud == Units.unitDimension (unloc u)
-            then convert throw val (n `withSameLocAs` sr) (ud `withSameLocAs` u) u
+            then convert throw val (n `withSameLocAs` loc) (ud `withSameLocAs` u) u
             else throw u (q (showT (unloc u)) <> " has a different dimension than " <> q (showT ud))
 
-        _ -> unexpected ("double in " <> showT u)
+        _ -> unexpected ("float in " <> q (showT (unloc u)))
     VInt {} -> req Schema.SInt
     VString {} -> req Schema.SString
     VList {} -> unexpected "list"
@@ -384,8 +347,7 @@ requireType why expected actual =
 blockValueToValue :: Blok.Value -> Value
 blockValueToValue e =
   case e of
-    Blok.Double n u -> VDouble (location n) (unloc n) u
-    Blok.Int n -> VInt (location n) (unloc n)
+    Blok.Number n mu -> VDouble (location n) (toRealFloat (unloc n)) mu
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)
     Blok.Tag i v ->
