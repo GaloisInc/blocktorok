@@ -46,7 +46,6 @@ import qualified Data.Text                   as Text
 
 import qualified Prettyprinter               as PP
 
-import           Data.Scientific             as Sci
 import qualified Language.Blocktorok.Syntax  as Blok
 import           Language.Common             (HasLocation (..), Located (..),
                                               SourceRange, msgWithLoc,
@@ -302,11 +301,7 @@ convert thrower why n to from
 validateValue :: Schema.SType -> Value -> Val Value
 validateValue ty val =
   case val of
-    VDouble loc d ->
-      case ty of
-        -- TODO: handle this during parsing
-        Schema.SInt -> pure $ VInt loc (floor d)
-        _           -> req Schema.SFloat
+    VDouble {} -> req Schema.SFloat
     VInt {} -> req Schema.SInt
     VString {} -> req Schema.SString
     VList {} -> unexpected "list"
@@ -389,8 +384,9 @@ requireType why expected actual =
 blockValueToValue :: Blok.Value -> Value
 blockValueToValue e =
   case e of
-    Blok.Quantity n u -> VQuantity (Sci.toRealFloat (unloc n) `withSameLocAs` n) u
-    Blok.Number n -> VDouble (location n) (unloc n)
+    Blok.Double n -> VDouble (location n) (unloc n)
+    Blok.Int n -> VInt (location n) (unloc n)
+    Blok.Quantity n u -> VQuantity n u
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)
     Blok.Tag i v ->
