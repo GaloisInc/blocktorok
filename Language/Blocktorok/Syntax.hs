@@ -22,11 +22,11 @@ module Language.Blocktorok.Syntax
   , locateValue
   ) where
 
-import           Data.Text       (Text)
+import           Data.Text                   (Text)
 
-import           Language.Common (Located(..), withSameLocAs, sourceRangeSpan')
-import           Data.Scientific(Scientific)
-import           Language.Common.Units.Units(Unit)
+import           Language.Common             (Located (..), sourceRangeSpan',
+                                              withSameLocAs)
+import           Language.Common.Units.Units (Unit)
 
 -- | Identifiers; type alias for easy representation changes in the future
 type Ident = Text
@@ -44,7 +44,7 @@ data Value =
   | Block (Located [BlockElement])
   | Tag (Located Ident) (Maybe Value)
   | String (Located Text)
-  | Quantity (Located Scientific) (Located Unit)
+  | Quantity (Located Double) (Located Unit)
   deriving(Show, Eq, Ord)
 
 -- | Locate a 'Value' where its underlying data is located

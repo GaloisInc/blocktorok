@@ -21,7 +21,6 @@ module Language.Blocktorok.Parser
   , parseBlocktorok
   ) where
 
-import qualified Data.Scientific              as SciN
 import           Data.Text                    (Text)
 import qualified Data.Text                    as Text
 import qualified Data.Text.IO                 as TextIO
@@ -33,7 +32,7 @@ import           Text.Megaparsec.Char         (char)
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
 import           Language.Blocktorok.Syntax   (BlockElement (..), Value (..))
-import           Language.Common              (Located (..), unloc, withSameLocAs)
+import           Language.Common              (Located (..))
 import           Language.Common.Parser       (brackets, lexeme, lident,
                                                located, optional, spc, symbol')
 import qualified Language.Common.Units.Parser as UP
@@ -54,14 +53,13 @@ value =
   <|> str
   <|> tag
   where
-    num =
-      do  n <- located signedNum
-          case SciN.floatingOrInteger (unloc n) of
-            Left f  -> MP.choice
-                        [ Quantity n <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
-                        , pure $ Double (f `withSameLocAs` n)
-                        ]
-            Right i -> pure $ Int (i `withSameLocAs` n)
+    num = MP.try float <|> int
+    float =
+      do f <- located $ Lexer.signed spc $ lexeme Lexer.float
+         MP.choice [ Quantity f <$> (symbol' "(" *> located UP.parseUnit <* symbol' ")")
+                   , pure $ Double f
+                   ]
+    int = Int <$> located (Lexer.signed spc $ lexeme Lexer.decimal)
 
     blockValue = Block <$> brackets (located blockContents)
 
@@ -69,10 +67,10 @@ value =
       do  t <- MP.try (lident <* MP.notFollowedBy (symbol' ":"))
           val <- optional value
           pure $ Tag t val
+
     str =
       do  s <- located strLit
           pure $ String (Text.pack <$> s)
-    signedNum = Lexer.signed spc $ lexeme Lexer.scientific
     strLit = char '"' >> MP.manyTill Lexer.charLiteral (char '"')
 
 -------------------------------------------------------------------------------
