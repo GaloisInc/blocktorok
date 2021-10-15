@@ -152,7 +152,7 @@ describeValue v =
     VTag c       -> "tag " <> unloc (tagTag c)
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
-    VDouble _ i Nothing -> "float " <> showT i
+    VDouble _ i Nothing  -> "float " <> showT i
     VDouble _ i (Just u) -> "float " <> showT i <> " in " <> showT (unloc u)
     VBool _ b    -> "boolean " <>  showT b
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
