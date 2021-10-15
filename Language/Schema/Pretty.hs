@@ -47,8 +47,8 @@ ppStype :: SType -> Doc ann
 ppStype t =
   case t of
     SInt        -> "int"
-    SFloat      -> "float"
+    SFloat mu   ->
+      "float" <> case mu of { Nothing -> ""; Just u -> " with dimension of" <+> pretty u }
     SString     -> "string"
     SBool       -> "bool"
-    SQuantity u -> "quantity with dimension of" <+> pretty u
     SNamed txt  -> pretty txt

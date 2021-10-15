@@ -33,20 +33,19 @@ type Ident = Text
 -- variants
 data SType
   = SInt
-  | SFloat
+  | SFloat (Maybe Unit)
   | SString
   | SBool
-  | SQuantity Unit
   | SNamed Ident
   deriving (Eq)
 
 instance Show SType where
-  show SInt          = "int"
-  show SFloat        = "float"
-  show SString       = "string"
-  show SBool         = "boolean"
-  show (SQuantity u) = "quantity in dim of " ++ show u
-  show (SNamed i)    = unpack i
+  show SInt        = "int"
+  show (SFloat mu) =
+    "float" ++ case mu of { Nothing -> ""; Just u -> " with dimension of " ++ show u }
+  show SString     = "string"
+  show SBool       = "boolean"
+  show (SNamed i)  = unpack i
 
 -- | Globs for block layout definitions
 data Globbed a

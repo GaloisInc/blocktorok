@@ -61,15 +61,12 @@ stype :: Parser SType
 stype =
   MP.choice [ keyword "int" $> SInt
             , keyword "bool" $> SBool
-            , keyword "float" $> SFloat
+            , SFloat <$> (keyword "float" *> munit)
             , keyword "string" $> SString
-            , parseQuantity
             , SNamed <$> ident
             ]
   where
-    parseQuantity =
-      do  keyword "quantity"
-          SQuantity <$> (symbol' "(" *> UP.parseUnit <* symbol' ")")
+    munit = optional $ symbol' "(" *> UP.parseUnit <* symbol' ")"
 
 -- ! Uses MP.setOffset; parsing state is messed up after failure
 decl :: Parser Ident -> Parser Decl
