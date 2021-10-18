@@ -64,7 +64,7 @@ data Expr =
   | ExprSelector Selector
   | ExprLit Lit
   | ExprFor LIdent Expr Expr
-  | ExprCond SourceRange Expr Expr [(Expr, Expr)] Expr
+  | ExprCond SourceRange [(Expr, Expr)] Expr
   | ExprConvertUnits Expr (Located Unit)
   deriving(Show, Eq, Ord)
 
@@ -79,7 +79,7 @@ instance HasLocation Expr where
       ExprSelector s -> location s
       ExprLit l      -> location l
       ExprFor ident _ e2 -> sourceRangeSpan' ident e2
-      ExprCond r _ _ _ _ -> r
+      ExprCond r _ _ -> r
       ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
 
 -- | Literals in the transformer language

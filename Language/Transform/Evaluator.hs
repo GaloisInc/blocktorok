@@ -291,36 +291,6 @@ evalRender sel e = modifySelected render sel
         VList l vs -> VList l <$> render `traverse` vs
         _          -> pure vr
 
-    -- path = reverse (pathRev s0)
-    -- schema = schemaS s0
-
-    -- setRenderer ss v =
-    --   case ss of
-    --     [] -> render v
-    --     Tx.SelName n:r ->
-    --       case v of
-    --         Value.VBlock b ->
-    --           case Map.lookup (unloc n) (Value.blockValues b) of
-    --             Nothing -> v
-    --             Just v' ->
-    --               let bv' = Map.insert (unloc n) (setRenderer ss v') (Value.blockValues b)
-    --               in Value.VBlock (b {Value.blockValues = bv'})
-    --         Value.VTag t | unloc (Value.tagTag t) == unloc n ->
-    --           case r of
-    --             [] -> render v
-    --             _ -> setRenderer ()
-
-
-
-    -- pathRev s =
-    --   case s of
-    --     Tx.SelName _     -> []
-    --     -- Tx.SelMem s' mem -> unloc mem:pathRev s'
-    -- schemaS s =
-    --   case s of
-    --     Tx.SelName n   -> unloc n
-    --     -- Tx.SelMem s' _ -> schemaS s'
-
 evalExpr :: Tx.Expr -> Eval Value
 evalExpr e0 =
   case e0 of
@@ -336,13 +306,7 @@ evalExpr e0 =
       do  iterVals <- evalExpr iterExpr >>= asList pure
           results <- forIteration name body `traverse` iterVals
           pure $ VList (location e0) results -- TODO: less listy if it's doable
-    Tx.ExprCond l i t alts e ->
-      do  test <- evalExpr i >>= bool
-          if test
-            then evalExpr t
-            else evalExpr $ case alts of
-                              [] -> e
-                              (altc, alt):alts' -> Tx.ExprCond l altc alt alts' e
+    Tx.ExprCond _ thens els -> cond thens els
     Tx.ExprConvertUnits e u ->
       -- TODO: every selector seems to produce a list, seems questionable
       do  quantities <- evalExpr e >>= asList quantity
@@ -353,6 +317,14 @@ evalExpr e0 =
       scoped $
         do bindVar name value
            evalExpr body
+    cond thens els =
+      case thens of
+        (i, e):rest ->
+          do  test <- evalExpr i >>= bool
+              if test
+                then evalExpr e
+                else cond rest els
+        [] -> evalExpr els
 
 
 
