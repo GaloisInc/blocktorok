@@ -10,18 +10,16 @@ render ::battle.orc      |Creature("Orc", ${hp}, ${damage})
 render ::battle.minotaur |Creature("Minotaur", ${hp}, ${damage})
 
 orcs =
-  if battle.orc? {
+  if battle.orc? then
     |orcs = [${join(", ", battle.orc)}]
-  } else {
+  else
     |
-  }
 
 monsters =
-  if battle.orc? {
+  if battle.orc? then
     |orcs + minotaurs
-  } else {
+  else
     |minotaurs
-  }
 
 render battle
   |from battle import *
