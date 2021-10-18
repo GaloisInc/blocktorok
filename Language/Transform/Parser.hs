@@ -134,10 +134,11 @@ exprParser = located baseExpr >>= postFixOps
     cond =
       do  lite <- located $ do  symbol' "if"
                                 i <- exprParser
-                                t <- brackets exprParser
+                                symbol' "then"
+                                t <- exprParser
 
                                 symbol' "else"
-                                e <- brackets exprParser
+                                e <- exprParser
                                 pure (i,t,e)
           let (i,t,e) = unloc lite
           pure (ExprCond (locRange lite) i t e)
