@@ -12,11 +12,18 @@ extra-source-files:  README.md
 executable blocktorok
   main-is:             Main.hs
   hs-source-dirs:      .
-  other-modules:
-                       Language.Blocktorok.Parser
+  other-modules:       Language.Blocktorok.Parser
                        Language.Blocktorok.Syntax
 
                        Language.Common
+                       Language.Common.Parser
+                       Language.Common.Units.Combinators
+                       Language.Common.Units.Dimensions
+                       Language.Common.Units.Factor
+                       Language.Common.Units.Parser
+                       Language.Common.Units.SI
+                       Language.Common.Units.SymbolTable
+                       Language.Common.Units.Units
 
                        Language.Schema.Env
                        Language.Schema.Parser
@@ -40,6 +47,8 @@ executable blocktorok
                      , megaparsec
                      , monad-validate
                      , mtl
+                     , multimap
+                     , multiset
                      , optparse-applicative
                      , prettyprinter
                      , scientific

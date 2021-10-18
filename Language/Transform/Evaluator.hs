@@ -21,25 +21,26 @@ module Language.Transform.Evaluator
   , runTransform
   ) where
 
-import           Control.Applicative       ((<|>))
-import qualified Control.Monad.Except      as Except
-import qualified Control.Monad.State       as State
-import           Control.Monad             ((>=>))
+import           Control.Applicative         ((<|>))
+import qualified Control.Monad.Except        as Except
+import qualified Control.Monad.State         as State
 
-import           Data.Foldable             (traverse_)
-import           Data.List.NonEmpty        (NonEmpty ((:|)))
-import           Data.Map                  (Map)
-import qualified Data.Map                  as Map
-import           Data.Text                 (Text)
-import qualified Data.Text                 as Text
+import           Data.Foldable               (traverse_)
+import           Data.List.NonEmpty          (NonEmpty ((:|)))
+import           Data.Map                    (Map)
+import qualified Data.Map                    as Map
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
 
-import qualified Prettyprinter             as PP
+import qualified Prettyprinter               as PP
 
-import           Language.Common           (HasLocation (..), Located (..),
-                                            msgWithLoc, ppRange, unloc)
-import qualified Language.Transform.Syntax as Tx
-import           Language.Transform.Value  (Value (..))
-import qualified Language.Transform.Value  as Value
+import           Language.Common             (HasLocation (..), Located (..),
+                                              msgWithLoc, ppRange, unloc)
+import           Language.Common.Units.Units (Unit)
+import qualified Language.Transform.Syntax   as Tx
+import           Language.Transform.Value    (Value (..), convert)
+import qualified Language.Transform.Value    as Value
+
 
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
@@ -155,7 +156,7 @@ showValue v0 =
   case v0 of
     VBool _ True -> pure "true"
     VBool _ False -> pure "false"
-    VDouble _ d -> pure $ PP.pretty d
+    VDouble _ d _ -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
     VList _ l -> PP.hcat <$> showValue `traverse` l
@@ -328,7 +329,7 @@ evalExpr e0 =
     Tx.ExprLit l ->
       pure $
         case l of
-          Tx.LitFloat f  -> VDouble (location f) (unloc f)
+          Tx.LitFloat f  -> VDouble (location f) (unloc f) Nothing
           Tx.LitInt i    -> VInt (location i) (unloc i)
           Tx.LitString s -> VString (location s) (unloc s)
     Tx.ExprFor name iterExpr body ->
@@ -345,6 +346,11 @@ evalExpr e0 =
           vs <- evalExpr `traverse` es
           vs' <- concat <$> (asList showValue `traverse` vs)
           pure $ VDoc (location les) (PP.vcat vs')
+    Tx.ExprConvertUnits e u ->
+      -- TODO: every selector seems to produce a list, seems questionable
+      do  quantities <- evalExpr e >>= asList quantity
+          let conv (n, u') = convert throw e n u u'
+          valuesToVList e <$> (conv `traverse` quantities)
   where
     forIteration name body value =
       scoped $
@@ -496,11 +502,11 @@ describeValueType v0 =
     VFile {} -> "file"
     VBool {} -> "boolean"
 
-list :: (Value -> Eval a) -> Value -> Eval [a]
-list f v =
-  case v of
-    VList _ l -> f `traverse` l
-    _         -> throw v "Expecting a list here"
+-- list :: (Value -> Eval a) -> Value -> Eval [a]
+-- list f v =
+--   case v of
+--     VList _ l -> f `traverse` l
+--     _         -> throw v "Expecting a list here"
 
 asList :: (Value -> Eval a) -> Value -> Eval [a]
 asList f v =
@@ -535,6 +541,13 @@ tag t =
     VTag tv -> pure tv
     _       -> throw t "Expecting a union tag here"
 
+quantity :: Value -> Eval (Located Double, Located Unit)
+quantity v =
+  case v of
+    VDouble sr n (Just u) -> pure (Located sr n, u)
+    _             -> throw v ("Expecting a float with units here (got " <> q (describeValueType v) <> ")")
+
+
 -------------------------------------------------------------------------------
 -- misc
 
@@ -547,7 +560,6 @@ valuesToVList l vs =
   case vs of
     [a] -> a
     _   -> VList (location l) vs
-
 
 -------------------------------------------------------------------------------
 -- API

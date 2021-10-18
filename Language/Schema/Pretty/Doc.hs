@@ -33,7 +33,8 @@ import qualified System.FilePath           as Path
 
 import           Language.Common           (orThrow, unloc)
 import           Language.Schema.Parser    (schemaASTFromFile)
-import           Language.Schema.Pretty    (blankLine, ppNoLoc, ppStype, (<//>), (</>))
+import           Language.Schema.Pretty    (blankLine, ppNoLoc, ppStype, (<//>),
+                                            (</>))
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), Root (..), Schema (..),
                                             SchemaDef (..), Union (..),

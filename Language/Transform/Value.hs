@@ -31,27 +31,33 @@ module Language.Transform.Value
   , mapSelected
   , validateElts
   , valueToList
+    -- ** Misc. utilities
+  , convert
   ) where
 
-import qualified Control.Monad.Reader       as Reader
-import qualified Control.Monad.Validate     as Validate
+import qualified Control.Monad.Reader        as Reader
+import qualified Control.Monad.Validate      as Validate
 
-import           Data.Foldable              (traverse_)
-import           Data.Map                   (Map)
-import qualified Data.Map                   as Map
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
+import           Data.Foldable               (traverse_)
+import           Data.Map                    (Map)
+import qualified Data.Map                    as Map
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
 
-import qualified Prettyprinter              as PP
+import qualified Prettyprinter               as PP
 
-import qualified Language.Blocktorok.Syntax as Blok
-import           Language.Common            (HasLocation (..), Located (..),
-                                             SourceRange, msgWithLoc, unloc,
-                                             sourceRangeSpan')
-import qualified Language.Schema.Env        as Schema
-import qualified Language.Schema.Syntax     as Schema
-import qualified Language.Schema.Type       as Schema
-import qualified Language.Transform.Syntax  as Tx
+import           Data.Scientific             (toRealFloat)
+import qualified Language.Blocktorok.Syntax  as Blok
+import           Language.Common             (HasLocation (..), Located (..),
+                                              SourceRange, msgWithLoc,
+                                              sourceRangeSpan', unloc,
+                                              withSameLocAs)
+import           Language.Common.Units.Units (Unit)
+import qualified Language.Common.Units.Units as Units
+import qualified Language.Schema.Env         as Schema
+import qualified Language.Schema.Syntax      as Schema
+import qualified Language.Schema.Type        as Schema
+import qualified Language.Transform.Syntax   as Tx
 
 type Doc = PP.Doc ()
 type Ident = Text
@@ -71,7 +77,7 @@ data TagValue = TagValue
   deriving(Show)
 
 data UnionValue = UnionValue
-  { unionTag :: TagValue
+  { unionTag    :: TagValue
   , unionSchema :: Maybe Ident
   }
   deriving(Show)
@@ -105,7 +111,7 @@ instance HasLocation BlockValue where
 -- | Values in the transformer language, which correspond closely to the values
 -- defined in "Language.Blocktorok.Syntax"
 data Value =
-    VDouble SourceRange Double
+    VDouble SourceRange Double (Maybe (Located Unit))
   | VInt SourceRange Integer
   | VList SourceRange [Value]
   | VString SourceRange Text
@@ -121,41 +127,18 @@ data Value =
 instance HasLocation Value where
   location v =
     case v of
-      VDouble r _  -> r
-      VInt r _     -> r
-      VBool r _    -> r
-      VList r _    -> r
-      VString r _  -> r
+      VDouble r _ Nothing  -> r
+      VDouble r _ (Just u) -> sourceRangeSpan' r u
+      VInt r _             -> r
+      VBool r _            -> r
+      VList r _            -> r
+      VString r _          -> r
 
-      VDoc r _     -> r
-      VFile r _    -> r
-      VTag t       -> location t
-      VBlock b     -> location b
-      VUnion t     -> location (unionTagValue t)
-
--- traverseValue :: Monad m => (Value -> m Value) -> Value -> m Value
--- traverseValue f v =
---   case v of
---     VDouble {} -> f v
---     VInt {} -> f v
---     VString {} -> f v
---     VBool {} -> f v
---     VFile {} -> f v
---     VList r l ->
---       (traverseValue f `traverse` l) >>= f . VList r
-
---     VDoc {} -> f v
---     VTag t ->
---       do  v' <- traverseValue f `traverse` tagValue t
---           f (VTag t { tagValue = v'})
-
---     VBlock b ->
---       do  v' <- traverseValue f `traverse` blockValues b
---           f (VBlock b { blockValues = v' })
-
---     VUnion t ->
---       do  v' <- traverseValue f (unionTag t)
---           f (VUnion )
+      VDoc r _             -> r
+      VFile r _            -> r
+      VTag t               -> location t
+      VBlock b             -> location b
+      VUnion t             -> location (unionTagValue t)
 
 -- | Return a textual description of a 'Value', useful for debugging and
 -- testing
@@ -165,11 +148,12 @@ describeValue v =
     VBlock b     ->
       case blockSchema b of
         Nothing -> "block"
-        Just s -> "block of type " <> q s
+        Just s  -> "block of type " <> q s
     VTag c       -> "tag " <> unloc (tagTag c)
     VString _ s  -> "string " <> showT s
     VInt _ i     -> "int " <> showT i
-    VDouble _ i  -> "double " <> showT i
+    VDouble _ i Nothing  -> "float " <> showT i
+    VDouble _ i (Just u) -> "float " <> showT i <> " in " <> showT (unloc u)
     VBool _ b    -> "boolean " <>  showT b
     VDoc _ d     -> "doc " <> Text.pack (take 50 (show d))
     VFile _ f    -> "file " <> Text.pack f
@@ -193,7 +177,7 @@ mapSelected f path v =
 
         VTag c | unloc (tagTag c) == n ->
           case r of
-            [] -> f v
+            []  -> f v
             _:_ -> VTag . mkCns c <$> (mapSelected f r `traverse` tagValue c)
 
         VList loc vs ->
@@ -205,21 +189,6 @@ mapSelected f path v =
 
     mapElt p r (n, v') | n == p =  (n,) <$> mapSelected f r v'
                        | otherwise = pure (n, v')
-
--- | Traverse a 'Value', running an action at each entity described by the
--- schema named by the provided 'Ident'
--- traverseSchemaValues :: Monad m => (Value -> m Value) -> Ident -> Value -> m Value
--- traverseSchemaValues f i = traverseValue sch
---   where
---     sch v =
---       case v of
---         VBlock b | blockSchema b == Just i -> f v
---         VTag t | tagSchema t == Just i -> f v
---         VList r vs -> VList r <$> (traverseSchemaValues f i `traverse` vs)
---         _ -> pure v
-
-
---
 
 type Val a = Validate.ValidateT [Text] (Reader.Reader Schema.Env) a
 
@@ -234,11 +203,8 @@ getSchemaDef why name =
           throw why ("[BUG] Could not find definition for schema " <> q name <> " used here")
         Just a -> pure a
 
---
-
 throw :: HasLocation a => a -> Text -> Val b
 throw why msg = Validate.refute [msgWithLoc why msg]
-
 
 validateBlockLike :: SourceRange -> Map Ident Value ->  Map Ident (Schema.Globbed Schema.BlockDecl) -> Val (Map Ident Value)
 validateBlockLike why fieldVals fieldTys =
@@ -272,21 +238,48 @@ validateBlockLike why fieldVals fieldTys =
         Nothing -> throw why (q ln <> " is not part of this block")
         Just _  -> pure ()
 
+-- | @convert thrower why n to from@ converts the value @n@ expressed in unit
+-- @from@ to be expressed in unit @to@, throwing an error (via @thrower why@)
+-- if the units are not of compatible dimension
+convert :: (HasLocation why, Monad m)
+        => (why -> Text -> m Value)
+        -> why
+        -> Located Double
+        -> Located Unit
+        -> Located Unit
+        -> m Value
+convert thrower why n to from
+  | Units.unitDimension (unloc from) == Units.unitDimension (unloc to) =
+    let fromRatio' = fromRational (Units.unitCanonicalConvRatio (unloc from))
+        toRatio' = fromRational (Units.unitCanonicalConvRatio (unloc to))
+        n' = unloc n * fromRatio' / toRatio'
+    in pure $ VDouble (location n) n' (Just to)
+  | otherwise = thrower why ("Cannot convert from " <> q (showT (unloc from)) <> " to " <>
+                           q (showT (unloc to)))
 
 validateValue :: Schema.SType -> Value -> Val Value
 validateValue ty val =
   case val of
-    VDouble loc d ->
+    VDouble loc n Nothing ->
       case ty of
-        -- TODO: handle this during parsing
-        Schema.SInt -> pure $ VInt loc (floor d)
-        _           -> req Schema.SFloat
+        Schema.SInt | floor n == (ceiling n :: Integer) -> pure $ VInt loc (round n)
+        Schema.SFloat Nothing -> pure val
+        _ -> unexpected "float"
+    VDouble loc n (Just u) ->
+      case ty of
+        Schema.SFloat (Just ud) ->
+          if Units.unitDimension ud == Units.unitDimension (unloc u)
+            then convert throw val (n `withSameLocAs` loc) (ud `withSameLocAs` u) u
+            else throw u (q (showT (unloc u)) <> " has a different dimension than " <> q (showT ud))
+
+        _ -> unexpected ("float in " <> q (showT (unloc u)))
     VInt {} -> req Schema.SInt
     VString {} -> req Schema.SString
     VList {} -> unexpected "list"
     VDoc {} -> unexpected "doc"
     VFile {} -> unexpected "file"
     VBool {} -> req Schema.SBool
+
     VUnion vu ->
       do  let t = unionTag vu
           n <- reqNamed "union constructor"
@@ -354,7 +347,7 @@ requireType why expected actual =
 blockValueToValue :: Blok.Value -> Value
 blockValueToValue e =
   case e of
-    Blok.Number n -> VDouble (location n) (unloc n)
+    Blok.Number n mu -> VDouble (location n) (toRealFloat (unloc n)) mu
     Blok.String s -> VString (location s) (unloc s)
     Blok.List l -> VList (location l) (blockValueToValue <$> unloc l)
     Blok.Tag i v ->

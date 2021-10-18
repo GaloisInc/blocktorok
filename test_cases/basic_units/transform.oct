@@ -1,0 +1,10 @@
+schema "schema.ocs"
+
+out = file("out.txt")
+
+render test
+  |velocity: ${velocity}
+  |time: ${time}
+  |
+
+out << test

@@ -8,4 +8,4 @@
 *.dat
 dist-newstyle/
 *ReferenceExecutable*
-test_cases/automated/**/output
+test_cases/**/output
