@@ -1,0 +1,7 @@
+battle: {
+  hero: {
+    name: "Phrobald the Halfling"
+    hp: Fixed { amount: 50 }
+    damage: Dice { sides: 6  number: 2 }
+  }
+}
