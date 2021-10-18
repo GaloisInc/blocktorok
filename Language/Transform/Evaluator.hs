@@ -336,11 +336,13 @@ evalExpr e0 =
       do  iterVals <- evalExpr iterExpr >>= asList pure
           results <- forIteration name body `traverse` iterVals
           pure $ VList (location e0) results -- TODO: less listy if it's doable
-    Tx.ExprCond _ i t e ->
+    Tx.ExprCond l i t alts e ->
       do  test <- evalExpr i >>= bool
           if test
             then evalExpr t
-            else evalExpr e
+            else evalExpr $ case alts of
+                              [] -> e
+                              (altc, alt):alts' -> Tx.ExprCond l altc alt alts' e
     Tx.ExprConvertUnits e u ->
       -- TODO: every selector seems to produce a list, seems questionable
       do  quantities <- evalExpr e >>= asList quantity

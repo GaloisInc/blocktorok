@@ -133,15 +133,21 @@ exprParser = located baseExpr >>= postFixOps
 
     cond =
       do  lite <- located $ do  symbol' "if"
-                                i <- exprParser
-                                symbol' "then"
-                                t <- exprParser
-
+                                branches <- NEL.fromList <$> MP.sepBy1 ((,) <$> exprParser <*> brackets exprParser) (symbol' "else if")
                                 symbol' "else"
-                                e <- exprParser
-                                pure (i,t,e)
-          let (i,t,e) = unloc lite
-          pure (ExprCond (locRange lite) i t e)
+                                e <- brackets exprParser
+                                pure (branches, e)
+          let (branches, e) = unloc lite
+          pure $ ExprCond (locRange lite) branches e
+      -- do  lite <- located $ do  symbol' "if"
+      --                           i <- exprParser
+      --                           t <- brackets exprParser
+      --                           alts <- many $ (,) <$> (symbol' "else if" *> exprParser) <*> brackets exprParser
+      --                           symbol' "else"
+      --                           e <- brackets exprParser
+      --                           pure (i,t,alts,e)
+      --     let (i,t,alts,e) = unloc lite
+      --     pure (ExprCond (locRange lite) i t alts e)
 
     isEmpty arg =
         do  range <- locRange <$> located (symbol' "!?")
