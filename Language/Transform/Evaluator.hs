@@ -317,6 +317,7 @@ evalExpr e0 =
       scoped $
         do bindVar name value
            evalExpr body
+
     cond thens els =
       case thens of
         (i, e):rest ->
