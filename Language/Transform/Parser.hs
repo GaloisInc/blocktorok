@@ -100,7 +100,11 @@ strLitParser =
       pure contents
 
 exprParser :: Parser Expr
-exprParser = baseExpr
+exprParser = MP.choice [ forParser
+                       , cond
+                       , barStringExprParser
+                       , makeExprParser term opTable
+                       ]
   where
     term = MP.choice [ mkSeq
                      , fn "vjoin" FVJoin
@@ -126,13 +130,6 @@ exprParser = baseExpr
         , binary "||" ExprOr
         ]
       ]
-
-    baseExpr =
-      MP.choice [ forParser
-                , cond
-                , barStringExprParser
-                , makeExprParser term opTable
-                ]
 
     convert =
       do  symbol' "convert"
