@@ -35,7 +35,8 @@ import qualified Data.Text                   as Text
 import qualified Prettyprinter               as PP
 
 import           Language.Common             (HasLocation (..), Located (..),
-                                              msgWithLoc, ppRange, unloc, sourceRangeSpan')
+                                              msgWithLoc, ppRange,
+                                              sourceRangeSpan', unloc)
 import           Language.Common.Units.Units (Unit)
 import qualified Language.Transform.Syntax   as Tx
 import           Language.Transform.Value    (Value (..), convert)
