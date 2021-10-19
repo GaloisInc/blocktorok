@@ -35,7 +35,7 @@ import qualified Data.Text                   as Text
 import qualified Prettyprinter               as PP
 
 import           Language.Common             (HasLocation (..), Located (..),
-                                              msgWithLoc, ppRange, unloc)
+                                              msgWithLoc, ppRange, unloc, sourceRangeSpan')
 import           Language.Common.Units.Units (Unit)
 import qualified Language.Transform.Syntax   as Tx
 import           Language.Transform.Value    (Value (..), convert)
@@ -312,6 +312,17 @@ evalExpr e0 =
       do  quantities <- evalExpr e >>= asList quantity
           let conv (n, u') = convert throw e n u u'
           valuesToVList e <$> (conv `traverse` quantities)
+    Tx.ExprNot e ->
+      do  v <- evalExpr e >>= bool
+          pure $ VBool (location e) (not v)
+    Tx.ExprAnd e1 e2 ->
+      do  v1 <- evalExpr e1 >>= bool
+          v2 <- evalExpr e2 >>= bool
+          pure $ VBool (sourceRangeSpan' e1 e2) (v1 && v2)
+    Tx.ExprOr e1 e2 ->
+      do v1 <- evalExpr e1 >>= bool
+         v2 <- evalExpr e2 >>= bool
+         pure $ VBool (sourceRangeSpan' e1 e2) (v1 || v2)
   where
     forIteration name body value =
       scoped $
