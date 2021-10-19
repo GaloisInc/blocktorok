@@ -120,9 +120,10 @@ exprParser = baseExpr
       [ [ postfix "!?" isEmpty
         , postfix "?" notIsEmpty
         ]
-      , [ prefix "not" ExprNot ]
-      , [ binary "and" ExprAnd
-        , binary "or" ExprOr
+      , [ prefix "!" ExprNot
+        ]
+      , [ binary "&&" ExprAnd
+        , binary "||" ExprOr
         ]
       ]
 
