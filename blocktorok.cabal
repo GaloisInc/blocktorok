@@ -50,6 +50,7 @@ executable blocktorok
                      , multimap
                      , multiset
                      , optparse-applicative
+                     , parser-combinators
                      , prettyprinter
                      , scientific
                      , text

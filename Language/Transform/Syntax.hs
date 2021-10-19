@@ -66,6 +66,9 @@ data Expr =
   | ExprFor LIdent Expr Expr
   | ExprCond SourceRange [(Expr, Expr)] Expr
   | ExprConvertUnits Expr (Located Unit)
+  | ExprNot Expr
+  | ExprAnd Expr Expr
+  | ExprOr Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -81,6 +84,9 @@ instance HasLocation Expr where
       ExprFor ident _ e2 -> sourceRangeSpan' ident e2
       ExprCond r _ _ -> r
       ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
+      ExprNot e -> location e
+      ExprAnd e1 e2 -> sourceRangeSpan' e1 e2
+      ExprOr e1 e2 -> sourceRangeSpan' e1 e2
 
 -- | Literals in the transformer language
 data Lit =
