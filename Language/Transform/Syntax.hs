@@ -84,7 +84,7 @@ instance HasLocation Expr where
       ExprFor ident _ e2 -> sourceRangeSpan' ident e2
       ExprCond r _ _ -> r
       ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
-      ExprNot e -> location e
+      ExprNot e' -> location e'
       ExprAnd e1 e2 -> sourceRangeSpan' e1 e2
       ExprOr e1 e2 -> sourceRangeSpan' e1 e2
 
