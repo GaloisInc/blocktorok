@@ -318,15 +318,12 @@ evalExpr e0 =
         do bindVar name value
            evalExpr body
 
-    cond thens els =
-      case thens of
-        (i, e):rest ->
-          do  test <- evalExpr i >>= bool
-              if test
-                then evalExpr e
-                else cond rest els
-        [] -> evalExpr els
-
+    cond [] els = evalExpr els
+    cond ((i, t):rest) els =
+      do  test <- evalExpr i >>= bool
+          if test
+            then evalExpr t
+            else cond rest els
 
 
 
