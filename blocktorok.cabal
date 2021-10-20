@@ -24,6 +24,7 @@ executable blocktorok
                        Language.Common.Units.SI
                        Language.Common.Units.SymbolTable
                        Language.Common.Units.Units
+                       Language.Common.Validate
 
                        Language.Schema.Env
                        Language.Schema.Parser

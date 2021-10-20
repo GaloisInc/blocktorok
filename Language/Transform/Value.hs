@@ -35,9 +35,6 @@ module Language.Transform.Value
   , convert
   ) where
 
-import qualified Control.Monad.Reader        as Reader
-import qualified Control.Monad.Validate      as Validate
-
 import           Data.Foldable               (traverse_)
 import           Data.Map                    (Map)
 import qualified Data.Map                    as Map
@@ -49,11 +46,11 @@ import qualified Prettyprinter               as PP
 import           Data.Scientific             (toRealFloat)
 import qualified Language.Blocktorok.Syntax  as Blok
 import           Language.Common             (HasLocation (..), Located (..),
-                                              SourceRange, msgWithLoc,
-                                              sourceRangeSpan', unloc,
-                                              withSameLocAs)
+                                              SourceRange, sourceRangeSpan',
+                                              unloc, withSameLocAs)
 import           Language.Common.Units.Units (Unit)
 import qualified Language.Common.Units.Units as Units
+import           Language.Common.Validate    (Val, getSchemaDef, runVal, throw)
 import qualified Language.Schema.Env         as Schema
 import qualified Language.Schema.Syntax      as Schema
 import qualified Language.Schema.Type        as Schema
@@ -190,21 +187,21 @@ mapSelected f path v =
     mapElt p r (n, v') | n == p =  (n,) <$> mapSelected f r v'
                        | otherwise = pure (n, v')
 
-type Val a = Validate.ValidateT [Text] (Reader.Reader Schema.Env) a
+-- type Val a = Validate.ValidateT [Text] (Reader.Reader Schema.Env) a
 
-runVal :: Schema.Env -> Val a -> Either [Text] a
-runVal e v = Reader.runReader (Validate.runValidateT v) e
+-- runVal :: Schema.Env -> Val a -> Either [Text] a
+-- runVal e v = Reader.runReader (Validate.runValidateT v) e
 
-getSchemaDef :: HasLocation why => why -> Ident -> Val Schema.SchemaDef
-getSchemaDef why name =
-  do  def <- Reader.asks (Map.lookup name . Schema.envTypeDefs)
-      case def of
-        Nothing ->
-          throw why ("[BUG] Could not find definition for schema " <> q name <> " used here")
-        Just a -> pure a
+-- getSchemaDef :: HasLocation why => why -> Ident -> Val Schema.SchemaDef
+-- getSchemaDef why name =
+--   do  def <- Reader.asks (Map.lookup name . Schema.envTypeDefs)
+--       case def of
+--         Nothing ->
+--           throw why ("[BUG] Could not find definition for schema " <> q name <> " used here")
+--         Just a -> pure a
 
-throw :: HasLocation a => a -> Text -> Val b
-throw why msg = Validate.refute [msgWithLoc why msg]
+-- throw :: HasLocation a => a -> Text -> Val b
+-- throw why msg = Validate.refute [msgWithLoc why msg]
 
 validateBlockLike :: SourceRange -> Map Ident Value ->  Map Ident (Schema.Globbed Schema.BlockDecl) -> Val (Map Ident Value)
 validateBlockLike why fieldVals fieldTys =
