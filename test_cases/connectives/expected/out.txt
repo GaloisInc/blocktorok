@@ -1,0 +1,3 @@
+Have y and (z and/or w)
+Don't have y, but have z
+Don't have any

@@ -25,13 +25,14 @@ module Language.Transform.Syntax
   , SelectorElement(..)
   ) where
 
-import           Data.Text       (Text)
+import           Data.Text                   (Text)
 
-import           Language.Common (HasLocation (..), Located (..),
-                                  sourceRangeSpan', SourceRange, sourceRangeSpans)
+import           Language.Common             (HasLocation (..), Located (..),
+                                              SourceRange, sourceRangeSpan',
+                                              sourceRangeSpans)
 
-import qualified Data.List.NonEmpty as NEL
-import           Language.Common.Units.Units(Unit)
+import qualified Data.List.NonEmpty          as NEL
+import           Language.Common.Units.Units (Unit)
 
 -- | Identifiers carrying their location; type alias for easy representation
 -- changes
@@ -48,7 +49,7 @@ instance HasLocation SelectorElement where
     case s of
       SelName n   -> location n
       SelSchema l -> location l
-      SelCond e -> location e
+      SelCond e   -> location e
 
 newtype Selector = Selector { selectorElements :: NEL.NonEmpty SelectorElement }
   deriving(Show, Eq, Ord)
@@ -66,6 +67,9 @@ data Expr =
   | ExprFor LIdent Expr Expr
   | ExprCond SourceRange [(Expr, Expr)] Expr
   | ExprConvertUnits Expr (Located Unit)
+  | ExprNot Expr
+  | ExprAnd Expr Expr
+  | ExprOr Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -75,12 +79,15 @@ data Call = Call FName (Located [Expr])
 instance HasLocation Expr where
   location e =
     case e of
-      ExprFn c       -> location c
-      ExprSelector s -> location s
-      ExprLit l      -> location l
-      ExprFor ident _ e2 -> sourceRangeSpan' ident e2
-      ExprCond r _ _ -> r
+      ExprFn c              -> location c
+      ExprSelector s        -> location s
+      ExprLit l             -> location l
+      ExprFor ident _ e2    -> sourceRangeSpan' ident e2
+      ExprCond r _ _        -> r
       ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
+      ExprNot e'            -> location e'
+      ExprAnd e1 e2         -> sourceRangeSpan' e1 e2
+      ExprOr e1 e2          -> sourceRangeSpan' e1 e2
 
 -- | Literals in the transformer language
 data Lit =

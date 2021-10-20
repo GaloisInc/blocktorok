@@ -18,28 +18,30 @@ module Language.Transform.Parser
     transformFromFile
   ) where
 
-import           Control.Applicative          (many, some)
-import           Control.Monad                (void)
+import           Control.Applicative            (many, some)
+import           Control.Monad                  (void)
+import           Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
 
-import qualified Data.List.NonEmpty           as NEL
-import           Data.Text                    (Text)
-import qualified Data.Text                    as Text
-import qualified Data.Text.IO                 as TIO
-import           Data.Void                    (Void)
+import qualified Data.List.NonEmpty             as NEL
+import           Data.Text                      (Text)
+import qualified Data.Text                      as Text
+import qualified Data.Text.IO                   as TIO
+import           Data.Void                      (Void)
 
-import qualified Text.Megaparsec              as MP
+import qualified Text.Megaparsec                as MP
 
-import           Language.Common              (Located (..), sourceRangeSpan',
-                                               unloc, withSameLocAs)
-import           Language.Common.Parser       (brackets, ident, lexeme, lident,
-                                               located, located', spc, symbol')
-import qualified Language.Common.Units.Parser as UP
-import           Language.Transform.Syntax    (Call (Call), Decl (..),
-                                               Expr (..),
-                                               FName (FFile, FHCat, FIsEmpty, FJoin, FMkSeq, FNot, FVCat, FVJoin),
-                                               Lit (LitString), Selector (..),
-                                               SelectorElement (..),
-                                               Transform (Transform))
+import           Language.Common                (Located (..), location, unloc,
+                                                 withSameLocAs)
+import           Language.Common.Parser         (brackets, ident, lexeme,
+                                                 lident, located, located', spc,
+                                                 symbol')
+import qualified Language.Common.Units.Parser   as UP
+import           Language.Transform.Syntax      (Call (Call), Decl (..),
+                                                 Expr (..),
+                                                 FName (FFile, FHCat, FIsEmpty, FJoin, FMkSeq, FNot, FVCat, FVJoin),
+                                                 Lit (LitString), Selector (..),
+                                                 SelectorElement (..),
+                                                 Transform (Transform))
 
 type Parser a = MP.Parsec Void Text a
 
@@ -98,27 +100,36 @@ strLitParser =
       pure contents
 
 exprParser :: Parser Expr
-exprParser = located baseExpr >>= postFixOps
+exprParser = MP.choice [ forParser
+                       , cond
+                       , barStringExprParser
+                       , makeExprParser term opTable
+                       ]
   where
-    -- TODO: this is a little inefficient
-    postFixOps e =
-      MP.choice [ isEmpty e
-                , notIsEmpty e
-                , pure (unloc e)
-                ]
+    term = MP.choice [ mkSeq
+                     , fn "vjoin" FVJoin
+                     , fn "join" FJoin
+                     , fn "file" FFile
+                     , ExprLit . LitString <$> located strLitParser
+                     , convert
+                     , selector
+                     , symbol' "(" *> exprParser <* symbol' ")"
+                     ]
 
-    baseExpr =
-      MP.choice [ mkSeq
-                , forParser
-                , fn "vjoin" FVJoin
-                , fn "join" FJoin
-                , fn "file" FFile
-                , cond
-                , ExprLit . LitString <$> located strLitParser
-                , convert
-                , barStringExprParser
-                , selector
-                ]
+    binary name f = InfixL (f <$ symbol' name)
+    prefix name f = Prefix (f <$ symbol' name)
+    postfix name f = Postfix (f <$ symbol' name)
+
+    opTable =
+      [ [ postfix "!?" isEmpty
+        , postfix "?" notIsEmpty
+        ]
+      , [ prefix "!" ExprNot
+        ]
+      , [ binary "&&" ExprAnd
+        , binary "||" ExprOr
+        ]
+      ]
 
     convert =
       do  symbol' "convert"
@@ -141,18 +152,16 @@ exprParser = located baseExpr >>= postFixOps
           pure $ ExprCond (locRange lite) branches e
 
     isEmpty arg =
-        do  range <- locRange <$> located (symbol' "!?")
-            let sr = sourceRangeSpan' arg range
-                cl = Call FIsEmpty ([unloc arg] `withSameLocAs` arg) `withSameLocAs` sr
-            pure $ ExprFn cl
+        let sr = location arg
+            cl = Call FIsEmpty ([arg] `withSameLocAs` arg) `withSameLocAs` sr
+        in ExprFn cl
 
     notIsEmpty arg =
-        do  range <- locRange <$> located (symbol' "?")
-            let sr = sourceRangeSpan' arg range
-                ncall = Call FNot ([eexpr] `withSameLocAs` sr) `withSameLocAs` sr
-                eexpr = ExprFn ecall
-                ecall = Call FIsEmpty ([unloc arg] `withSameLocAs` arg) `withSameLocAs` sr
-            pure $ ExprFn ncall
+        let sr = location arg
+            ncall = Call FNot ([eexpr] `withSameLocAs` sr) `withSameLocAs` sr
+            eexpr = ExprFn ecall
+            ecall = Call FIsEmpty ([arg] `withSameLocAs` arg) `withSameLocAs` sr
+        in ExprFn ncall
 
     selector = ExprSelector <$> selectorParser
 
