@@ -1,7 +1,7 @@
 block components {
-  .density: float
-  .heat_capacity: float
-  .thermal_conductivity: float
+  density: float;
+  heat_capacity: float;
+  thermal_conductivity: float;
 }
 
 union thermal_diffusivity {
@@ -20,8 +20,8 @@ union thermal_diffusivity {
 --}
 
 block incompressible_ideal_gas {
-  .specific_heat_capacity: float
-  .molecular_weight: float
+  specific_heat_capacity: float;
+  molecular_weight: float;
 }
 
 union fluid_model {
@@ -40,9 +40,9 @@ union density_model {
 }
 
 block sutherland {
-  .reference_viscosity: float
-  .reference_temp: float
-  .sutherland_constant: float
+  reference_viscosity: float;
+  reference_temp: float;
+  sutherland_constant: float;
 }
 
 union viscosity_model {
@@ -54,8 +54,8 @@ union viscosity_model {
 }
 
 block constant_prandtl {
-  .laminar_prandtl_number: float
-  .turbulent_prandtl_number: float
+  laminar_prandtl_number: float;
+  turbulent_prandtl_number: float;
 }
 
 union thermal_conductivity_model {
@@ -85,9 +85,9 @@ union turbulence_model {
 }
 
 block velocity {
-  .x: float
-  .y: float
-  .z: float
+  x: float;
+  y: float;
+  z: float;
 }
 
 union initial_value {
@@ -97,8 +97,8 @@ union initial_value {
 }
 
 block bc_val {
-  .marker: string
-  .value: float
+  marker: string;
+  value: float;
 }
 
 union boundary_conditions {
@@ -111,25 +111,25 @@ union boundary_conditions {
 
 block fluid {
   [-- The governing equation/solver for the problem --]
-  .governing_equation: governing_equations_fluid
+  governing_equation: governing_equations_fluid;
 
   [-- Turbulent model (NONE, SA) --]
-  .turbulence: turbulence_model
+  turbulence: turbulence_model;
 
   [-- if variable density, appropriate fluid model must be selected --]
-  .density_model: density_model
+  density_model: density_model;
 
-  .viscosity_model: viscosity_model
+  viscosity_model: viscosity_model;
 
-  .thermal_conductivity: thermal_conductivity_model
+  thermal_conductivity: thermal_conductivity_model;
 
   [-- If energy_equation, need initial temperature --]
-  .energy_equation: energy_equation
+  energy_equation: energy_equation;
 
-  .initial_values: initial_value*
+  initial_values: initial_value*;
 
   [-- Boundary conditions --]
-  .boundary_conditions: boundary_conditions*
+  boundary_conditions: boundary_conditions*;
 
   -- TODO: non-dimensionalization scheme
   -- defines how the reference pressure (pref) is computed
@@ -141,14 +141,14 @@ union governing_equations_solid {
 
 block solid {
   [-- The governing equation/solver for the problem --]
-  .governing_equation: governing_equations_solid
+  governing_equation: governing_equations_solid;
 
-  .conduction: thermal_diffusivity
+  conduction: thermal_diffusivity;
 
-  .initial_values: initial_value*
+  initial_values: initial_value*;
 
   [-- Boundary conditions --]
-  .boundary_conditions: boundary_conditions*
+  boundary_conditions: boundary_conditions*;
 }
 
 -- union physics {
@@ -158,8 +158,8 @@ block solid {
 -- }
 
 block criterion_with_start {
-  .min_value: float
-  .start_iter: int
+  min_value: float;
+  start_iter: int;
 }
 
 union convergence {
@@ -173,10 +173,10 @@ union convergence {
 }
 
 block transient {
-  .dt: float
-  .max_time: float
-  .inner_iter: int
-  .outer_iter: int
+  dt: float;
+  max_time: float;
+  inner_iter: int;
+  outer_iter: int;
 }
 
 union time {
@@ -203,22 +203,22 @@ union mesh_format {
 
 block input_output {
   [-- Output solution frequency in iterations for su2 --]
-  .write_interval_iter: int
+  write_interval_iter: int;
 
   [-- Output solution frequency in seconds for openfoam --]
-  .write_interval_sec : float
+  write_interval_sec : float;
 
   [-- Name of output file is optional (OpenFoam does not have one) --]
-  .output_file: string?
+  output_file: string?;
 
   [-- Output file format --]
-  .output_format: output_format*
+  output_format: output_format*;
 
   [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
-  .mesh_filename: string?
+  mesh_filename: string?;
 
   [-- The format of the mesh file --]
-  .mesh_format: mesh_format?
+  mesh_format: mesh_format?;
 }
 
 -- union boundary_condition_types {
@@ -258,53 +258,53 @@ block domain {
   [-- Description of the problem --]
   -- .physics : { .physType1 : solid, .physType2 : fluid }
 
-  .name: string
+  name: string;
 
   [-- TODO: YOU SHOULD NEVER HAVE MORE THAN ONE PHYSICS FOR A DOMAIN --]
-  .fluid: fluid*
-  .solid: solid*
+  fluid: fluid*;
+  solid: solid*;
 
   [-- Simulation termination conditions --]
-  .convergence: convergence
+  convergence: convergence;
 
   [-- Time dependency: transient or steady state parameters are defined here --]
-  .time: time
+  time: time;
 }
 
 block coupling_interface {
-  .interface1: string
-  .interface2: string
+  interface1: string;
+  interface2: string;
 }
 
 block coupled_domains {
 
   [-- Pairwise coupled domains --]
-  .domain1: string
-  .domain2: string
+  domain1: string;
+  domain2: string;
 
   [-- Pairwise interfaces between domains --]
-  .interface: coupling_interface*
+  interface: coupling_interface*;
 }
 
 block simulation {
 
   [-- multiphysics simulation has at least one coupled domains
   (currently only allowed for conjugated heat transfer) --]
-  .coupling: coupled_domains*
+  coupling: coupled_domains*;
 
-  .domain: domain*
+  domain: domain*;
 
   [-- Input output parameters (mesh files are included here) --]
-  .input_output: input_output
+  input_output: input_output;
 
   [-- couple iter is not requred if single_physics
   Number of coupled iterations --]
-  .couple_iter: int
+  couple_iter: int;
 
   [-- Simulation termination conditions --]
-  .convergence: convergence
+  convergence: convergence;
 }
 
 root {
-  .simulation: simulation
+  simulation: simulation;
 }

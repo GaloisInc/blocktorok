@@ -1,20 +1,20 @@
 block thermal_diffusivity {
   [-- Right hand side of the equation --]
-  .density: float
+  density: float;
 
-  .heat_capacity: float
+  heat_capacity: float;
 
-  .thermal_conductivity: float
+  thermal_conductivity: float;
 
   [-- Left hand side of the equation --]
-  .dt: float
+  dt: float;
 }
 
 block criterion {
-  .min_value: float
-  .start_iter: int
-  .cauchy_elements: int
-  .cauchy_epsilon: float
+  min_value: float;
+  start_iter: int;
+  cauchy_elements: int;
+  cauchy_epsilon: float;
 }
 
 union convergence {
@@ -26,11 +26,11 @@ union convergence {
 }
 
 block transient {
-  .dt: float
-  .max_time: float
-  .start_time: float
-  .inner_iter: int
-  .outer_iter: int
+  dt: float;
+  max_time: float;
+  start_time: float;
+  inner_iter: int;
+  outer_iter: int;
 }
 
 union time {
@@ -53,32 +53,32 @@ union mesh_format {
 
 block input_output {
   [-- Output solution frequency in iterations for su2 --]
-  .write_interval_iter: int
+  write_interval_iter: int;
 
   [-- Output solution frequency in seconds for openfoam --]
-  .write_interval_sec : float
+  write_interval_sec : float;
 
   [-- Name of output file is optional (OpenFoam does not have one) --]
-  .output_file: string
+  output_file: string;
 
   [-- Output file format --]
-  .output_format: output_format
+  output_format: output_format;
 
   [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
-  .mesh_filename: string
+  mesh_filename: string;
 
   [-- The format of the mesh file --]
-  .mesh_format: mesh_format
+  mesh_format: mesh_format;
 }
 
 block physics {
   [-- Parameters for physical models such as turbulence and thermophysical models are defined here --]
-  .physical_models: thermal_diffusivity
+  physical_models: thermal_diffusivity;
 }
 
 block bc_val {
-  .marker: string
-  .value: float
+  marker: string;
+  value: float;
 }
 
 union boundary_conditions {
@@ -89,24 +89,24 @@ union boundary_conditions {
 
 block domain {
   [-- Physics parameters --]
-  .physics: physics
+  physics: physics;
 
   [-- Initial temperature --]
-  .initial_temp: float
+  initial_temp: float;
 
   [-- Simulation termination conditions --]
-  .convergence: convergence
+  convergence: convergence;
 
   [-- Input output parameters (mesh files are included here) --]
-  .input_output: input_output
+  input_output: input_output;
 
   [-- Time dependency: transient or steady state parameters are defined here --]
-  .time: time
+  time: time;
 
   [-- Boundary conditions --]
-  .boundary_conditions: boundary_conditions*
+  boundary_conditions: boundary_conditions*;
 }
 
 root {
-  .simulation: domain
+  simulation: domain;
 }

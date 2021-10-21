@@ -13,7 +13,7 @@ union data {
 }
 
 block maybeDataJust {
-   .d : data
+   d : data;
 }
 
 union maybeData {
@@ -22,28 +22,28 @@ union maybeData {
 }
 
 block urlParams {
-   .activation: activation
+   activation: activation;
 
    [-- Eventually I want to figure out how to make this >=1 and <=30 --]
-   .batchSize:  int
+   batchSize:  int;
 
-   .dataSet:    maybeData
+   dataSet:    maybeData;
 }
 
 block urlBase {
-   .base:       string
+   base:       string;
 }
 
 block neural {
-   .urlBase:    urlBase
-   .urlParams:  urlParams
+   urlBase:    urlBase;
+   urlParams:  urlParams;
 }
 
 block foo {
-   .bar: urlBase
+   bar: urlBase;
 }
 
 root {
-   .neural:  neural
-   .foo: foo
+   neural:  neural;
+   foo: foo;
 }
