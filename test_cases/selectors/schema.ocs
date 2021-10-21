@@ -1,7 +1,7 @@
 block int_b {
-    .x: int
+    x: int;
 }
 
 root {
-    .top: int_b
+    top: int_b;
 }

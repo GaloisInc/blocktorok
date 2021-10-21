@@ -1,10 +1,10 @@
 block dice {
-  .sides: int
-  .number: int
+  sides: int;
+  number: int;
 }
 
 block fixed {
-  .amount: int
+  amount: int;
 }
 
 union value {
@@ -17,34 +17,34 @@ union value {
 
 block creature {
   [-- The number of hitpoints a creature has  --]
-  .hp: value
+  hp: value;
 
   [-- The amount of damage a creature does --]
-  .damage: value
+  damage: value;
 }
 
 block hero {
   [-- The hero's bold name --]
-  .name: string
+  name: string;
 
   [-- Hero hitpoints --]
-  .hp: value
+  hp: value;
 
   [-- Hero damage --]
-  .damage: value
+  damage: value;
 }
 
 block battle {
   [-- The dauntless heroes in the battle --]
-  .hero: hero*
+  hero: hero*;
 
   [-- The fell orcs opposing the hero --]
-  .orc: creature*
+  orc: creature*;
 
   [-- The forbidding minotaurs opposing the hero --]
-  .minotaur: creature*
+  minotaur: creature*;
 }
 
 root {
-  .battle: battle
+  battle: battle;
 }

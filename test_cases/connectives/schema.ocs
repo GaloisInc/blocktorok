@@ -1,9 +1,9 @@
 block x {
-    .y: int?
-    .z: int?
-    .w: int?
+    y: int?;
+    z: int?;
+    w: int?;
 }
 
 root {
-    .x: x*
+    x: x*;
 }

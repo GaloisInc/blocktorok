@@ -32,7 +32,6 @@ import           Data.Void                    (Void)
 
 import           Text.Megaparsec              ((<|>))
 import qualified Text.Megaparsec              as MP
-import qualified Text.Megaparsec.Char         as MPC
 import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
 import           Language.Common              (unloc)
@@ -49,13 +48,9 @@ import           Language.Schema.Syntax       (BlockDecl (BlockDecl, blockDeclDe
                                                Variant (Variant, variantTag),
                                                globbedDeclsMap, schemaDefMap,
                                                variantsMap)
-import           Language.Schema.Type         (Globbed (..), Ident, SType (..),
-                                               unGlob)
+import           Language.Schema.Type         (Globbed (..), SType (..), unGlob)
 
 type Parser a = MP.ParsecT Void Text (State Env) a
-
-selector :: Parser Ident
-selector = MPC.char '.' *> ident
 
 stype :: Parser SType
 stype =
@@ -69,9 +64,9 @@ stype =
     munit = optional $ symbol' "(" *> UP.parseUnit <* symbol' ")"
 
 -- ! Uses MP.setOffset; parsing state is messed up after failure
-decl :: Parser Ident -> Parser Decl
-decl p =
-  do n <- located p
+decl :: Parser Decl
+decl =
+  do n <- located ident
      symbol' ":"
      o <- MP.getOffset
      t <- located stype
@@ -92,7 +87,6 @@ variant =
   Variant <$> optional (located doc)
           <*> lident
           <*> optional stype
-          <*  symbol' ";"
 
 duplicatedElems :: Ord a => [a] -> [a]
 duplicatedElems xs = [x | (x, c) <- MS.toOccurList (MS.fromList xs), c > 1]
@@ -103,7 +97,7 @@ union =
   do symbol' "union"
      o    <- MP.getOffset
      nm   <- lident
-     vars <- brackets $ MP.some variant
+     vars <- brackets $ MP.endBy1 variant (symbol' ";")
      let dupedTags   = duplicatedElems (fmap (unloc . variantTag) vars)
          ppDupedTags = Text.unpack $ Text.intercalate ", " dupedTags
      if null dupedTags then
@@ -121,9 +115,7 @@ glob = MP.option One $ MP.choice [opt, some, many]
     many = symbol' "*" $> Many
 
 blockDecl :: Parser BlockDecl
-blockDecl =
-  BlockDecl <$> optional (located doc)
-            <*> decl selector
+blockDecl = BlockDecl <$> optional (located doc) <*> decl
 
 -- ! Uses MP.setOffset; parsing state is messed up after failure
 blockS :: Parser BlockS
@@ -131,7 +123,7 @@ blockS =
   do symbol' "block"
      o <- MP.getOffset
      t  <- lident
-     fs <- brackets $ MP.many $ blockDecl <**> glob
+     fs <- brackets $ MP.endBy (blockDecl <**> glob) (symbol' ";")
      let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
          ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
      if null dupedFields then
@@ -146,7 +138,7 @@ root :: Parser Root
 root =
   do o <- MP.getOffset
      symbol' "root"
-     fs <- brackets $ MP.many $ blockDecl <**> glob
+     fs <- brackets $ MP.endBy (blockDecl <**> glob) (symbol' ";")
      let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
          ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
      if null dupedFields then

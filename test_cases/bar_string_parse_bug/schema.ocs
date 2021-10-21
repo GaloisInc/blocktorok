@@ -1,7 +1,7 @@
 block x {
-  .y : int
+  y : int;
 }
 
 root {
-  .x : x
+  x : x;
 }
