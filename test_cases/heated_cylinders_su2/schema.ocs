@@ -12,13 +12,6 @@ union thermal_diffusivity {
   dt float;
 }
 
--- union transport_models {
---  [-- TODO: OPENFOAM
---  Transport model handles viscosity and its dependency on other variables.
---  In our case, it is Sutherland model, where viscosity depends on temperature --]
---
---}
-
 block incompressible_ideal_gas {
   specific_heat_capacity: float;
   molecular_weight: float;
@@ -126,11 +119,6 @@ block fluid {
   [-- If energy_equation, need initial temperature --]
   energy_equation: energy_equation;
 
-  initial_values: initial_value*;
-
-  [-- Boundary conditions --]
-  boundary_conditions: boundary_conditions*;
-
   -- TODO: non-dimensionalization scheme
   -- defines how the reference pressure (pref) is computed
 }
@@ -144,18 +132,7 @@ block solid {
   governing_equation: governing_equations_solid;
 
   conduction: thermal_diffusivity;
-
-  initial_values: initial_value*;
-
-  [-- Boundary conditions --]
-  boundary_conditions: boundary_conditions*;
 }
-
--- union physics {
---   [-- TODO: currently you can't have a block within a union --]
---   fluid;
---   solid;
--- }
 
 block criterion_with_start {
   min_value: float;
@@ -255,14 +232,18 @@ block input_output {
 -- }
 
 block domain {
-  [-- Description of the problem --]
-  -- .physics : { .physType1 : solid, .physType2 : fluid }
-
+  [-- Name of the domain --]
   name: string;
 
   [-- TODO: YOU SHOULD NEVER HAVE MORE THAN ONE PHYSICS FOR A DOMAIN --]
   fluid: fluid*;
   solid: solid*;
+
+  [-- Specify initial values for the domain --]
+  initial_values: initial_value*;
+
+  [-- Boundary conditions --]
+  boundary_conditions: boundary_conditions*;
 
   [-- Simulation termination conditions --]
   convergence: convergence;

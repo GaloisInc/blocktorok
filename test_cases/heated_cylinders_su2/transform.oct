@@ -52,10 +52,8 @@ render ::solid                          |SOLVER = ${governing_equation}
                                         |WRT_ZONE_HIST = YES
                                         |HISTORY_OUTPUT = (ITER, RMS_RES, HEAT)
                                         |INC_NONDIM= DIMENSIONAL
-                                        |SOLID_TEMPERATURE_INIT = ${initial_values.temperature}
                                         |${conduction}
                                         |LINEAR_SOLVER_ITER= 5
-                                        |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.isothermal)} )
 
 render ::turbulence_model.NONE          |NONE
 render ::turbulence_model.SA            |SA
@@ -92,13 +90,10 @@ render ::fluid                          |SOLVER = ${governing_equation}
                                         |HISTORY_OUTPUT= (ITER, RMS_RES, HEAT)
                                         |${density_model}
                                         |${energy_equation}
-                                        |INC_DENSITY_INIT= ${initial_values.density}
-                                        |INC_VELOCITY_INIT= ${initial_values.velocity}
                                         |INC_NONDIM= DIMENSIONAL
                                         |${viscosity_model}
                                         |${thermal_conductivity}
                                         |LINEAR_SOLVER_ITER= 10
-                                        |MARKER_FAR= ( ${join(", ", boundary_conditions.farfield)} )
 -- FLUID SPECIFIC NUMERICAL METHOD
                                         |CONV_NUM_METHOD_FLOW= FDS
                                         |MUSCL_FLOW= YES
@@ -123,19 +118,34 @@ in simulation.domain {
   filename = |${name}.cfg
   cfg_out = file(filename)
 
-  cfg_out <<                          |${fluid}
-                                      |${solid}
-                                      |${time}
-                                      |NUM_METHOD_GRAD= GREEN_GAUSS
-                                      |CFL_NUMBER= 50.0
-                                      |CFL_ADAPT= NO
-                                      |CFL_ADAPT_PARAM= ( 1.5, 0.5, 10.0, 10000.0 )
-                                      |RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 )
-                                      |LINEAR_SOLVER= FGMRES
-                                      |LINEAR_SOLVER_PREC= ILU
-                                      |LINEAR_SOLVER_ILU_FILL_IN= 0
-                                      |LINEAR_SOLVER_ERROR= 1E-15
-                                      |${convergence}
+  domain_specific_vars =
+    if fluid? {
+      |INC_VELOCITY_INIT= ${initial_values.velocity}
+      |INC_DENSITY_INIT= ${initial_values.density}
+      |MARKER_FAR= ( ${join(", ", boundary_conditions.farfield)} )
+    }
+    else if solid? {
+      |SOLID_TEMPERATURE_INIT = ${initial_values.temperature}
+      |MARKER_ISOTHERMAL= ( ${join(", ", boundary_conditions.isothermal)} )
+    }
+    else {
+      |
+    }
+
+    cfg_out <<                          |${fluid}
+                                        |${solid}
+                                        |${domain_specific_vars}
+                                        |${time}
+                                        |NUM_METHOD_GRAD= GREEN_GAUSS
+                                        |CFL_NUMBER= 50.0
+                                        |CFL_ADAPT= NO
+                                        |CFL_ADAPT_PARAM= ( 1.5, 0.5, 10.0, 10000.0 )
+                                        |RK_ALPHA_COEFF= ( 0.66667, 0.66667, 1.000000 )
+                                        |LINEAR_SOLVER= FGMRES
+                                        |LINEAR_SOLVER_PREC= ILU
+                                        |LINEAR_SOLVER_ILU_FILL_IN= 0
+                                        |LINEAR_SOLVER_ERROR= 1E-15
+                                        |${convergence}
 }
 
 -- TODO: if multi_physics input exists

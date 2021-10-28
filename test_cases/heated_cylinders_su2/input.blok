@@ -37,11 +37,11 @@ simulation: {
                                heat_capacity: 1004.703
                                thermal_conductivity: 0.1
                              }
-      initial_values: temperature 288.15
-      boundary_conditions: isothermal { marker: "core1"
-                                        value: 350
-                                      }
     }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core1"
+                                      value: 350
+                                    }
     time: steady_state 10
     convergence: criterion_with_start { min_value: -20
                                         start_iter: 10
@@ -56,11 +56,11 @@ simulation: {
                                heat_capacity: 1004.703
                                thermal_conductivity: 0.1
                              }
-      initial_values: temperature 288.15
-      boundary_conditions: isothermal { marker: "core2"
-                                        value: 350
-                                      }
     }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core2"
+                                      value: 350
+                                    }
     time: steady_state 10
     convergence: criterion_with_start { min_value: -20
                                         start_iter: 10
@@ -75,11 +75,11 @@ simulation: {
                                heat_capacity: 1004.703
                                thermal_conductivity: 0.1
                              }
-      initial_values: temperature 288.15
-      boundary_conditions: isothermal { marker: "core3"
-                                        value: 350
-                                      }
     }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core3"
+                                      value: 350
+                                    }
     time: steady_state 10
     convergence: criterion_with_start { min_value: -20
                                         start_iter: 10
@@ -99,14 +99,14 @@ simulation: {
                                                turbulent_prandtl_number: 0.90
                                              }
       energy_equation: use 288.15
-      initial_values: [ density 0.00042
-                      , velocity { x: 3.40297
-                                   y: 0
-                                   z: 0
-                                 }
-                      ]
-      boundary_conditions: farfield "farfield"
     }
+    initial_values: [ density 0.00042
+                    , velocity { x: 3.40297
+                                  y: 0
+                                  z: 0
+                                }
+                    ]
+    boundary_conditions: farfield "farfield"
     time: steady_state 1
     convergence: criterion_with_start { min_value: -20
                                         start_iter: 0
