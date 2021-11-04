@@ -172,7 +172,7 @@ exprParser = MP.choice [ forParser
       do  symbol' "for"
           name <- lident
           symbol' "in"
-          ExprFor name <$> exprParser <*> exprParser
+          ExprFor name <$> exprParser <*> brackets exprParser
 
     call name fname =
       located $
