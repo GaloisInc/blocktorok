@@ -223,8 +223,7 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl, requireDecl]
 
 transformParser :: Parser Transform
 transformParser =
-  do  spc
-      schema <- symbol' "schema" *> located strLitParser
+  do  schema <- symbol' "schema" *> located strLitParser
       decls <- many declParser
       pure $ Transform schema decls
 
@@ -232,7 +231,7 @@ transformParser =
 
 parseTransform :: String -> Text -> Either Text Transform
 parseTransform name input =
-  case MP.parse (transformParser <* MP.eof) name input of
+  case MP.parse (spc *> transformParser <* MP.eof) name input of
     Right tx -> Right tx
     Left err -> Left (Text.pack $ MP.errorBundlePretty err)
 
