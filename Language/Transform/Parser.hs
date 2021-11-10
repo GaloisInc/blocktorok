@@ -18,85 +18,49 @@ module Language.Transform.Parser
     transformFromFile
   ) where
 
-import           Control.Applicative        (many, some)
-import           Control.Monad              (void)
+import           Control.Applicative            (many, some)
+import           Control.Monad                  (void)
+import           Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
 
-import           Data.Char                  (isAlpha, isDigit)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
-import qualified Data.Text.IO               as TIO
-import           Data.Void                  (Void)
+import qualified Data.List.NonEmpty             as NEL
+import           Data.Text                      (Text)
+import qualified Data.Text                      as Text
+import qualified Data.Text.IO                   as TIO
+import           Data.Void                      (Void)
 
-import qualified Text.Megaparsec            as MP
-import qualified Text.Megaparsec.Char       as MPC
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import qualified Text.Megaparsec                as MP
 
-import           Language.Common            (Located (..),
-                                             SourceRange (SourceRange), unloc,
-                                             withSameLocAs)
-import           Language.Transform.Syntax  (Call (Call), Decl (..), Expr (..),
-                                             FName (FFile, FHCat, FJoin, FMkSeq, FVCat, FVJoin),
-                                             Lit (LitString), Selector (..),
-                                             Transform (Transform))
+import           Language.Common                (Located (..), location, unloc,
+                                                 withSameLocAs)
+import           Language.Common.Parser         (brackets, ident, lexeme,
+                                                 lident, located, located', spc,
+                                                 symbol')
+import qualified Language.Common.Units.Parser   as UP
+import           Language.Transform.Syntax      (Call (Call), Decl (..),
+                                                 Expr (..),
+                                                 FName (FFile, FHCat, FIsEmpty, FJoin, FMkSeq, FNot, FVCat, FVJoin),
+                                                 Lit (LitString), Selector (..),
+                                                 SelectorElement (..),
+                                                 Transform (Transform))
 
 type Parser a = MP.Parsec Void Text a
-
-spc :: Parser ()
-spc = Lexer.space MPC.space1
-                  (Lexer.skipLineComment "--")
-                  MP.empty
-
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme spc
-
-symbol :: Text -> Parser Text
-symbol = Lexer.symbol spc
-
-symbol' :: Text -> Parser ()
-symbol' t = void $ symbol t
-
-mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
-mkRange s e =
-  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
-  where
-    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
-
-located :: Parser a -> Parser (Located a)
-located = lexeme . located'
-
-located' :: Parser a -> Parser (Located a)
-located' p =
-    do  start <- MP.getSourcePos
-        a <- p
-        end <- MP.getSourcePos
-        pure $ Located (mkRange start end) a
-
-ident :: Parser Text
-ident =
-  lexeme . MP.try $
-    do  c0 <- MP.satisfy identFirstChar
-        cr <- MP.takeWhileP Nothing identRestChar
-        pure (c0 `Text.cons` cr)
-  where
-    identFirstChar :: Char -> Bool
-    identFirstChar c = isAlpha c || c == '_'
-    identRestChar c = identFirstChar c || isDigit c
-
-lident :: Parser (Located Text)
-lident = located ident
 
 -------------------------------------------------------------------------------
 
 selectorParser :: Parser Selector
 selectorParser =
-  do  nm <- lident
-      selElt (SelName nm)
+  do  e0 <- initial
+      es <- MP.many subsequent
+      pure $ Selector (e0 NEL.:| es)
+
   where
-    selElt p =
-      MP.choice [selMem p, pure p]
-    selMem p =
-      do  p' <- MP.try (symbol' ".") *> (SelMem p <$> lident)
-          selElt p'
+    schema = SelSchema <$> located (MP.try (symbol' "::") *> ident)
+    mem = SelName <$> located (MP.try (symbol' ".") *> ident)
+    cond = SelCond <$> (MP.try (symbol' "[") *> exprParser <* symbol' "]")
+    initial =
+      MP.choice [ SelName <$> lident, mem, schema ]
+    subsequent =
+      MP.choice [ mem, schema, cond ]
 
 barStringExprParser :: Parser Expr
 barStringExprParser =
@@ -106,7 +70,7 @@ barStringExprParser =
         _   -> pure $ ExprFn (Call FVCat ls `withSameLocAs` ls)
   where
     line =
-        do  MP.try (void $ MP.chunk "|")
+        do  void $ MP.chunk "|"
             elts <- located' (many stringElt)
             case unloc elts of
               [a] -> pure a
@@ -118,39 +82,97 @@ barStringExprParser =
 
     stringChunk = ExprLit . LitString <$> located' sc
     embeddedExpr =
-      do  void $ MP.try (MP.chunk "${")
+      do  void $ symbol' "${"
           expr <- exprParser
           void $ MP.chunk "}"
           pure expr
 
     escaped =
-      do  void $ MP.try (MP.chunk "\\")
+      do  void $ MP.chunk "\\"
           c <- located' MP.anySingle
           pure . ExprLit . LitString $ (Text.singleton <$> c)
 
 strLitParser :: Parser Text
 strLitParser =
-  do  MP.try (symbol' "\"")
+  do  symbol' "\""
       contents <- MP.takeWhileP (Just "string literal") (/= '"')
       void $ MP.single '"'
       pure contents
 
 exprParser :: Parser Expr
-exprParser =
-    MP.choice [ mkSeq
-              , fn "vjoin" FVJoin
-              , fn "join" FJoin
-              , fn "file" FFile
-              , ExprLit . LitString <$> located strLitParser
-              , barStringExprParser
-              , selector
-              ]
+exprParser = MP.choice [ forParser
+                       , cond
+                       , barStringExprParser
+                       , makeExprParser term opTable
+                       ]
   where
+    term = MP.choice [ mkSeq
+                     , fn "vjoin" FVJoin
+                     , fn "join" FJoin
+                     , fn "file" FFile
+                     , ExprLit . LitString <$> located strLitParser
+                     , convert
+                     , selector
+                     , symbol' "(" *> exprParser <* symbol' ")"
+                     ]
+
+    binary name f = InfixL (f <$ symbol' name)
+    prefix name f = Prefix (f <$ symbol' name)
+    postfix name f = Postfix (f <$ symbol' name)
+
+    opTable =
+      [ [ postfix "!?" isEmpty
+        , postfix "?" notIsEmpty
+        ]
+      , [ prefix "!" ExprNot
+        ]
+      , [ binary "&&" ExprAnd
+        , binary "||" ExprOr
+        ]
+      ]
+
+    convert =
+      do  symbol' "convert"
+          symbol' "["
+          unit <- located UP.parseUnit
+          symbol' "]"
+          symbol' "("
+          expr <- exprParser
+          symbol' ")"
+
+          pure $ ExprConvertUnits expr unit
+
+    cond =
+      do  lite <- located $ do  symbol' "if"
+                                branches <- MP.sepBy1 ((,) <$> exprParser <*> brackets exprParser) (symbol' "else if")
+                                symbol' "else"
+                                e <- brackets exprParser
+                                pure (branches, e)
+          let (branches, e) = unloc lite
+          pure $ ExprCond (locRange lite) branches e
+
+    isEmpty arg =
+        let sr = location arg
+            cl = Call FIsEmpty ([arg] `withSameLocAs` arg) `withSameLocAs` sr
+        in ExprFn cl
+
+    notIsEmpty arg =
+        let sr = location arg
+            ncall = Call FNot ([eexpr] `withSameLocAs` sr) `withSameLocAs` sr
+            eexpr = ExprFn ecall
+            ecall = Call FIsEmpty ([arg] `withSameLocAs` arg) `withSameLocAs` sr
+        in ExprFn ncall
+
     selector = ExprSelector <$> selectorParser
 
     parseArgs =
       located $ MP.sepBy exprParser (symbol' ",")
 
+    forParser =
+      do  symbol' "for"
+          name <- lident
+          symbol' "in"
+          ExprFor name <$> exprParser <*> exprParser
 
     call name fname =
       located $
@@ -164,19 +186,16 @@ exprParser =
           pure $ ExprFn (Call FMkSeq seqb `withSameLocAs` seqb)
 
     seqBody =
-      located $
-        MP.try (symbol' "[") *>
-          MP.sepBy exprParser (symbol' ",")
-        <* MP.try (symbol' "]")
+      located $ symbol' "[" *> MP.sepBy exprParser (symbol' ",") <* symbol' "]"
 
 
 declParser :: Parser Decl
-declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
+declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl, requireDecl]
   where
     inDecl =
       do  lin <-
             located $
-              do  sel <- MP.try $ symbol' "in" *> selectorParser <* symbol' "{"
+              do  sel <- symbol' "in" *> selectorParser <* symbol' "{"
                   decls <- many declParser
                   symbol' "}"
                   pure (sel, decls)
@@ -193,9 +212,14 @@ declParser = MP.choice [renderDecl, letDecl, outDecl, inDecl]
           DeclLet i <$> exprParser
 
     renderDecl =
-      do  MP.try (symbol' "render")
+      do  symbol' "render"
           sel <- selectorParser
           DeclRender sel <$> exprParser
+
+    requireDecl =
+      do  symbol' "require"
+          DeclRequire <$> exprParser <*> located strLitParser
+
 
 transformParser :: Parser Transform
 transformParser =

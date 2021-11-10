@@ -21,23 +21,27 @@ module Language.Transform.Evaluator
   , runTransform
   ) where
 
-import           Control.Applicative       ((<|>))
-import qualified Control.Monad.Except      as Except
-import qualified Control.Monad.State       as State
+import           Control.Applicative         ((<|>))
+import qualified Control.Monad.Except        as Except
+import qualified Control.Monad.State         as State
 
-import           Data.Foldable             (traverse_)
-import           Data.Map                  (Map)
-import qualified Data.Map                  as Map
-import           Data.Text                 (Text)
-import qualified Data.Text                 as Text
+import           Data.Foldable               (traverse_)
+import           Data.List.NonEmpty          (NonEmpty ((:|)))
+import           Data.Map                    (Map)
+import qualified Data.Map                    as Map
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
 
-import qualified Prettyprinter             as PP
+import qualified Prettyprinter               as PP
 
-import           Language.Common           (HasLocation (..), Located (..),
-                                            msgWithLoc, ppRange, unloc)
-import qualified Language.Transform.Syntax as Tx
-import           Language.Transform.Value  (Value (..))
-import qualified Language.Transform.Value  as Value
+import           Language.Common             (HasLocation (..), Located (..),
+                                              msgWithLoc, ppRange,
+                                              sourceRangeSpan', unloc)
+import           Language.Common.Units.Units (Unit)
+import qualified Language.Transform.Syntax   as Tx
+import           Language.Transform.Value    (Value (..), convert)
+import qualified Language.Transform.Value    as Value
+
 
 data InterpEnv = InterpEnv
   { envBindings :: Map Ident Value
@@ -80,6 +84,30 @@ bindVar i v =
         Just _ ->
           throw i (q (unloc i) <> " is already bound here")
 
+modifyVar :: Located Ident -> (Value -> Eval Value) -> Eval ()
+modifyVar i f =
+  do  bindVal <- State.gets (Map.lookup (unloc i) . envBindings)
+      envVal <- State.gets (Map.lookup (unloc i) . envBlockEnv)
+      case (bindVal, envVal) of
+        (Just a, _) ->
+          do  a' <- f a
+              State.modify $ \s -> s { envBindings = Map.insert (unloc i) a' (envBindings s) }
+        (_, Just b) ->
+          do  b' <- f b
+              State.modify $ \s -> s { envBlockEnv = Map.insert (unloc i) b' (envBlockEnv s) }
+        _ -> throw i (q (unloc i) <> " is not defined here")
+
+modifyEnv :: (Value -> Eval Value) -> Eval ()
+modifyEnv f =
+  do  bindVals <- State.gets envBindings
+      envVals <- State.gets envBlockEnv
+
+      envVals' <- f `traverse` envVals
+      bindVals' <- f `traverse` bindVals
+
+      State.modify (\s -> s { envBindings = bindVals', envBlockEnv = envVals' })
+
+
 appendToFile :: FilePath -> Doc -> Eval ()
 appendToFile fp doc =
   do  out <- State.gets envOutputs
@@ -90,11 +118,11 @@ appendToFile fp doc =
       State.modify $ \s -> s { envOutputs = Map.insert fp doc' (envOutputs s) }
 
 
-modTraverseBlockEnv :: (Value -> Eval Value) -> Eval ()
-modTraverseBlockEnv f  =
-  do  env <- State.gets envBlockEnv
-      env' <- f `traverse` env
-      State.modify' (\s -> s { envBlockEnv = env'})
+-- modTraverseBlockEnv :: (Value -> Eval Value) -> Eval ()
+-- modTraverseBlockEnv f  =
+--   do  env <- State.gets envBlockEnv
+--       env' <- f `traverse` env
+--       State.modify' (\s -> s { envBlockEnv = env'})
 
 withBlockEnv :: Map Ident Value -> Eval a -> Eval a
 withBlockEnv env' eval =
@@ -103,6 +131,14 @@ withBlockEnv env' eval =
       result <- eval
       State.modify (\s -> s { envBlockEnv = env})
       pure result
+
+valEnv :: Value -> Map Ident Value
+valEnv v =
+  case v of
+    VBlock b -> Value.blockValues b
+    VUnion u -> Map.singleton (unloc $ Value.tagTag (Value.unionTag u)) (Value.unionTagValue u)
+    VTag t   -> maybe Map.empty valEnv (Value.tagValue t)
+    _        -> Map.singleton "value" v
 
 scoped :: Eval a -> Eval a
 scoped eval =
@@ -119,31 +155,36 @@ scoped eval =
 showValue :: Value -> Eval Doc
 showValue v0 =
   case v0 of
-    VDouble _ d -> pure $ PP.pretty d
+    VBool _ True -> pure "true"
+    VBool _ False -> pure "false"
+    VDouble _ d _ -> pure $ PP.pretty d
     VInt _ i -> pure $ PP.pretty i
     VString _ s -> pure $ PP.pretty s
     VList _ l -> PP.hcat <$> showValue `traverse` l
     VDoc _ d -> pure d
     VFile _ p -> pure $ PP.pretty p
-    VConstruct c ->
+    VTag c ->
       case Value.tagRenderer c of
-        Nothing ->
-          throw v0 ("No renderer for constructor at " <> ppRange (Value.tagLoc c))
-        Just r ->
-          withBlockEnv (Value.tagValue c) (evalExpr r) >>= showValue
+        Nothing -> throw v0 ("No renderer for tag at " <> ppRange (Value.tagLoc c))
+        Just renderer ->
+          case Value.tagValue c of
+            Nothing         -> showEnv Map.empty renderer
+            Just (VBlock b) -> showEnv (Value.blockValues b) renderer
+            Just v          -> showEnv (Map.singleton "value" v) renderer
     VBlock b ->
       case Value.blockRenderer b of
         Nothing -> throw v0 ("No renderer for block at " <> ppRange (Value.blockLoc b))
-        Just r ->
-          withBlockEnv (Value.blockValues b) (evalExpr r) >>= showValue
-
+        Just r -> showEnv (Value.blockValues b) r
+    VUnion u -> showValue (Value.unionTagValue u)
+  where
+    showEnv env e = withBlockEnv env (evalExpr e) >>= showValue
 evalDecl :: Tx.Decl -> Eval ()
 evalDecl d0 =
   case d0 of
     Tx.DeclLet i e ->
       do  v <- evalExpr e
           bindVar i v
-    Tx.DeclRender s e -> modTraverseBlockEnv (evalRender s e)
+    Tx.DeclRender s e -> evalRender s e
     Tx.DeclFileOut f e ->
       do  f' <- getVarVal f >>= file
           doc <- evalExpr e >>= showValue
@@ -151,32 +192,105 @@ evalDecl d0 =
     Tx.DeclIn _ sel decls ->
       do  envs <- evalSelector sel >>= asList envValue
           evalIn decls `traverse_` envs
+    Tx.DeclRequire expr text ->
+      do  v <- evalExpr expr >>= bool
+          if not v then throw expr (unloc text)
+                   else pure ()
   where
     evalIn decls env =
       scoped $ withBlockEnv env (evalDecl `traverse_` decls)
 
 
-evalRender :: Tx.Selector -> Tx.Expr -> Value -> Eval Value
-evalRender s0 e = Value.traverseSchemaValues (Value.mapSelected render path) schema
+modifySelected :: (Value -> Eval Value) -> Tx.Selector -> Eval ()
+modifySelected f sel = go (Tx.selectorElements sel)
   where
+    go (s0:|ss) =
+      case s0 of
+        Tx.SelCond _ -> throw s0 "Cannot begin selector here with conditional"
+        Tx.SelName name -> modifyVar name (modify ss)
+        Tx.SelSchema sch -> modifyEnv (schema (unloc sch) (modify ss))
+
+    modify ss v =
+      case ss of
+        []                  -> f v
+        Tx.SelName name:r   -> mem (unloc name) (modify r) v
+        Tx.SelSchema name:r -> schema (unloc name) (modify r) v
+        Tx.SelCond expr:r   -> cond expr (modify r) v
+
+    schema :: Ident -> (Value -> Eval Value) -> Value -> Eval Value
+    schema sch g v =
+      case v of
+        Value.VBlock b ->
+          do  values' <- schema sch g `traverse` Value.blockValues b
+              let b' = b { Value.blockValues = values' }
+              if Value.blockSchema b' == Just sch
+                then g (VBlock b')
+                else pure (VBlock b')
+
+        Value.VUnion u ->
+          do  tagv' <- schema sch g (Value.unionTagValue u) >>= tag
+              let u' = u { Value.unionTag = tagv' }
+              if Value.unionSchema u == Just sch
+                  then g (VUnion u')
+                  else pure (VUnion u')
+
+        Value.VTag t ->
+          do  arg' <- schema sch g `traverse` Value.tagValue t
+              let t' = t { Value.tagValue = arg' }
+              pure $ VTag t'
+
+        VList loc l -> VList loc <$> (schema sch g `traverse` l)
+        _ -> pure v
+
+
+    cond :: Tx.Expr -> (Value -> Eval Value) -> Value -> Eval Value
+    cond expr g v =
+      do  i <- withBlockEnv (valEnv v) (evalExpr expr)
+          case i of
+            VBool _ True -> g v
+            VBool _ False -> pure v
+            VList l elts -> VList l <$> (cond expr g `traverse` elts)
+            _ -> throw expr "Expecting selector expression to return a bool"
+
+    mem :: Ident -> (Value -> Eval Value) -> Value -> Eval Value
+    mem name g v =
+
+      case v of
+        Value.VBlock b ->
+          case Map.lookup name (Value.blockValues b) of
+            Nothing -> pure v
+            Just v' ->
+              do  v'' <- g v'
+                  let b' = b { Value.blockValues = Map.insert name v'' (Value.blockValues b)}
+                  pure (VBlock b')
+
+        Value.VUnion u | unloc (Value.unionTagTag u) == name ->
+          do  v' <- g (Value.unionTagValue u) >>= tag
+              let u' = u { Value.unionTag = v' }
+              pure (VUnion u')
+
+        Value.VTag t ->
+          do  v' <- mem name g `traverse` Value.tagValue t
+              pure (VTag t { Value.tagValue  = v'})
+
+        Value.VList loc vs -> VList loc <$> (mem name g `traverse` vs)
+
+        _ -> pure v
+
+evalRender :: Tx.Selector -> Tx.Expr -> Eval ()
+evalRender sel e = modifySelected render sel
+  where
+    render :: Value -> Eval Value
     render vr =
+      -- Trace.traceM ("\n\n>>> VALUE   :" ++ show vr) >>
+      -- Trace.traceM ("\n>>> SELECTOR:" ++ show sel) >>
+      -- Trace.traceM "\n\n" >>
+
       case vr of
-        VBlock vb ->
-            pure $ VBlock vb { Value.blockRenderer = Just e}
-        VConstruct vc -> pure $ VConstruct vc { Value.tagRenderer = Just e }
-        _ -> pure vr
-
-    path = reverse (pathRev s0)
-    schema = schemaS s0
-
-    pathRev s =
-      case s of
-        Tx.SelName _     -> []
-        Tx.SelMem s' mem -> unloc mem:pathRev s'
-    schemaS s =
-      case s of
-        Tx.SelName n   -> unloc n
-        Tx.SelMem s' _ -> schemaS s'
+        VBlock vb  -> pure $ VBlock vb { Value.blockRenderer = Just e}
+        VTag vc    -> pure $ VTag vc { Value.tagRenderer = Just e }
+        VList l vs -> VList l <$> render `traverse` vs
+        _          -> pure vr
 
 evalExpr :: Tx.Expr -> Eval Value
 evalExpr e0 =
@@ -186,53 +300,110 @@ evalExpr e0 =
     Tx.ExprLit l ->
       pure $
         case l of
-          Tx.LitFloat f  -> VDouble (location f) (unloc f)
+          Tx.LitFloat f  -> VDouble (location f) (unloc f) Nothing
           Tx.LitInt i    -> VInt (location i) (unloc i)
           Tx.LitString s -> VString (location s) (unloc s)
+    Tx.ExprFor name iterExpr body ->
+      do  iterVals <- evalExpr iterExpr >>= asList pure
+          results <- forIteration name body `traverse` iterVals
+          pure $ VList (location e0) results -- TODO: less listy if it's doable
+    Tx.ExprCond _ thens els -> cond thens els
+    Tx.ExprConvertUnits e u ->
+      -- TODO: every selector seems to produce a list, seems questionable
+      do  quantities <- evalExpr e >>= asList quantity
+          let conv (n, u') = convert throw e n u u'
+          valuesToVList e <$> (conv `traverse` quantities)
+    Tx.ExprNot e ->
+      do  v <- evalExpr e >>= bool
+          pure $ VBool (location e) (not v)
+    Tx.ExprAnd e1 e2 ->
+      do  v1 <- evalExpr e1 >>= bool
+          v2 <- evalExpr e2 >>= bool
+          pure $ VBool (sourceRangeSpan' e1 e2) (v1 && v2)
+    Tx.ExprOr e1 e2 ->
+      do v1 <- evalExpr e1 >>= bool
+         v2 <- evalExpr e2 >>= bool
+         pure $ VBool (sourceRangeSpan' e1 e2) (v1 || v2)
+  where
+    forIteration name body value =
+      scoped $
+        do bindVar name value
+           evalExpr body
 
--- TODO: this is kind of a hack to deal with constructors not being separable into tag/value
-data SelValue =
-    SelValue Value
-  | SelValues [SelValue]
-  | SelMap Value (Map Ident Value)
+    cond [] els = evalExpr els
+    cond ((i, t):rest) els =
+      do  test <- evalExpr i >>= bool
+          if test
+            then evalExpr t
+            else cond rest els
+
+
 
 evalSelector :: Tx.Selector -> Eval Value
-evalSelector s0 = selValToVal s0 <$> go s0
-    where
-      go s1 =
-        case s1 of
-          Tx.SelName n -> SelValue <$> getVarVal n
-          Tx.SelMem s n ->
-            do  s' <- go s
-                pure $ select (unloc n) s'
+evalSelector selector = go (Tx.selectorElements selector)
+  where
+    go (s0:|ss) =
+      do  i <- initial s0
+          vs <- select ss i
+          pure $ valuesToVList selector vs
 
-      selValToVal :: HasLocation why => why -> SelValue -> Value
-      selValToVal loc v0 =
-        case v0 of
-          SelValue  v -> v
-          SelMap v _ -> v
-          SelValues vs ->
-            VList (location loc) [ l | v <- selValToVal loc <$> vs
-                                 , l <- Value.valueToList v ]
+    -- TODO: clean up
+    select :: [Tx.SelectorElement] -> Value -> Eval [Value]
+    select ss v =
+      case ss of
+        [] -> pure [v]
+        Tx.SelName name:r ->
+          concat <$> select r `traverse` mem (unloc name) v
+        Tx.SelSchema name:r ->  -- pure (schema (unloc name)) v >>= select r
+          concat <$> select r `traverse` schema (unloc name) v
+        Tx.SelCond expr:r ->
+          do  isSatisfied <- cond expr v
+              if isSatisfied
+                then select r v
+                else pure []
 
-      select :: Ident -> SelValue -> SelValue
-      select i v =
-        case v of
-          SelValue (VBlock b) ->
-            case Map.lookup i (Value.blockValues b) of
-              Nothing -> SelValues []
-              Just vs -> SelValue vs
-          SelValue vc@(VConstruct c) | unloc (Value.tagTag c) == i ->
-              SelMap vc (Value.tagValue c)
-          SelValue (VList _ vs) ->
-              SelValues (select i . SelValue <$> vs)
-          SelValues vs ->
-              SelValues $ select i <$> vs
-          SelMap _ m ->
-              case Map.lookup i m of
-                Nothing -> SelValues []
-                Just vs -> SelValue vs
-          _ -> SelValues []
+    initial s0 =
+      case s0 of
+        Tx.SelName name -> getVarVal name
+        Tx.SelSchema _  -> throw s0 "Cannot use schema selector here"
+        Tx.SelCond _    -> throw s0 "Selector cannot begin with a condition"
+
+    schema name v =
+      case v of
+        VBlock b ->
+          let svals = Map.toList (Value.blockValues b) >>= schema name . snd
+          in if Value.blockSchema b == Just name
+              then v:svals
+              else svals
+        VUnion u ->
+          let svals = schema name (Value.unionTagValue u)
+          in if Value.unionSchema u == Just name
+              then v:svals
+              else svals
+        VTag t ->  maybe [] (schema name) (Value.tagValue t)
+        VList _ elts -> elts >>= schema name
+        _ -> []
+
+    mem name v =
+      case v of
+        VBlock b ->
+          case Map.lookup name (Value.blockValues b) of
+            Nothing -> []
+            Just v' -> [v']
+        VUnion u | unloc (Value.tagTag (Value.unionTag u)) == name -> [Value.unionTagValue u]
+        VTag t ->
+          case Value.tagValue t of
+            Nothing -> []
+            Just v' -> [v'] >>= mem name
+        VList _ l -> l >>= mem name
+        _ -> []
+
+    cond expr v =
+      do  result <- withBlockEnv (valEnv v) (evalExpr expr)
+          case result of
+            VBool _ b -> pure b
+            _ -> throw expr "Transform error: expression does not have boolean result"
+
 
 evalCall :: Located Tx.Call -> Eval Value
 evalCall lcall =
@@ -247,11 +418,11 @@ evalCall lcall =
         Tx.FJoin ->
           do  (sep, vals) <- args2 args
               sep' <- showValue sep
-              vals' <- list showValue vals
+              vals' <- asList showValue vals
               pure $ VDoc (location lcall) (PP.hcat $ PP.punctuate sep' vals')
         Tx.FVJoin ->
           do  vals <- args1 args
-              vals' <- list showValue vals
+              vals' <- asList showValue vals
               pure $ VDoc (location lcall) (PP.vcat vals')
         Tx.FMkSeq -> pure $ VList (location lcall) args
         Tx.FFile ->
@@ -263,6 +434,15 @@ evalCall lcall =
                   throw lcall
                     ("Transform error: refusing to create file with multiple line name "
                      <> q (line1 <> "\n" <> line2 <> "\n" <> "..."))
+        Tx.FIsEmpty ->
+          do  elts <- args1 args >>= asList pure
+              case elts of
+                [] -> pure $ VBool (location lcall) True
+                _  -> pure $ VBool (location lcall) False
+        Tx.FNot ->
+          do  b <- args1 args >>= bool
+              pure $ VBool (location lcall) (not b)
+
   where
     Tx.Call name largExprs = unloc lcall
     argExprs = unloc largExprs
@@ -288,18 +468,24 @@ describeValueType v0 =
     VList {} -> "list"
     VString {} -> "string"
     VDoc {} -> "doc"
-    VBlock b -> "block " <> q (unloc $ Value.blockType b)
-    VConstruct c ->
-      case Value.tagSchema c of
-        Just a -> "constructor " <> q (unloc $ Value.tagTag c) <> " for union " <> q a
-        Nothing -> "constructor " <> q (unloc $ Value.tagTag c)
+    VBlock b ->
+      case Value.blockSchema b of
+        Just a  -> "block " <> q a
+        Nothing -> "block"
+    VUnion u ->
+      case Value.unionSchema u of
+        Nothing -> "union" <> describeValueType (Value.unionTagValue u)
+        Just schema -> "union " <> schema <> describeValueType (Value.unionTagValue u)
+    VTag c ->
+        "constructor " <> q (unloc $ Value.tagTag c)
     VFile {} -> "file"
+    VBool {} -> "boolean"
 
-list :: (Value -> Eval a) -> Value -> Eval [a]
-list f v =
-  case v of
-    VList _ l -> f `traverse` l
-    _         -> throw v "Expecting a list here"
+-- list :: (Value -> Eval a) -> Value -> Eval [a]
+-- list f v =
+--   case v of
+--     VList _ l -> f `traverse` l
+--     _         -> throw v "Expecting a list here"
 
 asList :: (Value -> Eval a) -> Value -> Eval [a]
 asList f v =
@@ -311,8 +497,7 @@ envValue :: Value -> Eval (Map Text Value)
 envValue v =
   case v of
     VBlock b -> pure $ Value.blockValues b
-    VConstruct c -> pure $ Value.tagValue c
-    _ -> throw v "Expecting some kind of block or constructor here"
+    _        -> throw v "Expecting some kind of block or constructor here"
 
 showAsString :: Value -> Eval Text
 showAsString s = Text.pack . show <$> showValue s
@@ -323,11 +508,37 @@ file v =
     VFile _ f -> pure f
     _         -> throw v "Expecting a file handle here"
 
+bool :: Value -> Eval Bool
+bool v =
+  case v of
+    VBool _ b -> pure b
+    _         -> throw v "Expecting a boolean expression here"
+
+tag :: Value -> Eval Value.TagValue
+tag t =
+  case t of
+    VTag tv -> pure tv
+    _       -> throw t "Expecting a union tag here"
+
+quantity :: Value -> Eval (Located Double, Located Unit)
+quantity v =
+  case v of
+    VDouble sr n (Just u) -> pure (Located sr n, u)
+    _             -> throw v ("Expecting a float with units here (got " <> q (describeValueType v) <> ")")
+
+
 -------------------------------------------------------------------------------
 -- misc
 
 q :: Text -> Text
 q v = "'" <> v <> "'"
+
+
+valuesToVList :: HasLocation a => a -> [Value] -> Value
+valuesToVList l vs =
+  case vs of
+    [a] -> a
+    _   -> VList (location l) vs
 
 -------------------------------------------------------------------------------
 -- API

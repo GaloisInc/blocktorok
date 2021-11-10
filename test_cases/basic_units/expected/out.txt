@@ -1,0 +1,2 @@
+velocity: 500.0
+time: 2.5

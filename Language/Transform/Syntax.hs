@@ -22,29 +22,40 @@ module Language.Transform.Syntax
   , Lit(..)
   , Selector(..)
   , Transform(..)
+  , SelectorElement(..)
   ) where
 
-import           Data.Text       (Text)
+import           Data.Text                   (Text)
 
-import           Language.Common (HasLocation (..), Located (..),
-                                  sourceRangeSpan', SourceRange)
+import           Language.Common             (HasLocation (..), Located (..),
+                                              SourceRange, sourceRangeSpan',
+                                              sourceRangeSpans)
+
+import qualified Data.List.NonEmpty          as NEL
+import           Language.Common.Units.Units (Unit)
 
 -- | Identifiers carrying their location; type alias for easy representation
 -- changes
 type LIdent = Located Text
 
--- | Selectors, which refer to parts of a schema (overall data shape) or the
--- actual data present in inputs. See 'Expr' and 'Decl' for more information
-data Selector =
+data SelectorElement =
     SelName LIdent
-  | SelMem  Selector LIdent
+  | SelSchema LIdent
+  | SelCond Expr
   deriving(Show, Eq, Ord)
 
-instance HasLocation Selector where
+instance HasLocation SelectorElement where
   location s =
     case s of
       SelName n   -> location n
-      SelMem s' l -> sourceRangeSpan' s' l
+      SelSchema l -> location l
+      SelCond e   -> location e
+
+newtype Selector = Selector { selectorElements :: NEL.NonEmpty SelectorElement }
+  deriving(Show, Eq, Ord)
+
+instance HasLocation Selector where
+  location s = sourceRangeSpans (selectorElements s)
 
 -- | Expressions in the transformer language, which can be interpolated in
 -- so-called "bar strings". 'Selector' in this context refers to the data
@@ -53,6 +64,12 @@ data Expr =
     ExprFn (Located Call)
   | ExprSelector Selector
   | ExprLit Lit
+  | ExprFor LIdent Expr Expr
+  | ExprCond SourceRange [(Expr, Expr)] Expr
+  | ExprConvertUnits Expr (Located Unit)
+  | ExprNot Expr
+  | ExprAnd Expr Expr
+  | ExprOr Expr Expr
   deriving(Show, Eq, Ord)
 
 -- | A function call (e.g. @join(", ", foo.bar)@)
@@ -62,13 +79,17 @@ data Call = Call FName (Located [Expr])
 instance HasLocation Expr where
   location e =
     case e of
-      ExprFn c       -> location c
-      ExprSelector s -> location s
-      ExprLit l      -> location l
+      ExprFn c              -> location c
+      ExprSelector s        -> location s
+      ExprLit l             -> location l
+      ExprFor ident _ e2    -> sourceRangeSpan' ident e2
+      ExprCond r _ _        -> r
+      ExprConvertUnits e2 u -> sourceRangeSpan' e2 u
+      ExprNot e'            -> location e'
+      ExprAnd e1 e2         -> sourceRangeSpan' e1 e2
+      ExprOr e1 e2          -> sourceRangeSpan' e1 e2
 
--- TODO: units
--- | Literals in the transformer language; numerical literals will eventually
--- carry unit information
+-- | Literals in the transformer language
 data Lit =
     LitString (Located Text)
   | LitInt (Located Integer)
@@ -103,6 +124,12 @@ data FName =
 
   -- | Open a file for output
   | FFile
+
+  -- | Is a list/selector empty?
+  | FIsEmpty
+
+  -- | Boolean negation
+  | FNot
   deriving(Show, Eq, Ord)
 
 -- | Top-level declarations defining a transformer, consisting of:
@@ -123,6 +150,8 @@ data Decl =
 
   -- | Subtemplates
   | DeclIn SourceRange Selector [Decl]
+
+  | DeclRequire Expr (Located Text)
   deriving(Show, Eq, Ord)
 
 instance HasLocation Decl where
@@ -131,6 +160,7 @@ instance HasLocation Decl where
       DeclRender s e  -> sourceRangeSpan' s e
       DeclLet  l e    -> sourceRangeSpan' l e
       DeclFileOut f o -> sourceRangeSpan' f o
+      DeclRequire e s -> sourceRangeSpan' e s
       DeclIn r _ _    -> r
 
 -- | A full transformer, consisting of a schema filename and the 'Decl's which

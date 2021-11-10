@@ -1,7 +1,0 @@
-block int_b {
-    .x: int
-}
-
-root {
-    .top: int_b
-}

@@ -146,9 +146,8 @@ placing any output files in the directory `out/`.
 
 ## Tests and Documentation
 
-Within the directory `test_cases/` is a subdirectory named `automated`, which
-contains a number of small examples of data and transformers to exercise the
-compiler and get a feel for the language syntax.
+Within the directory `test_cases/` are a number of small examples of data and
+transformers to exercise the compiler and get a feel for the language syntax.
 
 To run an example, from a Bash-compatible shell, simply run:
 
@@ -167,5 +166,5 @@ Of particular interest are the tests `heated_rod_su2` and
 different transforms to produce very different simulation codes for the same
 problem, demonstrating the power of the Blocktorok workflow.
 
-Documentation for the Blocktorok's data, schema, and transformer language can
-be found in the report distributed with this code release.
+Documentation for the Blocktorok schema and transformer languages can be found
+in the `docs/` directory.

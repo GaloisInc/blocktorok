@@ -1,0 +1,7 @@
+schema "schema.ocs"
+
+output = file("roots.out")
+
+render ::int_b |The int is ${x}
+
+output << top

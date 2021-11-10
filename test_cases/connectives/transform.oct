@@ -1,0 +1,14 @@
+schema "schema.ocs"
+
+output = file("out.txt")
+
+render ::x[y? && (z? || w?)]
+  |Have y and (z and/or w)
+
+render ::x[!y? && z?]
+  |Don't have y, but have z
+
+render ::x[y!? && z!? && w!?]
+  |Don't have any
+
+output << vjoin(x)

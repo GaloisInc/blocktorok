@@ -22,19 +22,22 @@ module Language.Common
     -- ** Computing with locations
   , locUnknown
   , msgWithLoc
-  , orThrow
-  , orThrow'
   , sourceRangeSpan
   , sourceRangeSpan'
+  , sourceRangeSpans
   , unloc
   , withSameLocAs
     -- ** Pretty-printing
   , ppRange
+    -- ** Handling exceptions
+  , orThrow
+  , orThrow'
   ) where
 
-import qualified Control.Exception         as Ex
+import qualified Control.Exception  as Ex
+import qualified Data.List.NonEmpty as NonEmptyList
 
-import           Data.Text (Text, pack)
+import           Data.Text          (Text, pack)
 
 -- | A line:column range in a source file used for error reporting
 data SourceRange = SourceRange
@@ -54,8 +57,8 @@ data Located a = Located
 
 -- | @withSameLocAs b a@ returns @b@ annotated with the same location
 -- information as @a@
-withSameLocAs :: b -> Located a -> Located b
-withSameLocAs b a = Located (locRange a) b
+withSameLocAs :: HasLocation a => b -> a -> Located b
+withSameLocAs b a = Located (location a) b
 
 -- | Pretty-printing for a 'SourceRange'
 ppRange :: SourceRange -> Text
@@ -107,6 +110,9 @@ sourceRangeSpan (SourceRange f1 s1 e1) (SourceRange _ s2 e2) =
 -- location data
 sourceRangeSpan' :: (HasLocation a, HasLocation b) => a -> b -> SourceRange
 sourceRangeSpan' e1 e2 = sourceRangeSpan (location e1) (location e2)
+
+sourceRangeSpans :: HasLocation a => NonEmptyList.NonEmpty a -> SourceRange
+sourceRangeSpans es = foldr1 sourceRangeSpan (location <$> es)
 
 -- | @ioe `orThrow` f@ runs the 'IO' action @ioe@, throwing an exception via
 -- @f@ if the result is @Left@ and unwrapping the @Right@ value otherwise

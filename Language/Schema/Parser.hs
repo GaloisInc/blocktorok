@@ -19,141 +19,93 @@ module Language.Schema.Parser
   , schemaEnvFromFile
   ) where
 
-import           Control.Monad              (void)
-import           Control.Monad.State        (State)
-import qualified Control.Monad.State        as State
+import           Control.Applicative          ((<**>))
+import           Control.Monad.State          (State)
+import qualified Control.Monad.State          as State
 
-import           Data.Char                  (isAlpha, isDigit)
-import           Data.Functor               (($>))
-import qualified Data.List                  as List
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
-import qualified Data.Text.IO               as TIO
-import           Data.Void                  (Void)
+import           Data.Functor                 (($>))
+import qualified Data.MultiSet                as MS
+import           Data.Text                    (Text)
+import qualified Data.Text                    as Text
+import qualified Data.Text.IO                 as TIO
+import           Data.Void                    (Void)
 
-import           Text.Megaparsec            ((<|>))
-import qualified Text.Megaparsec            as MP
-import qualified Text.Megaparsec.Char       as MPC
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import           Text.Megaparsec              ((<|>))
+import qualified Text.Megaparsec              as MP
+import qualified Text.Megaparsec.Char.Lexer   as Lexer
 
-import           Language.Common            (Located (..), SourceRange (..))
-import           Language.Schema.Env        (Env, addRootType, addTypeDef,
-                                             emptyEnv, lookupTypeDef)
-import           Language.Schema.Syntax     (BlockDecl (BlockDecl, blockDeclDecl),
-                                             BlockS (BlockS),
-                                             Decl (Decl, declName), Root (Root),
-                                             Schema (Schema), SchemaDef (..),
-                                             Union (Union),
-                                             Variant (Variant, variantTag),
-                                             declsMap, globbedDeclsMap,
-                                             schemaDefMap, variantsMap)
-import           Language.Schema.Type       (Globbed (..), Ident, SType (..),
-                                             containedName, containsNamed,
-                                             unGlob)
+import           Language.Common              (unloc)
+import           Language.Common.Parser       (brackets, ident, keyword, lident,
+                                               located, optional, spc, symbol')
+import qualified Language.Common.Units.Parser as UP
+import           Language.Schema.Env          (Env, addRootType, addTypeDef,
+                                               emptyEnv, lookupTypeDef)
+import           Language.Schema.Syntax       (BlockDecl (BlockDecl, blockDeclDecl),
+                                               BlockS (BlockS),
+                                               Decl (Decl, declName),
+                                               Root (Root), Schema (Schema),
+                                               SchemaDef (..), Union (Union),
+                                               Variant (Variant, variantTag),
+                                               globbedDeclsMap, schemaDefMap,
+                                               variantsMap)
+import           Language.Schema.Type         (Globbed (..), SType (..), unGlob)
 
 type Parser a = MP.ParsecT Void Text (State Env) a
 
-spc :: Parser ()
-spc = Lexer.space MPC.space1
-                  (Lexer.skipLineComment "--")
-                  MP.empty
-
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme spc
-
-symbol :: Text -> Parser Text
-symbol = Lexer.symbol spc
-
-symbol' :: Text -> Parser ()
-symbol' t = void $ symbol t
-
-mkRange :: MP.SourcePos -> MP.SourcePos -> SourceRange
-mkRange s e =
-  SourceRange (MP.sourceName s) (asLoc s) (asLoc e)
-  where
-    asLoc pos = (MP.unPos (MP.sourceLine pos), MP.unPos (MP.sourceColumn pos))
-
-located :: Parser a -> Parser (Located a)
-located p =
-  lexeme $
-    do  start <- MP.getSourcePos
-        a <- p
-        end <- MP.getSourcePos
-        pure $ Located (mkRange start end) a
-
-optional :: Parser a -> Parser (Maybe a)
-optional p = (Just <$> MP.try p) <|> pure Nothing
-
-ident :: Parser Ident
-ident =
-  lexeme . MP.try $
-    do c0 <- MP.satisfy identFirstChar
-       cr <- MP.takeWhileP Nothing identRestChar
-       pure (c0 `Text.cons` cr)
-  where
-    identFirstChar :: Char -> Bool
-    identFirstChar c = isAlpha c || c == '_'
-    identRestChar c = identFirstChar c || isDigit c
-
-selector :: Parser Ident
-selector = MPC.char '.' *> ident
-
-brackets :: Parser a -> Parser a
-brackets p = symbol' "{" *> p <* symbol' "}"
-
 stype :: Parser SType
 stype =
-  do tyName <- ident
-     case tyName of
-       "int" -> pure SInt
-       "float" -> pure SFloat
-       "string" -> pure SString
-       _ -> pure $ SNamed tyName
+  MP.choice [ keyword "int" $> SInt
+            , keyword "bool" $> SBool
+            , SFloat <$> (keyword "float" *> munit)
+            , keyword "string" $> SString
+            , SNamed <$> ident
+            ]
+  where
+    munit = optional $ symbol' "(" *> UP.parseUnit <* symbol' ")"
 
-decl :: Parser Ident -> Parser Decl
-decl p =
-  do n <- located p
+-- ! Uses MP.setOffset; parsing state is messed up after failure
+decl :: Parser Decl
+decl =
+  do n <- located ident
      symbol' ":"
+     o <- MP.getOffset
      t <- located stype
-     if containsNamed (locValue t) then
-       do let nm = containedName (locValue t)
-          env <- State.get
-          case lookupTypeDef nm env of
-            Nothing -> fail $ "The type " ++ show nm ++ " is not defined."
-            Just _  -> pure $ Decl n t
-     else pure $ Decl n t
+     let res = Decl n t
+     case unloc t of
+       SNamed nm ->
+         do env <- State.get
+            case lookupTypeDef nm env of
+              Nothing -> MP.setOffset o >> fail ("The type " ++ show nm ++ " is not defined")
+              Just _ -> pure res
+       _ -> pure res
 
 doc :: Parser Text
 doc = Text.pack <$> (symbol' "[-- " *> MP.manyTill Lexer.charLiteral (symbol' " --]"))
 
--- | TODO: Better detection of / error for duplicate fields?
 variant :: Parser Variant
 variant =
-  do ann   <- optional (located doc)
-     t     <- located ident
-     decls <- brackets $ MP.sepBy (decl ident) (symbol' ",")
-     symbol' ";"
-     if length (declNames decls) /= length (List.nub (declNames decls)) then
-       fail "The preceding union variant contains duplicated field names."
-     else
-       pure $ Variant ann t (declsMap decls)
-  where
-    declNames = fmap (locValue . declName)
+  Variant <$> optional (located doc)
+          <*> lident
+          <*> optional stype
 
--- | TODO: Better detection of / error for duplicate tags?
+duplicatedElems :: Ord a => [a] -> [a]
+duplicatedElems xs = [x | (x, c) <- MS.toOccurList (MS.fromList xs), c > 1]
+
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 union :: Parser Union
 union =
   do symbol' "union"
-     nm   <- located ident
-     vars <- brackets $ MP.some variant
-     if length (varNames vars) /= length (List.nub (varNames vars)) then
-       fail "The preceding union definition contains duplicated variant tags."
-     else
+     o    <- MP.getOffset
+     nm   <- lident
+     vars <- brackets $ MP.endBy1 variant (symbol' ";")
+     let dupedTags   = duplicatedElems (fmap (unloc . variantTag) vars)
+         ppDupedTags = Text.unpack $ Text.intercalate ", " dupedTags
+     if null dupedTags then
        do let u = Union nm (variantsMap vars)
-          addTypeDef (locValue nm) (UnionDef u)
+          addTypeDef (unloc nm) (UnionDef u)
           pure u
-  where
-    varNames = fmap (locValue . variantTag)
+     else
+       MP.setOffset o >> fail ("This union has duplicate tags: " ++ ppDupedTags)
 
 glob :: Parser (a -> Globbed a)
 glob = MP.option One $ MP.choice [opt, some, many]
@@ -162,52 +114,38 @@ glob = MP.option One $ MP.choice [opt, some, many]
     some = symbol' "+" $> Some
     many = symbol' "*" $> Many
 
-globbed :: Parser a -> Parser (Globbed a)
-globbed p =
-  do a <- p
-     g <- glob
-     pure $ g a
-
 blockDecl :: Parser BlockDecl
-blockDecl =
-  BlockDecl <$> optional (located doc)
-            <*> decl selector
+blockDecl = BlockDecl <$> optional (located doc) <*> decl
 
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 blockS :: Parser BlockS
 blockS =
   do symbol' "block"
-     t  <- located ident
-     fs <- brackets $ MP.many $ globbed blockDecl
-     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
-       fail "The preceding block definition contains duplicated field names."
-     else
+     o <- MP.getOffset
+     t  <- lident
+     fs <- brackets $ MP.endBy (blockDecl <**> glob) (symbol' ";")
+     let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
+         ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
+     if null dupedFields then
        do let b = BlockS t (globbedDeclsMap fs)
-          addTypeDef (locValue t) (BlockDef b)
+          addTypeDef (unloc t) (BlockDef b)
           pure b
-  where
-    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
+     else
+       MP.setOffset o >> fail ("This block has duplicated fields: " ++ ppDupedFields)
 
--- blockExt :: Parser BlockS
--- blockExt =
---   do symbol' "block"
---      new <- located ident
---      symbol' "extends"
---      old <- located ident
---      fs <- brackets $ MP.many $ globbed blockDecl
-
-
+-- ! Uses MP.setOffset; parsing state is messed up after failure
 root :: Parser Root
 root =
-  do symbol' "root"
-     fs <- brackets $ MP.many $ globbed blockDecl
-     if length (fieldNames fs) /= length (List.nub (fieldNames fs)) then
-       fail "The root specifiation contains duplicated field names."
-     else
+  do o <- MP.getOffset
+     symbol' "root"
+     fs <- brackets $ MP.endBy (blockDecl <**> glob) (symbol' ";")
+     let dupedFields   = duplicatedElems (fmap (unloc . declName . blockDeclDecl . unGlob) fs)
+         ppDupedFields = Text.unpack $ Text.intercalate ", " dupedFields
+     if null dupedFields then
        do sequence_ (addRootType <$> fs)
           pure $ Root $ globbedDeclsMap fs
-  where
-    fieldNames = fmap (locValue . declName . blockDeclDecl . unGlob)
-  -- Root <$> (symbol' "root" *> brackets (globbedDeclsMap <$> (MP.some $ globbed blockDecl)))
+     else
+       MP.setOffset o >> fail ("The root specification has duplicate fields: " ++ ppDupedFields)
 
 schemaDefsP :: Parser SchemaDef
 schemaDefsP =  UnionDef <$> union

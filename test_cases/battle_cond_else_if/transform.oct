@@ -1,0 +1,35 @@
+schema "schema.ocs"
+
+output = file("orcs.py")
+
+render ::value.Dice      |Roll(${number}, ${sides})
+render ::value.Fixed     |Fixed(${amount})
+
+render ::battle.hero     |Creature("${name}", ${hp}, ${damage})
+render ::battle.orc      |Creature("Orc", ${hp}, ${damage})
+render ::battle.minotaur |Creature("Minotaur", ${hp}, ${damage})
+
+orcs =
+  if battle.orc? {
+    |orcs = [${join(", ", battle.orc)}]
+  } else {
+    |
+  }
+
+monsters =
+  if battle.orc? {
+    |orcs + minotaurs
+  } else if battle.minotaur? {
+    |minotaurs
+  } else {
+    |
+  }
+
+render battle
+  |from battle import *
+  |heroes = [${join(", ", hero)}]
+  |${orcs}
+  |minotaurs = [${join(", ", minotaur)}]
+  |battle(heroes, ${monsters})
+
+output << battle

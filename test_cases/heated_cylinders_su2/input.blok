@@ -1,0 +1,135 @@
+simulation: {
+  coupling: {
+    domain1: "solid1"
+    domain2: "fluid"
+
+    interface: {
+      interface1: "cylinder_outer1"
+      interface2: "cylinder_inner1"
+    }
+  }
+
+  coupling: {
+    domain1: "solid2"
+    domain2: "fluid"
+
+    interface: {
+      interface1: "cylinder_outer2"
+      interface2: "cylinder_inner2"
+    }
+  }
+
+  coupling: {
+    domain1: "solid3"
+    domain2: "fluid"
+
+    interface: {
+      interface1: "cylinder_outer3"
+      interface2: "cylinder_inner3"
+    }
+  }
+
+  domain: {
+    name: "solid1"
+    solid: {
+      governing_equation: heat_conduction
+      conduction: components { density: 0.00042
+                               heat_capacity: 1004.703
+                               thermal_conductivity: 0.1
+                             }
+    }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core1"
+                                      value: 350
+                                    }
+    time: steady_state 10
+    convergence: criterion_with_start { min_value: -20
+                                        start_iter: 10
+                                      }
+  }
+
+  domain: {
+    name: "solid2"
+    solid: {
+      governing_equation: heat_conduction
+      conduction: components { density: 0.00042
+                               heat_capacity: 1004.703
+                               thermal_conductivity: 0.1
+                             }
+    }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core2"
+                                      value: 350
+                                    }
+    time: steady_state 10
+    convergence: criterion_with_start { min_value: -20
+                                        start_iter: 10
+                                      }
+  }
+
+  domain: {
+    name: "solid3"
+    solid: {
+      governing_equation: heat_conduction
+      conduction: components { density: 0.00042
+                               heat_capacity: 1004.703
+                               thermal_conductivity: 0.1
+                             }
+    }
+    initial_values: temperature 288.15
+    boundary_conditions: isothermal { marker: "core3"
+                                      value: 350
+                                    }
+    time: steady_state 10
+    convergence: criterion_with_start { min_value: -20
+                                        start_iter: 10
+                                      }
+  }
+
+  domain: {
+    name: "fluid"
+    fluid: {
+      governing_equation: incompressible_navier_stokes
+      turbulence: NONE
+      density_model: variable incompressible_ideal_gas { specific_heat_capacity: 1004.703
+                                                         molecular_weight: 28.96
+                                                       }
+      viscosity_model: constant 1.7893e-05
+      thermal_conductivity: constant_prandtl { laminar_prandtl_number: 0.72
+                                               turbulent_prandtl_number: 0.90
+                                             }
+      energy_equation: use 288.15
+    }
+    initial_values: [ density 0.00042
+                    , velocity { x: 3.40297
+                                  y: 0
+                                  z: 0
+                                }
+                    ]
+    boundary_conditions: farfield "farfield"
+    time: steady_state 1
+    convergence: criterion_with_start { min_value: -20
+                                        start_iter: 0
+                                      }
+  }
+
+    input_output: {
+      write_interval_iter: 15000
+
+      write_interval_sec: 0.2
+
+      output_format: [ RESTART, TECPLOT, PARAVIEW, SURFACE_TECPLOT, SURFACE_PARAVIEW ]
+
+      mesh_filename: "mesh_cht_3cyl_ffd.su2"
+
+      mesh_format: SU2
+    }
+
+    couple_iter: 15000
+
+    convergence: criterion -20
+
+  }
+
+
+

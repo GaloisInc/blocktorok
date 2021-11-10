@@ -1,0 +1,7 @@
+block x {
+  y : int;
+}
+
+root {
+  x : x;
+}

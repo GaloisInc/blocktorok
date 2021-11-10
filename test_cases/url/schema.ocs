@@ -1,0 +1,49 @@
+union activation {
+   Tanh;
+   Sigmoid;
+   Linear;
+   ReLU;
+}
+
+union data {
+   Circle;
+   Xor;
+   Gauss;
+   Spiral;
+}
+
+block maybeDataJust {
+   d : data;
+}
+
+union maybeData {
+   None;
+   Just maybeDataJust;
+}
+
+block urlParams {
+   activation: activation;
+
+   [-- Eventually I want to figure out how to make this >=1 and <=30 --]
+   batchSize:  int;
+
+   dataSet:    maybeData;
+}
+
+block urlBase {
+   base:       string;
+}
+
+block neural {
+   urlBase:    urlBase;
+   urlParams:  urlParams;
+}
+
+block foo {
+   bar: urlBase;
+}
+
+root {
+   neural:  neural;
+   foo: foo;
+}

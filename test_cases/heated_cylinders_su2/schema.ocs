@@ -1,0 +1,291 @@
+block components {
+  density: float;
+  heat_capacity: float;
+  thermal_conductivity: float;
+}
+
+union thermal_diffusivity {
+  [-- Right hand side of the equation --]
+  components components;
+
+  [-- Left hand side of the equation --]
+  dt float;
+}
+
+block incompressible_ideal_gas {
+  specific_heat_capacity: float;
+  molecular_weight: float;
+}
+
+union fluid_model {
+  incompressible_ideal_gas incompressible_ideal_gas;
+
+  standard_air;
+}
+
+union density_model {
+  [-- if variable density, an appropriate fluid model must be selected --]
+  variable fluid_model;
+
+  constant float;
+
+  boussinesq;
+}
+
+block sutherland {
+  reference_viscosity: float;
+  reference_temp: float;
+  sutherland_constant: float;
+}
+
+union viscosity_model {
+  [-- dynamic viscosity --]
+  sutherland sutherland;
+
+  [-- constant viscosity --]
+  constant float;
+}
+
+block constant_prandtl {
+  laminar_prandtl_number: float;
+  turbulent_prandtl_number: float;
+}
+
+union thermal_conductivity_model {
+  [-- constant Prandtl number --]
+  constant_prandtl constant_prandtl;
+
+  [-- constant conductivity --]
+  constant_conductivity float;
+}
+
+union energy_equation {
+  use float;
+  not_used;
+}
+
+union governing_equations_fluid {
+  compressible_navier_stokes;
+  incompressible_navier_stokes;
+  compressible_euler;
+  incompressible_euler;
+}
+
+union turbulence_model {
+  [-- There's more, this is an incomplete list --]
+  NONE;
+  SA;
+}
+
+block velocity {
+  x: float;
+  y: float;
+  z: float;
+}
+
+union initial_value {
+  density float;
+  velocity velocity;
+  temperature float;
+}
+
+block bc_val {
+  marker: string;
+  value: float;
+}
+
+union boundary_conditions {
+  isothermal bc_val;
+
+  heatflux bc_val;
+
+  farfield string;
+}
+
+block fluid {
+  [-- The governing equation/solver for the problem --]
+  governing_equation: governing_equations_fluid;
+
+  [-- Turbulent model (NONE, SA) --]
+  turbulence: turbulence_model;
+
+  [-- if variable density, appropriate fluid model must be selected --]
+  density_model: density_model;
+
+  viscosity_model: viscosity_model;
+
+  thermal_conductivity: thermal_conductivity_model;
+
+  [-- If energy_equation, need initial temperature --]
+  energy_equation: energy_equation;
+
+  -- TODO: non-dimensionalization scheme
+  -- defines how the reference pressure (pref) is computed
+}
+
+union governing_equations_solid {
+  heat_conduction;
+}
+
+block solid {
+  [-- The governing equation/solver for the problem --]
+  governing_equation: governing_equations_solid;
+
+  conduction: thermal_diffusivity;
+}
+
+block criterion_with_start {
+  min_value: float;
+  start_iter: int;
+}
+
+union convergence {
+  [-- Maximum number of iterations before the simulation ends --]
+  max_iterations int;
+
+  [-- Simulation terminates when a field reaches a certain threshold. The list of possible fields depends on the solver --]
+  criterion float;
+
+  criterion_with_start criterion_with_start;
+}
+
+block transient {
+  dt: float;
+  max_time: float;
+  inner_iter: int;
+  outer_iter: int;
+}
+
+union time {
+  [-- Steady state simulation --]
+  steady_state int;
+
+  [-- Transient simulation --]
+  transient transient;
+}
+
+union output_format {
+  CSV;
+  TECPLOT;
+  RESTART;
+  PARAVIEW;
+  SURFACE_TECPLOT;
+  SURFACE_PARAVIEW;
+}
+
+union mesh_format {
+  SU2;
+  CGNS;
+}
+
+block input_output {
+  [-- Output solution frequency in iterations for su2 --]
+  write_interval_iter: int;
+
+  [-- Output solution frequency in seconds for openfoam --]
+  write_interval_sec : float;
+
+  [-- Name of output file is optional (OpenFoam does not have one) --]
+  output_file: string?;
+
+  [-- Output file format --]
+  output_format: output_format*;
+
+  [-- The mesh file is optional (OpenFoam may not have a mesh file if using blockMeshDict) --]
+  mesh_filename: string?;
+
+  [-- The format of the mesh file --]
+  mesh_format: mesh_format?;
+}
+
+-- union boundary_condition_types {
+--   [-- TODO: finish compiling list of acceptable boundary condition types --]
+--   ZeroGradient {value: float};
+--
+--   FixedValue {value: float};
+-- }
+--
+-- union field_type {
+--   [-- TODO: finish compiling list of acceptable boundary condition types
+--   Value being applied to the boundary: e.g. uniform 273 --]
+--   Uniform {value: float};
+-- }
+--
+-- union variables {
+--   [-- TODO: finish compiling the list of openfoam primitive variables --]
+--   Temperature {};
+--   Pressure {};
+-- }
+--
+-- block boundary_conditions {
+--   [-- The variable that the boundary condition is being applied (temperature, pressure, ...) --]
+--   .variable: variables
+--
+--   [-- Name of the mesh location to apply the boundary condition --]
+--   .marker: string
+--
+--   [-- Type of boundary condition: fixed value, zero gradient, ... --]
+--   .type: boundary_condition_types
+--
+--   [-- Field type: e.g. Uniform (SU2 is only uniform) --]
+--   .field_type: field_type
+-- }
+
+block domain {
+  [-- Name of the domain --]
+  name: string;
+
+  [-- TODO: YOU SHOULD NEVER HAVE MORE THAN ONE PHYSICS FOR A DOMAIN --]
+  fluid: fluid*;
+  solid: solid*;
+
+  [-- Specify initial values for the domain --]
+  initial_values: initial_value*;
+
+  [-- Boundary conditions --]
+  boundary_conditions: boundary_conditions*;
+
+  [-- Simulation termination conditions --]
+  convergence: convergence;
+
+  [-- Time dependency: transient or steady state parameters are defined here --]
+  time: time;
+}
+
+block coupling_interface {
+  interface1: string;
+  interface2: string;
+}
+
+block coupled_domains {
+
+  [-- Pairwise coupled domains --]
+  domain1: string;
+  domain2: string;
+
+  [-- Pairwise interfaces between domains --]
+  interface: coupling_interface*;
+}
+
+block simulation {
+
+  [-- multiphysics simulation has at least one coupled domains
+  (currently only allowed for conjugated heat transfer) --]
+  coupling: coupled_domains*;
+
+  domain: domain*;
+
+  [-- Input output parameters (mesh files are included here) --]
+  input_output: input_output;
+
+  [-- couple iter is not requred if single_physics
+  Number of coupled iterations --]
+  couple_iter: int;
+
+  [-- Simulation termination conditions --]
+  convergence: convergence;
+}
+
+root {
+  simulation: simulation;
+}

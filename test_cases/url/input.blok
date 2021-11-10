@@ -1,0 +1,17 @@
+neural: {
+   urlBase: {
+      base: "https://playground.tensorflow.org/"
+   }
+
+   urlParams: {
+      activation: Tanh
+      batchSize:  7
+      dataSet:    None
+   }
+}
+
+foo: {
+   bar: {
+      base: "hello"
+   }
+}
