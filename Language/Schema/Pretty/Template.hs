@@ -93,4 +93,4 @@ ppTemplate =
 -- Conveniences
 
 comment :: Doc ann -> Doc ann
-comment x = "--" <+> x
+comment = ("--" <+>)
