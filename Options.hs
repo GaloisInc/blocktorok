@@ -13,7 +13,8 @@ needs, wants, and what is useful for demos etc.
 -}
 
 module Options
-  ( BuildOptions(..)
+  ( ASTOptions(..)
+  , BuildOptions(..)
   , Command(..)
   , Options(..)
   , parseOpts
@@ -22,6 +23,13 @@ module Options
 import           Options.Applicative (Parser, argument, command, help,
                                       hsubparser, info, long, metavar, progDesc,
                                       short, str, strOption)
+
+-- | The options provided at the command line to control AST-dumping
+data ASTOptions = ASTOptions
+  { dataF     :: FilePath
+  , schema    :: FilePath
+  , transform :: FilePath
+  }
 
 -- | The options provided at the command line to control compilation
 data BuildOptions = BuildOptions
@@ -35,6 +43,7 @@ data Command
   = Doc FilePath
   | Template FilePath
   | Build BuildOptions
+  | AST ASTOptions
 
 -- | Options provided at the command line, generally (i.e. all known commands)
 newtype Options = Options { optCommand :: Command }
@@ -70,6 +79,25 @@ parseBuildOpts =
                                <> help "The data to be transformed"
                                 )
 
+-- | A parser for AST-dump command line options
+parseASTOpts :: Parser ASTOptions
+parseASTOpts =
+  ASTOptions <$> strOption ( long "data"
+                          <> short 'd'
+                          <> metavar "FILE"
+                          <> help "The data file to dump the AST of"
+                           )
+             <*> strOption ( long "schema"
+                          <> short 's'
+                          <> metavar "FILE"
+                          <> help "The schema to dump the AST of"
+                           )
+             <*> strOption ( long "transform"
+                          <> short 't'
+                          <> metavar "FILE"
+                          <> help "The transform to dump the AST of"
+                           )
+
 -- | A parser for all command line options
 parseOpts :: Parser Options
 parseOpts = Options <$>
@@ -77,4 +105,5 @@ parseOpts = Options <$>
     ( command "doc" (info (Doc <$> parseDocOpts) (progDesc "Generate documentation from a schema"))
    <> command "template" (info (Template <$> parseTemplateOpts) (progDesc "Generate a data template from a schema"))
    <> command "build" (info (Build <$> parseBuildOpts) (progDesc "Run a transformer on data"))
+   <> command "ast" (info (AST <$> parseASTOpts) (progDesc "Dump ASTs for a data file, schema, and transformer"))
     )

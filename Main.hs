@@ -20,7 +20,8 @@ import qualified Control.Exception               as Ex
 
 import qualified Data.Text.IO                    as TIO
 
-import           Options                         (BuildOptions (..),
+import           Options                         (ASTOptions (..),
+                                                  BuildOptions (..),
                                                   Command (..), Options (..),
                                                   parseOpts)
 import           Options.Applicative             (execParser, fullDesc, header,
@@ -30,8 +31,11 @@ import           Options.Applicative             (execParser, fullDesc, header,
 import           System.Directory                (makeAbsolute)
 import qualified System.Exit                     as Exit
 
+import           Language.Blocktorok.Parser      (elementsFromFile)
+import           Language.Schema.Parser          (schemaASTFromFile)
 import           Language.Schema.Pretty.Doc      (ppSchemaDocs)
 import           Language.Schema.Pretty.Template (ppSchemaTemplate)
+import           Language.Transform.Parser       (transformFromFile)
 import           Link                            (LinkError (..),
                                                   runTransformIO)
 
@@ -54,6 +58,26 @@ realMain Options { optCommand = cmd } =
          absO <- makeAbsolute o
          absD <- makeAbsolute d
          runTransformIO absT absD absO
+    AST ASTOptions { dataF = d, schema = s, transform = t } ->
+      do  absD <- makeAbsolute d
+          absS <- makeAbsolute s
+          absT <- makeAbsolute t
+
+          resD <- elementsFromFile absD
+          case resD of
+            Left e   -> TIO.putStrLn e >> Exit.exitFailure
+            Right d' -> print d'
+
+          resS <- schemaASTFromFile absS
+          case resS of
+            Left e   -> TIO.putStrLn e >> Exit.exitFailure
+            Right s' -> print s'
+
+          resT <- transformFromFile absT
+          case resT of
+            Left e   -> TIO.putStrLn e >> Exit.exitFailure
+            Right t' -> print t'
+
 
   `Ex.catch`
 
