@@ -13,7 +13,7 @@ Some pretty-printing combinators / primitives useful in both documentation and
 template generation.
 -}
 
-module Language.Schema.Pretty
+module Language.Common.Pretty
   ( blankLine
   , ppStype
   , ppNoLoc

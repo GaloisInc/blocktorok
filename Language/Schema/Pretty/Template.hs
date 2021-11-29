@@ -32,9 +32,9 @@ import           Prettyprinter.Render.Text (putDoc)
 import qualified System.FilePath           as Path
 
 import           Language.Common           (orThrow, unloc)
+import           Language.Common.Pretty    (ppStype, (<//>), (</>))
 import           Language.Schema.Env       (Env (..), lookupTypeDef)
 import           Language.Schema.Parser    (schemaEnvFromFile)
-import           Language.Schema.Pretty    (ppStype, (<//>), (</>))
 import           Language.Schema.Syntax    (BlockDecl (..), BlockS (..),
                                             Decl (..), SchemaDef (..))
 import           Language.Schema.Type      (Globbed (..), Ident, SType (..))

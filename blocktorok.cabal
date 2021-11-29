@@ -13,10 +13,12 @@ executable blocktorok
   main-is:             Main.hs
   hs-source-dirs:      .
   other-modules:       Language.Blocktorok.Parser
+                       Language.Blocktorok.Pretty
                        Language.Blocktorok.Syntax
 
                        Language.Common
                        Language.Common.Parser
+                       Language.Common.Pretty
                        Language.Common.Units.Combinators
                        Language.Common.Units.Dimensions
                        Language.Common.Units.Factor
@@ -28,7 +30,6 @@ executable blocktorok
                        Language.Schema.Env
                        Language.Schema.GUI.Test
                        Language.Schema.Parser
-                       Language.Schema.Pretty
                        Language.Schema.Pretty.Doc
                        Language.Schema.Pretty.Template
                        Language.Schema.Syntax
