@@ -47,5 +47,5 @@ ppValue v = case v of
   Block lbes  -> lbrace
              </> indent 2 (vcat $ ppBlockElement <$> unloc lbes)
              </> rbrace
-  Tag lt mv   -> pretty (unloc lt) <+> maybe "" ppValue mv
+  Tag lt mv   -> pretty (unloc lt) <> maybe "" (\v' -> " " <> ppValue v') mv
   String lt   -> dquotes $ pretty $ unloc lt
