@@ -21,8 +21,8 @@ import qualified Control.Exception               as Ex
 import qualified Data.Text.IO                    as TIO
 
 import           Options                         (BuildOptions (..),
-                                                  Command (..), Options (..),
-                                                  parseOpts)
+                                                  Command (..), GUIOptions (..),
+                                                  Options (..), parseOpts)
 import           Options.Applicative             (execParser, fullDesc, header,
                                                   helper, info, progDesc,
                                                   (<**>))
@@ -30,7 +30,7 @@ import           Options.Applicative             (execParser, fullDesc, header,
 import           System.Directory                (makeAbsolute)
 import qualified System.Exit                     as Exit
 
-import           Language.Schema.GUI.Test        (showGUI)
+import           Language.Schema.GUI             (showGUI)
 import           Language.Schema.Pretty.Doc      (ppSchemaDocs)
 import           Language.Schema.Pretty.Template (ppSchemaTemplate)
 import           Link                            (LinkError (..),
@@ -55,7 +55,7 @@ realMain Options { optCommand = cmd } =
          absO <- makeAbsolute o
          absD <- makeAbsolute d
          runTransformIO absT absD absO
-    GUI fp -> showGUI fp
+    GUI GUIOptions { schema = s, outdir = o } -> showGUI s o
 
   `Ex.catch`
 

@@ -14,23 +14,27 @@ schema-generated GUI.
 -}
 
 module Language.Blocktorok.Pretty
-  ( ppData
+  ( writeData
   ) where
 
 import           Prettyprinter              (Doc, Pretty (pretty), colon,
                                              concatWith, dquotes, indent,
                                              lbrace, list, rbrace, vcat, (<+>))
-import           Prettyprinter.Render.Text  (putDoc)
+import           Prettyprinter.Render.Text  (hPutDoc)
+
+import qualified System.FilePath            as Path
 
 import           Language.Blocktorok.Syntax (BlockElement (..), Value (..))
 import           Language.Common            (unloc)
 import           Language.Common.Pretty     ((<//>), (</>))
+import           System.IO                  (IOMode (..), withFile)
 
--- | Write formatted Blocktorok data to the file @input.blok@
-ppData :: [BlockElement] -> IO ()
-ppData bes =
+-- | Write formatted Blocktorok data to the file @input.blok@ in directory
+-- @dir@
+writeData :: [BlockElement] -> FilePath -> IO ()
+writeData bes dir =
   do  let d = concatWith (<//>) $ ppBlockElement <$> bes
-      putDoc d
+      withFile (dir Path.</> "input.blok") WriteMode (`hPutDoc` d)
 
 -------------------------------------------------------------------------------
 -- Generating 'Doc's from 'BlockElement's

@@ -14,6 +14,7 @@ needs, wants, and what is useful for demos etc.
 
 module Options
   ( BuildOptions(..)
+  , GUIOptions(..)
   , Command(..)
   , Options(..)
   , parseOpts
@@ -30,12 +31,17 @@ data BuildOptions = BuildOptions
   , blocktorok  :: FilePath
   }
 
+data GUIOptions = GUIOptions
+  { schema :: FilePath
+  , outdir :: FilePath
+  }
+
 -- | Commands recognized at the command line (like git add, git commit, etc)
 data Command
   = Doc FilePath
   | Template FilePath
   | Build BuildOptions
-  | GUI FilePath
+  | GUI GUIOptions
 
 -- | Options provided at the command line, generally (i.e. all known commands)
 newtype Options = Options { optCommand :: Command }
@@ -72,11 +78,16 @@ parseBuildOpts =
                                 )
 
 -- | A parser for gui command line options
-parseGuiOpts :: Parser FilePath
+parseGuiOpts :: Parser GUIOptions
 parseGuiOpts =
-  argument str ( metavar "FILE"
-              <> help "The schema to generate a data-entry GUI for"
-               )
+  GUIOptions <$> argument str ( metavar "FILE"
+                             <> help "The schema to generate a data-entry GUI for"
+                              )
+             <*> strOption ( long "output"
+                          <> short 'o'
+                          <> metavar "DIR"
+                          <> help "The directory to sent outputs to"
+                           )
 
 -- | A parser for all command line options
 parseOpts :: Parser Options
