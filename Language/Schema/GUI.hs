@@ -1,3 +1,6 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
+
 {-|
 Module      : Language.Schema.GUI
 Description : Generate a GUI for data input from a schema
@@ -15,11 +18,66 @@ module Language.Schema.GUI
   ( showGUI
   ) where
 
-import           Control.Lens               ()
+import           Control.Lens               (makeLenses, (^.))
 
-import           Monomer                    ()
+import           Monomer                    (AppEventResponse,
+                                             EventResponse (..), WidgetEnv,
+                                             WidgetNode, WidgetRequest (..),
+                                             appFontDef, appInitEvent, appTheme,
+                                             appWindowTitle, darkTheme,
+                                             startApp)
 
-import           Language.Blocktorok.Syntax ()
+import           Language.Blocktorok.Pretty (writeData)
+import           Language.Blocktorok.Syntax (BlockElement (..))
+import           Language.Common            (orThrow)
+import           Language.Schema.Env        (Env (..))
+import           Language.Schema.Parser     (schemaEnvFromFile)
+
+import           Link                       (LinkError (..))
+
+newtype AppModel = AppModel {
+  _blocks :: [BlockElement]
+} deriving (Eq, Show)
+
+data AppEvent
+  = AppInit
+  | AppSubmit
+  | AppExit
+  deriving (Eq, Show)
+
+makeLenses 'AppModel
+
+buildUI :: Env
+        -> WidgetEnv AppModel AppEvent
+        -> AppModel
+        -> WidgetNode AppModel AppEvent
+buildUI = error "Unimplemented!"
+
+handleEvent :: FilePath
+            -> WidgetEnv AppModel AppEvent
+            -> WidgetNode AppModel AppEvent
+            -> AppModel
+            -> AppEvent
+            -> [AppEventResponse AppModel AppEvent]
+handleEvent o _ _ model evt =
+  case evt of
+    AppInit   -> []
+    AppSubmit -> [Task writeAndQuit]
+    AppExit   -> [Request $ ExitApplication True]
+  where
+    writeAndQuit :: IO AppEvent
+    writeAndQuit =
+      do  writeData (model ^. blocks) o
+          pure AppExit
 
 showGUI :: FilePath -> FilePath -> IO ()
-showGUI = undefined
+showGUI s o =
+  do  env <- schemaEnvFromFile s `orThrow` ParseError
+      startApp model (handleEvent o) (buildUI env) config
+  where
+    config = [ appWindowTitle "Data Entry"
+             , appTheme darkTheme
+             , appFontDef "Regular" "./assets/fonts/Roboto-Regular.ttf"
+             , appInitEvent AppInit
+             ]
+    model = AppModel { _blocks = [] }
