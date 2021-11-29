@@ -28,6 +28,7 @@ executable blocktorok
                        Language.Common.Units.Units
 
                        Language.Schema.Env
+                       Language.Schema.GUI
                        Language.Schema.GUI.Test
                        Language.Schema.Parser
                        Language.Schema.Pretty.Doc
