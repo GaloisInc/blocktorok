@@ -12,38 +12,20 @@ union data {
    Spiral;
 }
 
-block maybeDataJust {
-   d : data;
-}
-
-union maybeData {
-   None;
-   Just maybeDataJust;
-}
-
 block urlParams {
    activation: activation;
 
    [-- Eventually I want to figure out how to make this >=1 and <=30 --]
    batchSize:  int;
 
-   dataSet:    maybeData;
-}
-
-block urlBase {
-   base:       string;
+   dataSet:    data;
 }
 
 block neural {
-   urlBase:    urlBase;
+   urlBase:    string;
    urlParams:  urlParams;
-}
-
-block foo {
-   bar: urlBase;
 }
 
 root {
    neural:  neural;
-   foo: foo;
 }
