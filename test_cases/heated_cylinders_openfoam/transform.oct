@@ -1,0 +1,700 @@
+schema "schema.ocs"
+
+initial_fluid_T = file("0/fluid/T")
+initial_fluid_U = file("0/fluid/U")
+initial_fluid_p = file("0/fluid/p")
+initial_fluid_p_rgh = file("0/fluid/p_rgh")
+
+properties_fluid_g = file("constant/fluid/g")
+properties_fluid_thermo = file("constant/fluid/thermophysicalProperties")
+properties_fluid_turbulence = file("constant/fluid/turbulenceProperties")
+
+regions = file("constant/regionProperties")
+
+fluid_schemes = file("system/fluid/fvSchemes")
+fluid_solution = file("system/fluid/fvSolution")
+
+require (simulation.domain.fluid? && simulation.domain.solid?)
+  "Need at least one fluid and one solid domain."
+
+-- TODO: systems
+
+-------------------------------------------------------------
+-- boundary conditions
+-------------------------------------------------------------
+
+bc = simulation.domain.boundary_conditions
+
+pressure =
+if bc.farfield? {
+  |farfield
+  |{
+  |    type            zeroGradient;
+  |}
+}
+else {
+  |
+}
+
+temp =
+if bc.farfield? {
+  |farfield 
+  |{
+  |    type            fixedValue;
+  |    value           \$internalField;
+  |}
+}
+else {
+  |
+}
+
+init = simulation.domain.initial_values
+
+velocity =
+if bc.farfield? {
+  |farfield 
+  |{
+  |    type            fixedValue;
+  |    value           uniform ( ${init.velocity.x}, ${init.velocity.y}, ${init.velocity.z} );
+  |}
+}
+else {
+  |
+}
+
+interfaces_temp =
+  for d in simulation.domain
+    |fluid_to_${d.name}
+    |     {
+    |         type            compressible::turbulentTemperatureCoupledBaffleMixed;
+    |         value           \$internalField;
+    |         Tnbr            T;
+    |     }
+
+interfaces_velocity =
+  for d in simulation.domain
+    |fluid_to_${d.name}
+    |{
+    |    type            noSlip;
+    |}
+
+-------------------------------------------------------------
+-- 0/fluid section
+-------------------------------------------------------------
+initial_fluid_p <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       volScalarField;
+  |    location    "0/fluid";
+  |    object      p;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [ 1 -1 -2 0 0 0 0 ];
+  |
+  |internalField   uniform 0;
+  |
+  |boundaryField
+  |{
+  |    ${pressure}
+  |}
+  |
+  |// ************************************************************************* //
+
+initial_fluid_p_rgh <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       volScalarField;
+  |    location    "0/fluid";
+  |    object      p_rgh;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [ 1 -1 -2 0 0 0 0 ];
+  |
+  |internalField   uniform 0;
+  |
+  |boundaryField
+  |{
+  |    ${pressure}
+  |}
+  |
+  |// ************************************************************************* //
+
+initial_fluid_T <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       volScalarField;
+  |    location    "0/fluid";
+  |    object      T;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [ 0 0 0 1 0 0 0 ];
+  |
+  |internalField   uniform ${init.temperature};
+  |
+  |boundaryField
+  |{
+  |    ${temp}
+  |    ${interfaces_temp}
+  |}
+  |
+  |// ************************************************************************* //
+
+initial_fluid_U <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       volVectorField;
+  |    location    "0/fluid";
+  |    object      U;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [ 0 1 -1 0 0 0 0 ];
+  |
+  |internalField   uniform (0 0 1e-3);
+  |
+  |boundaryField
+  |{
+  |    ${velocity}
+  |    ${interfaces_velocity}
+  |}
+  |
+  |// ************************************************************************* //
+
+-------------------------------------------------------------
+-- 0/solid section
+-------------------------------------------------------------
+
+initial_solid_p =
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       volScalarField;
+  |    object      p;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [1 -1 -2 0 0 0 0];
+  |
+  |internalField   uniform 0;
+  |
+  |boundaryField
+  |{
+  |    ".*"
+  |    {
+  |        type            calculated;
+  |        value           \$internalField;
+  |    }
+  |}
+  |
+  |// ************************************************************************* //
+
+in simulation.domain {
+  filename = |0/${name}/p
+  in solid {
+    cs_out = file(filename)
+    cs_out << initial_solid_p 
+  }
+}
+
+in simulation.domain {
+  filename = |0/${name}/T
+  in solid {
+    cs_out = file(filename)
+    cs_out <<
+      |FoamFile
+      |{
+      |    version     2.0;
+      |    format      ascii;
+      |    class       volScalarField;
+      |    object      T;
+      |}
+      |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+      |
+      |dimensions      [ 0 0 0 1 0 0 0 ];
+      |
+      |internalField   uniform ${initial_values.temperature.value};
+      |
+      |boundaryField
+      |{
+      |    solid1_to_fluid
+      |    {
+      |        type            compressible::turbulentTemperatureCoupledBaffleMixed;
+      |        value           uniform ${boundary_conditions.isothermal.value};
+      |        Tnbr            T;
+      |    }
+      |}
+      |
+      |// ************************************************************************* //
+  }
+}
+
+-------------------------------------------------------------
+-- constant/fluid section
+-------------------------------------------------------------
+
+properties_fluid_g <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       uniformDimensionedVectorField;
+  |    location    "constant/fluid";
+  |    object      g;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |dimensions      [0 1 -2 0 0 0 0];
+  |value           (0 0 0);
+  |
+  |// ************************************************************************* //
+
+turb =
+  if simulation.domain.fluid.turbulence.NONE? {
+    |simulationType  laminar;
+  }
+  else if simulation.domain.fluid.turbulence.SA? {
+    |simulationType  SA;
+  }
+  else {
+    |
+  }
+
+properties_fluid_turbulence << 
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "constant";
+  |    object      turbulenceProperties;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |${turb}
+  |
+  |// ************************************************************************* //
+
+render ::viscosity_model.constant              |mu              ${value};
+
+render ::thermal_conductivity_model.constant_prandtl |Pr              ${laminar_prandtl_number}; 
+
+render ::fluid_model.incompressible_ideal_gas
+  |    specie
+  |    {
+  |        nMoles          1;
+  |        molWeight       ${molecular_weight};
+  |    }
+  |    thermodynamics
+  |    {
+  |        Cp              ${specific_heat_capacity};
+  |        Hf              0;
+  |    }
+
+transport =
+if simulation.domain.fluid.viscosity_model.constant? {
+  |transport       constant; -- if constant dynamic viscosity
+}
+else {
+  |
+}
+
+vis = 
+if simulation.domain.fluid.viscosity_model.constant? {
+  |transport       constant; -- if constant dynamic viscosity
+}
+else {
+  |
+}
+
+fm =
+if simulation.domain.fluid_model.incompressible_ideal_gas? {
+  |    equationOfState incompressiblePerfectGas; -- if incompressible_ideal_gas
+}
+else {
+  |
+}
+
+fluid_template =
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "constant";
+  |    object      thermophysicalProperties;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |thermoType
+  |{
+  |    type            heRhoThermo;
+  |    mixture         pureMixture;
+-- use either the transport variable defined above or the if with the ?
+  |${transport}
+  |${vis}
+  |    thermo          hConst;
+  |${fm}
+  |    specie          specie;
+  |    energy          sensibleInternalEnergy;
+  |}
+  |
+  |dpdt yes;
+  |
+  |air
+  |{
+  |    ${simulation.domain.fluid.density_model.variable.incompressible_ideal_gas}
+  |    transport
+  |    {
+  |        ${simulation.domain.fluid.viscosity_model};
+  |        ${simulation.domain.fluid.thermal_conductivity};
+  |    }
+  |}
+  |
+  |// ************************************************************************* //
+
+properties_fluid_thermo << fluid_template
+
+-------------------------------------------------------------
+-- constant/solid
+-------------------------------------------------------------
+
+render ::thermal_diffusivity.components
+  |    transport
+  |    {
+  |        kappa   ${thermal_conductivity}; // Thermal conductivity [W/(m.K)]
+  |    }
+  |    thermodynamics
+  |    {
+  |        Hf      0;
+  |        Cp      ${heat_capacity}; // Specific heat capacity [J/(kg.K)]
+  |    }
+  |    equationOfState
+  |    {
+  |        rho     ${density}; // Density [kg/m3]
+  |    }
+
+solid_thermo =
+  |thermoType
+--  a model for a solid material with constant properties
+  |{
+  |    type            heSolidThermo;
+  |    mixture         pureMixture;
+  |    transport       constIso;
+  |    thermo          hConst;
+  |    equationOfState rhoConst;
+  |    specie          specie;
+  |    energy          sensibleEnthalpy;
+  |}
+  |
+  |mixture
+  |{
+  |    specie
+  |    {
+  |        molWeight   12; // molar weight, [g/mol]
+  |    }
+  |${simulation.domain.solid.conduction}
+  |}
+  |
+  |// ************************************************************************* //
+
+in simulation.domain {
+  filename = |constant/${name}/thermophysicalProperties
+  in solid {
+    cs_out = file(filename)
+    cs_out << solid_thermo
+  }
+}
+
+solid_rad =
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "constant";
+  |    object      radiationProperties;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |radiation off;
+  |
+  |radiationModel none;
+  |
+  |// ************************************************************************* //
+
+
+in simulation.domain {
+  filename = |constant/${name}/radiationProperties
+  in solid {
+    cs_out = file(filename)
+    cs_out << solid_rad
+  }
+}
+
+-------------------------------------------------------------
+-- constant/regionProperties
+-------------------------------------------------------------
+
+fluid_names =
+for d in simulation.domain
+  if d.fluid? {
+    |${d.name}
+  }
+  else {
+    |
+  }
+
+solid_names =
+for d in simulation.domain
+  if d.solid? {
+    |${d.name}
+  }
+  else {
+    |
+  }
+
+regions <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "constant";
+  |    object      regionProperties;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |regions
+  |(
+  |    fluid       (${join(" ", fluid_names)}
+  |    solid       (${join(" ", solid_names)})
+  |
+  |);
+  |
+  |// ************************************************************************* /
+
+-------------------------------------------------------------
+-- system/fluid
+-------------------------------------------------------------
+
+fluid_schemes <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "system/fluid";
+  |    object      fvSchemes;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |ddtSchemes
+  |{
+  |    default         Euler;
+  |}
+  |
+  |gradSchemes
+  |{
+  |    default         Gauss linear;
+  |}
+  |
+  |divSchemes
+  |{
+  |    default         none;
+  |
+  |    div(phi,U)      Gauss upwind;
+  |    div(phi,K)      Gauss linear;
+  |    div(phi,h)      Gauss upwind;
+  |    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
+  |}
+  |
+  |laplacianSchemes
+  |{
+  |    default         Gauss linear corrected;
+  |}
+  |
+  |interpolationSchemes
+  |{
+  |    default         linear;
+  |}
+  |
+  |snGradSchemes
+  |{
+  |    default         corrected;
+  |}
+  |
+  |// ************************************************************************* //
+
+fluid_solution <<
+  |FoamFile
+  |{
+  |    version     2.0;
+  |    format      ascii;
+  |    class       dictionary;
+  |    location    "system/fluid";
+  |    object      fvSolution;
+  |}
+  |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  |
+  |solvers
+  |{
+  |    rho
+  |    {
+  |        solver          diagonal;
+  |    }
+  |
+  |    rhoFinal
+  |    {
+  |        \$rho;
+  |    }
+  |
+  |    p_rgh
+  |    {
+  |        solver           GAMG;
+  |        smoother         symGaussSeidel;
+  |        tolerance        1e-7;
+  |        relTol           0.01;
+  |    }
+  |
+  |    p_rghFinal
+  |    {
+  |        \$p_rgh;
+  |        relTol           0;
+  |    }
+  |
+  |    "(U|h)"
+  |    {
+  |        solver           PBiCGStab;
+  |        preconditioner   DILU;
+  |        tolerance        1e-7;
+  |        relTol           0.1;
+  |    }
+  |
+  |    "(U|h)Final"
+  |    {
+  |        \$U;
+  |        relTol           0;
+  |    }
+  |}
+  |
+  |PIMPLE
+  |{
+  |    momentumPredictor   yes;
+  |}
+  |
+  |relaxationFactors
+  |{
+  |    equations
+  |    {
+  |        h               1;
+  |        U               1;
+  |    }
+  |}
+  |
+  |// ************************************************************************* //
+
+-------------------------------------------------------------
+-- system/solid
+-------------------------------------------------------------
+
+in simulation.domain {
+  filename = |system/${name}/fvSchemes
+  in solid {
+    cs_out = file(filename)
+    cs_out << 
+      |FoamFile
+      |{
+      |    version     2.0;
+      |    format      ascii;
+      |    class       dictionary;
+      |    location    "system/solid"; --TODO: fix location
+      |    object      fvSchemes;
+      |}
+      |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+      |
+      |ddtSchemes
+      |{
+      |    default         Euler;
+      |}
+      |
+      |gradSchemes
+      |{
+      |    default         Gauss linear;
+      |}
+      |
+      |divSchemes
+      |{
+      |    default         none;
+      |}
+      |
+      |laplacianSchemes
+      |{
+      |    default         none;
+      |    laplacian(alpha,e) Gauss linear corrected;
+      |}
+      |
+      |interpolationSchemes
+      |{
+      |    default         linear;
+      |}
+      |
+      |snGradSchemes
+      |{
+      |    default         corrected;
+      |}
+      |
+      |// ************************************************************************* //
+  }
+}
+
+in simulation.domain {
+  filename = |system/${name}/fvSolution
+  in solid {
+    cs_out = file(filename)
+    cs_out <<
+      |FoamFile
+      |{
+      |    version     2.0;
+      |    format      ascii;
+      |    class       dictionary;
+      |    location    "system/solid"; --TODO: fix location
+      |    object      fvSolution;
+      |}
+      |// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+      |
+      |solvers
+      |{
+      |    e
+      |    {
+      |        solver           GAMG;
+      |        smoother         symGaussSeidel;
+      |        tolerance        1e-6;
+      |        relTol           0.1;
+      |    }
+      |
+      |    eFinal
+      |    {
+      |        \$e;
+      |        relTol           0;
+      |    }
+      |}
+      |
+      |PIMPLE
+      |{
+      |    nNonOrthogonalCorrectors 0;
+      |}
+      |
+      |// ************************************************************************* //
+  }
+}

@@ -1,0 +1,72 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  9                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      thermophysicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// herhothermo: fluid with fixed chemical composition, calculates the basic thermodynamic 
+//properties based on density variation of the fluid, 𝜌. This is used in heat transfer analyses
+//where the density of the fluid is changing due to changes in its temperature.
+
+//thermophysical models without reactions is pureMixture, which represents a mixture with
+//fixed composition. When pureMixture is specified, 
+//the thermophysical models coefficients are specified within a sub-dictionary called mixture.
+
+//The transport modelling concerns evaluating dynamic viscosity μ, thermal conductivity κ and
+//thermal diffusivity α (for internal energy and enthalpy equations).
+// **constant: assumes constant viscosity and constant prandtl number**
+
+//The thermodynamic models are concerned with evaluating the specific heat cp from which other
+//properties are derived. 
+
+//Hf (heat of fusion) for dry air = 0
+//Hf is the heat of fusion. It is however not used if sensibleEnthalpy or sensibleInternalEnergy is specified. 
+//This quantity only applies to totalEnthalpy etc. ... Nevertheless a value must be present. 
+//Which value is choosen does not affect your simulation results since it is not used to calculate any quantity.
+
+//https://www.cfd-online.com/Forums/openfoam-solving/228152-when-choose-sensibleinternalenergy-sensibleenthalpy-thermophysicalproperties.html
+
+thermoType
+{
+    type            heRhoThermo;
+    mixture         pureMixture;
+    transport       constant;
+    thermo          hConst;
+    equationOfState incompressiblePerfectGas;
+    specie          specie;
+    energy          sensibleInternalEnergy;
+}
+
+dpdt yes;
+
+air
+{
+    specie
+    {
+        nMoles          1;
+        molWeight       28.96;
+    }
+    thermodynamics
+    {
+        Cp              1004.5;
+        Hf              0;
+    }
+    transport
+    {
+        mu              1.8e-05;
+        Pr              0.7;
+    }
+}
+
+// ************************************************************************* //

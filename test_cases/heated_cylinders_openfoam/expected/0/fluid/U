@@ -1,0 +1,54 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    "0/fluid";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [ 0 1 -1 0 0 0 0 ];
+
+internalField   uniform (0 0 1e-3);
+
+// farfield: a free-stream condition at infinity, with free-stream Mach number and
+// static conditions being specified
+// freestream: if the flow is going outside the boundary will be locally zero gradient,
+// if it is going inside the boundary will be locally fixedValue.
+
+
+boundaryField
+{
+
+    farfield 
+    {
+        type            fixedValue;
+        value           uniform ( 3.40297, 0.0, 0.0 );
+    }
+    // fluidOutlet // but su2 does not specify an outlet boundary marker
+    // {
+    //     type            zeroGradient;
+    // }
+    fluid_to_solid1
+    {
+        type            noSlip;
+    }
+    fluid_to_solid2
+    {
+        type            noSlip;
+    }
+    fluid_to_solid3
+    {
+        type            noSlip;
+    }
+}
+
+// ************************************************************************* //
