@@ -19,7 +19,7 @@ module Language.Schema.GUI
   ( showGUI
   ) where
 
-import           Control.Lens               (makeLenses, (^.))
+import           Control.Lens               (makeLenses)
 
 import           Data.Scientific            (scientific)
 import           Data.Text                  (Text)
@@ -73,7 +73,7 @@ buildUI :: Env
         -> WidgetEnv AppModel AppEvent
         -> AppModel
         -> WidgetNode AppModel AppEvent
-buildUI _ _ model = widgetTree
+buildUI _ _ _ = widgetTree
   where
     widgetTree =
       vstack [ box $ vstack [ hstack [ label "urlBase:" `styleBasic` [paddingR 20]
